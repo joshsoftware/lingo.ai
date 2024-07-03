@@ -2,3 +2,4 @@ openai-whisper
 streamlit
 librosa
 pytest
+pytube

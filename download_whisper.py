@@ -3,8 +3,7 @@ import os
 
 model_path = "whisper_model"
 model_id = 'large-v3'
-
-# Ensure the directory exists
+s
 os.makedirs(model_path, exist_ok=True)
 
 # Download model 
