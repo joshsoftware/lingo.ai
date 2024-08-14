@@ -1,7 +1,7 @@
-import openai
+#import openai
 from config import openai_api_key
 
-openai.api_key = openai_api_key
+#openai.api_key = openai_api_key
 
 def extract_entities(text):
     prompt = f"""

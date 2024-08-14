@@ -1,7 +1,7 @@
-import openai
+#import openai
 from config import openai_api_key
 
-openai.api_key = openai_api_key
+#openai.api_key = openai_api_key
 
 def translate_text(text):
     prompt = f"Translate the following text from given audio language to English:\n\n{text}"
