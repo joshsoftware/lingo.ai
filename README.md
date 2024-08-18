@@ -25,7 +25,8 @@ Clone this github repository
 > git clone
 
 Create python virtual environment
-> python3 -m venv lingo
+> python3 -m lingo
+Activate the virtual environment
 > source lingo/bin/activate
 
 Install dependencies
