@@ -17,6 +17,7 @@ _m4a, mp3, webm, mp4, mpga, wav, mpeg_
 python 3.8.1 or above
 Ollam
     > curl -fsSL https://ollama.com/install.sh | sh
+    
 Llama 3.1 model
     > ollama run llama3.1
 
@@ -26,13 +27,14 @@ Clone this github repository
 
 Create python virtual environment
 > python3 -m lingo
+
 Activate the virtual environment
 > source lingo/bin/activate
 
 Install dependencies
-> pip install -r requirements.txton
+> pip install -r requirements.txt
 
-Execute the appllilcation
+Execute the applilcation
 > python3 app.py
 
 It will execute and prints the url in the output console, copy the url and paste in the brwoser
