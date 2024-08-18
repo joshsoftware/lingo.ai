@@ -1,4 +1,4 @@
-#README
+# README
 Voice to text from major languages supported by whisper model, this applicationn will transcibe the uploaded or recored audio to its original language, translate to Englis and and summarise in English.
 
 **Supported Languages (by whispher model)**
