@@ -35,7 +35,7 @@ Clone this github repository
 
 Create python virtual environment
 
-    python3 -m lingo
+    python3 -m lingo .
 
 Activate the virtual environment
 
