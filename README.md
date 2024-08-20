@@ -22,14 +22,21 @@ python 3.8.1 or above
     sudo apt-get install python3.8.1
 
 ffmpeg
+
     sudo apt update && sudo apt install ffmpeg
     
 Ollam
+
 For Linux:
+
      curl -fsSL https://ollama.com/install.sh | sh
+     
 For Mac:
+
     https://ollama.com/download/Ollama-darwin.zip
-For Windows
+    
+For Windows:
+
     https://ollama.com/download/OllamaSetup.exe
     
 Llama 3.1 model
