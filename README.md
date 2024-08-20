@@ -15,15 +15,19 @@ Voice to text from major languages supported by whisper model, this applicationn
 _m4a, mp3, webm, mp4, mpga, wav, mpeg_
 
 **Pre-requisite:**
-
+Note: Following instructions a for linux, 
 python 3.8.1 or above
 
     sudo apt-get update
     sudo apt-get install python3.8.1
 
 Ollam
-
+For Linux:
      curl -fsSL https://ollama.com/install.sh | sh
+For Mac:
+    https://ollama.com/download/Ollama-darwin.zip
+For Windows
+    https://ollama.com/download/OllamaSetup.exe
     
 Llama 3.1 model
 
@@ -35,7 +39,7 @@ Clone this github repository
 
 Create python virtual environment
 
-    python3 -m lingo .
+    python3 -m venv lingo .
 
 Activate the virtual environment
 
@@ -49,5 +53,5 @@ Execute the applilcation
 
     python3 app.py
 
-It will execute and prints the url in the output console, copy the url and paste in the brwoser
+It will execute and prints the url, http://localhost:77434, in the output console, copy the url and paste in the brwoser
     
