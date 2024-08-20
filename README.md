@@ -21,6 +21,9 @@ python 3.8.1 or above
     sudo apt-get update
     sudo apt-get install python3.8.1
 
+ffmpeg
+    sudo apt update && sudo apt install ffmpeg
+    
 Ollam
 For Linux:
      curl -fsSL https://ollama.com/install.sh | sh
