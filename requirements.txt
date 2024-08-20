@@ -1,5 +1,4 @@
 openai-whisper
-streamlit
-librosa
-pytest
-pytube
+ollama
+gradio
+load_dotenv

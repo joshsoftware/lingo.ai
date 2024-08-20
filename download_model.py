@@ -2,8 +2,8 @@ import sys
 
 # # Check if two command-line arguments are provided
 if len(sys.argv) !=3:
-    print("Usage: python main.py <whisper_model_id> <whisper_model_output_path>")
-    print("Example: python main.py large-v3 /workspace/whisper-model/")
+    print("Usage: python download_model.py <whisper_model_id> <whisper_model_output_path>")
+    print("Example: python download_model.py large-v3 /workspace/whisper-model/")
     sys.exit(1)
 
 # Check if the model path ends with '/'
