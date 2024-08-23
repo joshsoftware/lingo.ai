@@ -2,3 +2,6 @@ openai-whisper
 ollama
 gradio
 load_dotenv
+openai
+logging
+logging-conf
