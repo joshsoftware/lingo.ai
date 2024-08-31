@@ -1,12 +1,30 @@
+import { auth, signOut } from "@/auth";
+import LogoutButton from "@/components/Logout";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import UploadFile from "@/components/UploadFile";
+import { redirect } from "next/navigation";
 
-export default function Home() {
+export default async function Home() {
+  const session = await auth();
+
+  if (!session) {
+    return redirect("/api/auth/signin");
+  }
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <div className="flex flex-col gap-4 items-center">
         <h1 className="text-4xl font-bold text-center">
-          Hello Nextjs
+          Hello {session.user.name}!
         </h1>
+        <LogoutButton
+          signOut={async () => {
+            "use server";
+            await signOut();
+          }}
+        />
+        <p>Upload an file</p>
+        <UploadFile />
         <div className="flex gap-4 items-center">
           Toggle Theme <ThemeToggle />
         </div>
