@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS "session" (
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "transcriptions" (
-	"id" integer PRIMARY KEY NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"userId" text NOT NULL,
 	"transcription" text NOT NULL,
 	"documentUrl" text NOT NULL
