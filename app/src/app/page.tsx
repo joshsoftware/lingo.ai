@@ -8,11 +8,14 @@ export default async function Home() {
   const session = await auth();
 
   if (!session) {
-    return redirect("/api/auth/signin");
+    return redirect("/sign-in");
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
+    <div className="flex flex-col items-center justify-between p-24">
+      <div className="flex gap-4 items-center">
+        Toggle Theme <ThemeToggle />
+      </div>
       <div className="flex flex-col gap-4 items-center">
         <h1 className="text-4xl font-bold text-center">
           Hello {session.user.name}!
@@ -23,12 +26,8 @@ export default async function Home() {
             await signOut();
           }}
         />
-        <p>Upload an file</p>
-        <UploadFile />
-        <div className="flex gap-4 items-center">
-          Toggle Theme <ThemeToggle />
-        </div>
+          <UploadFile />
       </div>
-    </main>
+    </div>
   );
 }

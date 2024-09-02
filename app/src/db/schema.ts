@@ -5,6 +5,7 @@ import {
   text,
   primaryKey,
   integer,
+  uuid,
 } from "drizzle-orm/pg-core";
 
 import type { AdapterAccountType } from "next-auth/adapters";
@@ -86,8 +87,8 @@ export const authenticators = pgTable(
   }),
 );
 
-export const trancriptions = pgTable("transcriptions", {
-  id: integer("id").primaryKey(),
+export const transcriptions = pgTable("transcriptions", {
+  id: uuid("id").primaryKey().defaultRandom(),
   userId: text("userId")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
