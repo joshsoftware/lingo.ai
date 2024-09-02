@@ -1,8 +1,10 @@
 import { auth, signOut } from "@/auth";
+import AudioRecorder from "@/components/AudioRecorder";
 import LogoutButton from "@/components/Logout";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import UploadFile from "@/components/UploadFile";
 import { redirect } from "next/navigation";
+import AudioRecorder2 from "../components/AudioRecorder2";
 
 export default async function Home() {
   const session = await auth();
@@ -27,6 +29,8 @@ export default async function Home() {
           }}
         />
           <UploadFile />
+          {/* <AudioRecorder /> */}
+          <AudioRecorder2 />
       </div>
     </div>
   );
