@@ -40,13 +40,13 @@ async def convert_uploadfile_to_ndarray(upload_file: UploadFile) -> np.ndarray:
     return data
 
 #translate the audio file to English language using whisper model
-def translate_with_whisper(audio): 
+def translate_with_whisper(audioPath): 
     logger.info("Started transciption through whishper")
     # audio_tensor = np_array_to_tensor(audio)
     # stft_result = perform_stft(audio_tensor)
     options = dict(beam_size=5, best_of=5)
     translate_options = dict(task="translate", **options)
-    result = model.transcribe(audio,**translate_options)
+    result = model.transcribe(audioPath,**translate_options)
     logger.info("completed transciption through whishper")
     return result["text"]
 
