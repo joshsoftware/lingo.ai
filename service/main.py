@@ -4,12 +4,23 @@ from logger import logger
 from dotenv import load_dotenv
 import tempfile
 import os
+from starlette.middleware.cors import CORSMiddleware
 # Import configurations and functions from modules
 from load_model import load_model
 from audio_service import convert_uploadfile_to_ndarray, translate_with_whisper,summarize_using_openai
 
 app = FastAPI()
 
+app = FastAPI()
+
+# Add CORS middleware to the application
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all HTTP methods
+    allow_headers=["*"],  # Allows all headers
+)
 
 @app.get("/")
 def root_route():
