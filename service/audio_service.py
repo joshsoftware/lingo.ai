@@ -18,27 +18,6 @@ openai.api_key = openai_api_key
 print("model path -> ",model_path)
 model = load_model(model_id, model_path)
 
-
-async def convert_uploadfile_to_ndarray(upload_file: UploadFile) -> np.ndarray:
-
-    # Read the audio file from UploadFile
-    audio_data = await upload_file.read()
-
-    # Use soundfile to read the audio data into a NumPy array
-    # We use a BytesIO object because soundfile expects a file-like object
-    audio_file = BytesIO(audio_data)
-    
-    # Read audio data and sample rate
-    data, sample_rate = sf.read(audio_file)
-
-    # Convert the data to single precision (float32)
-    data = data.astype(np.float32)
-
-    logger.info("convert upload file to ndarray function completed successfully")
-
-    # Return the numpy array
-    return data
-
 #translate the audio file to English language using whisper model
 def translate_with_whisper(audioPath): 
     logger.info("Started transciption through whishper")
