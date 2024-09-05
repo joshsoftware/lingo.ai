@@ -5,11 +5,7 @@ from dotenv import load_dotenv
 import tempfile
 import os
 from starlette.middleware.cors import CORSMiddleware
-# Import configurations and functions from modules
-from load_model import load_model
 from audio_service import translate_with_whisper,summarize_using_openai
-
-app = FastAPI()
 
 app = FastAPI()
 
