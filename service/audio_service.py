@@ -1,0 +1,70 @@
+from fastapi import UploadFile
+from logger import logger
+import openai
+from dotenv import load_dotenv
+import numpy as np
+from pydub import AudioSegment
+from io import BytesIO
+import soundfile as sf
+# Import configurations and functions from modules
+from config import openai_api_key, model_id, model_path
+from load_model import load_model
+
+# Load environment variables
+load_dotenv()
+
+openai.api_key = openai_api_key
+#Load whisher model
+print("model path -> ",model_path)
+model = load_model(model_id, model_path)
+
+
+async def convert_uploadfile_to_ndarray(upload_file: UploadFile) -> np.ndarray:
+
+    # Read the audio file from UploadFile
+    audio_data = await upload_file.read()
+
+    # Use soundfile to read the audio data into a NumPy array
+    # We use a BytesIO object because soundfile expects a file-like object
+    audio_file = BytesIO(audio_data)
+    
+    # Read audio data and sample rate
+    data, sample_rate = sf.read(audio_file)
+
+    # Convert the data to single precision (float32)
+    data = data.astype(np.float32)
+
+    logger.info("convert upload file to ndarray function completed successfully")
+
+    # Return the numpy array
+    return data
+
+#translate the audio file to English language using whisper model
+def translate_with_whisper(audio): 
+    logger.info("Started transciption through whishper")
+    # audio_tensor = np_array_to_tensor(audio)
+    # stft_result = perform_stft(audio_tensor)
+    options = dict(beam_size=5, best_of=5)
+    translate_options = dict(task="translate", **options)
+    result = model.transcribe(audio,**translate_options)
+    logger.info("completed transciption through whishper")
+    return result["text"]
+
+#Using openaie, summarize the English translation
+def summarize_using_openai(text):
+    logger.info("Started summarization")
+    prompt = "Summarize the following text: " +text
+    try:
+        response = openai.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant that extracts information from Indian multilingual text."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=500
+        )
+        summary  = response.choices[0].message.content
+    except Exception as e:
+        logger.error(e)
+        summary = "Unable to  exract summary"
+    return summary
