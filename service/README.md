@@ -22,9 +22,9 @@ description: swagger ui for api testing
 
 uri: "/upload-audio
 mehtod: "POST"
-Content-Type: multipart/form-data
+Content-Type: application/json
 body: {
-    audioFile: recorded or uploaded audio file (types accepted: 'm4a', 'mp4','mp3','webm','mpga','wav','mpeg')
+    audio_file_link: saved audio file link (types accepted: 'm4a', 'mp4','mp3','webm','mpga','wav','mpeg')
 }
 successResponse: {
     message: "File processed successfully",

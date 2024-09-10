@@ -1,11 +1,10 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from logger import logger
 from dotenv import load_dotenv
-import tempfile
-import os
 from starlette.middleware.cors import CORSMiddleware
 from audio_service import translate_with_whisper,summarize_using_openai
+from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -22,30 +21,22 @@ app.add_middleware(
 def root_route():
     return 'Hello, this is the root route for lingo ai server'
 
+class Body(BaseModel):
+    audio_file_link: str
+
 @app.post("/upload-audio")
-async def upload_audio(audioFile: UploadFile = File(...)):
+async def upload_audio(body: Body):
     try:
 
         # Check file type
-        if not audioFile.filename.endswith(('m4a', 'mp4','mp3','webm','mpga','wav','mpeg')):
+        if not body.audio_file_link.endswith(('.m4a', '.mp4','.mp3','.webm','.mpga','.wav','.mpeg')):
             logger.error("invalid file type")
             raise HTTPException(status_code=400, detail="Invalid file type")
 
-        # Create a temporary file to save the uploaded file
-        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(audioFile.filename)[1]) as temp_file:
-            temp_file_path = temp_file.name
-            # Save the file
-            with open(temp_file_path, "wb") as buffer:
-                buffer.write(await audioFile.read())
-
-
         #translation = translate_with_whisper(transcription)
-        translation = translate_with_whisper(temp_file_path)
+        translation = translate_with_whisper(body.audio_file_link)
 
         logger.info("translation done")
-
-        # Clean up the temporary file
-        os.remove(temp_file_path)
         
         #summary = summarize_using_openai(translation)
         summary = summarize_using_openai(translation)
