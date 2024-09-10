@@ -38,7 +38,8 @@ async def upload_audio(audioFile: UploadFile = File(...)):
             with open(temp_file_path, "wb") as buffer:
                 buffer.write(await audioFile.read())
 
-        #translation = translate_with_ollama(transcription)
+
+        #translation = translate_with_whisper(transcription)
         translation = translate_with_whisper(temp_file_path)
 
         logger.info("translation done")
@@ -46,7 +47,7 @@ async def upload_audio(audioFile: UploadFile = File(...)):
         # Clean up the temporary file
         os.remove(temp_file_path)
         
-        #summary = summarize_using_llama(translation)
+        #summary = summarize_using_openai(translation)
         summary = summarize_using_openai(translation)
 
         logger.info("summary done")

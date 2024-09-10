@@ -39,4 +39,4 @@ errorStatusCode: 500
 
 # exit virtual env
 
-source deactivate
+deactivate

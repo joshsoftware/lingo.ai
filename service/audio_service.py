@@ -15,7 +15,6 @@ load_dotenv()
 
 openai.api_key = openai_api_key
 #Load whisher model
-print("model path -> ",model_path)
 model = load_model(model_id, model_path)
 
 #translate the audio file to English language using whisper model
