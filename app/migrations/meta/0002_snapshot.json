@@ -1,6 +1,6 @@
 {
-  "id": "e8d68466-6cea-4d52-8e1b-593c60c231ae",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "21fe80ad-e01f-4679-8f45-d9b61904fb42",
+  "prevId": "0ca8a22b-ed90-440b-8ac0-1fd7f9fa40b7",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -56,8 +56,14 @@
           "primaryKey": false,
           "notNull": true
         },
-        "transcription": {
-          "name": "transcription",
+        "translation": {
+          "name": "translation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "summary": {
+          "name": "summary",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -71,6 +77,12 @@
         },
         "documentUrl": {
           "name": "documentUrl",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "documentName": {
+          "name": "documentName",
           "type": "text",
           "primaryKey": false,
           "notNull": true
