@@ -2,10 +2,9 @@ from fastapi import UploadFile
 from logger import logger
 import openai
 from dotenv import load_dotenv
-import numpy as np
 from pydub import AudioSegment
 from io import BytesIO
-import soundfile as sf
+ 
 # Import configurations and functions from modules
 from config import openai_api_key, model_id, model_path
 from load_model import load_model
@@ -39,7 +38,8 @@ def summarize_using_openai(text):
                 {"role": "system", "content": "You are a helpful assistant that extracts information from Indian multilingual text."},
                 {"role": "user", "content": prompt}
             ],
-            max_tokens=500
+            max_tokens=500,
+            stream=True 
         )
         summary  = response.choices[0].message.content
     except Exception as e:
