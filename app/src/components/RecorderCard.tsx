@@ -4,10 +4,12 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardFooter } from "./ui/card";
 import { Button } from "./ui/button";
 import {
+  ArrowLeftIcon,
   Loader2Icon,
   MicIcon,
   PauseCircleIcon,
   PlayCircleIcon,
+  SendIcon,
   UploadIcon,
 } from "lucide-react";
 import { useDropzone } from "react-dropzone";
@@ -19,7 +21,7 @@ import { toast } from "sonner";
 import { useUploadThing } from "@/utils/uploadthing";
 import { TranscribeDocumentRequest } from "@/Validators/document";
 import { TranscriptionResponse } from "@/types/TranscriptionResponse";
-import { TranscriptionsPayload } from "@/db/schema";
+import { TranscriptionsPayload, TranscriptionsType } from "@/db/schema";
 
 const RecorderCard = () => {
   const router = useRouter();
@@ -76,7 +78,6 @@ const RecorderCard = () => {
       });
     },
     onUploadError: () => {
-      console.log("upload error");
       toast.error("Failed to upload audio, please try again in some time", {
         description: "If the issue persists, please contact support",
       });
@@ -136,10 +137,12 @@ const RecorderCard = () => {
       mutationKey: ["saveTranscribe"],
       mutationFn: async (data: TranscriptionsPayload) => {
         const response = await axios.post("/api/transcribe/save", data);
-        return response.data as string;
+        return response.data[0] as TranscriptionsType;
       },
       onSuccess: async (res) => {
-        router.push("/transcriptions");
+        if(res.id){
+          router.push(`/transcriptions/${res.id}`);
+        }
         return toast.success("Transcription saved successfully");
       },
       onError: (error) => {
@@ -320,8 +323,8 @@ const RecorderCard = () => {
                     }}
                     className="flex gap-2 bg-[#668D7E] hover:bg-[#668D7E] text-white"
                   >
-                    <MicIcon className="w-4 h-4" />
-                    Upload
+                    <SendIcon className="w-4 h-4" />
+                    Transcribe
                   </Button>
                 </>
               ) : (
