@@ -3,5 +3,10 @@ ollama
 gradio
 load_dotenv
 openai
-logging
-logging-conf
+fastapi
+uvicorn
+pytest
+pytest-asyncio
+httpx
+#logging
+#logging-conf
