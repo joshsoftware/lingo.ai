@@ -18,7 +18,7 @@ export async function POST(req: Request) {
       registrationId,
       summary,
       translation,
-    });
+    }).returning();
 
     return new Response(JSON.stringify(response), { status: 200 });
   } catch (error) {

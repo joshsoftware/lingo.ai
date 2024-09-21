@@ -4,7 +4,6 @@ import { z } from "zod";
 
 export async function POST(req: Request) {
   try {
-    console.clear();
     const body = await req.json();
 
     const { documentUrl } = transcribeDocumentSchema.parse(body);
@@ -30,11 +29,9 @@ export async function POST(req: Request) {
       }),
     });
 
-    console.log(response);
 
     const data = await response.json();
 
-    console.log(data);
 
     return new Response(JSON.stringify(data), { status: 200 });
   } catch (error) {
