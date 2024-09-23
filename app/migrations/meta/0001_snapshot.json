@@ -1,6 +1,6 @@
 {
-  "id": "e8d68466-6cea-4d52-8e1b-593c60c231ae",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "0ca8a22b-ed90-440b-8ac0-1fd7f9fa40b7",
+  "prevId": "e8d68466-6cea-4d52-8e1b-593c60c231ae",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -56,8 +56,14 @@
           "primaryKey": false,
           "notNull": true
         },
-        "transcription": {
-          "name": "transcription",
+        "translation": {
+          "name": "translation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "summary": {
+          "name": "summary",
           "type": "text",
           "primaryKey": false,
           "notNull": true
