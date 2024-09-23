@@ -1,3 +1,4 @@
+import NavigateBack from "@/components/NavigateBack";
 import RegisterForm from "@/components/RegisterForm";
 
 import { Metadata } from "next";
@@ -8,8 +9,13 @@ export const metadata: Metadata = {
 
 const page = async () => {
   return (
-    <div className="flex flex-col md:flex-row w-full h-screen justify-center items-center gap-4 pt-16 px-0 md:px-16">
-      <RegisterForm />
+    <div className="flex flex-col w-full h-screen pt-16 px-0 md:px-16">
+      <div className="flex justify-start w-full px-4 mt-8">
+        <NavigateBack />
+      </div>
+      <div className="flex flex-1 justify-center items-center">
+        <RegisterForm />
+      </div>
     </div>
   );
 };

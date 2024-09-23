@@ -1,3 +1,4 @@
+import NavigateBack from "@/components/NavigateBack";
 import TranscriptionItem from "@/components/TranscriptionItem";
 import { db } from "@/db";
 import { transcriptions } from "@/db/schema";
@@ -26,11 +27,16 @@ const page = async () => {
     .orderBy(desc(transcriptions.createdAt));
 
   return (
-    <div className="flex flex-col w-full h-screen overflow-y-hidden justify-center items-center gap-4 pt-16 px-0 md:px-16">
-      <div className="flex flex-col w-full max-h-96 overflow-y-auto gap-4">
-        {userTranscriptions.map((transcription, idx) => (
-          <TranscriptionItem key={idx} index={idx} transcription={transcription} />
-        ))}
+    <div className="flex flex-col w-full h-screen pt-16 px-0 md:px-16">
+      <div className="flex justify-start w-full px-4 mt-8">
+        <NavigateBack subHeading="Transcriptions" />
+      </div>
+      <div className="flex flex-1 justify-center items-center">
+        <div className="flex flex-col w-full max-h-96 overflow-y-auto gap-4">
+          {userTranscriptions.map((transcription, idx) => (
+            <TranscriptionItem key={idx} index={idx} transcription={transcription} />
+          ))}
+        </div>
       </div>
     </div>
   );
