@@ -19,10 +19,11 @@ import { useMutation } from "@tanstack/react-query";
 import axios, { AxiosError } from "axios";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const RegisterForm = () => {
   const router = useRouter();
+  const [isPersistingUser,setIsPersistingUser] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined" && localStorage.getItem("user")) {
@@ -51,6 +52,7 @@ const RegisterForm = () => {
       }
       form.reset();
       router.push("/new");
+      setIsPersistingUser(false);
     },
     onError: (error) => {
       if (error instanceof AxiosError) {
@@ -67,6 +69,7 @@ const RegisterForm = () => {
   });
 
   const onSubmit = (data: RegisterUserRequest) => {
+    setIsPersistingUser(true);
     mutate(data);
   };
 
@@ -110,7 +113,8 @@ const RegisterForm = () => {
           />
         </div>
         <Button
-          isLoading={isPending}
+          isLoading={isPersistingUser || isPending}
+          disabled={isPersistingUser || isPending}
           type="submit"
           className="bg-[#668D7E] hover:bg-[#668D7E] text-white w-full"
         >
