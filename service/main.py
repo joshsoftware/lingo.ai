@@ -38,7 +38,7 @@ async def upload_audio(body: Body):
         translation = translate_with_whisper(body.audio_file_link)
 
         logger.info("translation done")
-        print("----------   -----------summary started-----------------------")
+        print("---------------------summary started-----------------------")
         #summary = summarize_using_openai(translation)
         summary = summarize_using_openai(translation)
 
@@ -47,4 +47,5 @@ async def upload_audio(body: Body):
         return JSONResponse(content={"message": "File processed successfully!", "translation":translation, "summary": summary}, status_code=200)
 
     except Exception as e:
+        print("---------------",e,"-------------------")
         return JSONResponse(content={"message": str(e)}, status_code=500)
