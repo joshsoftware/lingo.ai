@@ -26,18 +26,19 @@ class Body(BaseModel):
 
 @app.post("/upload-audio")
 async def upload_audio(body: Body):
+    print("------------body--------------",body,"--------------------------")
     try:
-
+        print("----------audio file link-----------",body.audio_file_link,"-----------------------")
         # Check file type
         if not body.audio_file_link.endswith(('.m4a', '.mp4','.mp3','.webm','.mpga','.wav','.mpeg')):
             logger.error("invalid file type")
             raise HTTPException(status_code=400, detail="Invalid file type")
-
+        print("---------------------translation started-----------------------")
         #translation = translate_with_whisper(transcription)
         translation = translate_with_whisper(body.audio_file_link)
 
         logger.info("translation done")
-        
+        print("----------   -----------summary started-----------------------")
         #summary = summarize_using_openai(translation)
         summary = summarize_using_openai(translation)
 

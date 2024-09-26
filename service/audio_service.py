@@ -39,7 +39,6 @@ def summarize_using_openai(text):
                 {"role": "user", "content": prompt}
             ],
             max_tokens=500,
-            stream=True 
         )
         summary  = response.choices[0].message.content
     except Exception as e:
