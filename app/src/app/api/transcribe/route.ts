@@ -15,23 +15,13 @@ export async function POST(req: Request) {
       return new Response("Microservice URL not found", { status: 500 });
     }
 
-    // const {data} = await axios.post(BASE_URL+'/upload-audio',{
-    //     audio_file_link: documentUrl,
-    // })
-
-    const response = await fetch(BASE_URL + "/upload-audio", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    const {data,status:transcriptionStatus} = await axios.post(BASE_URL+'/upload-audio',{
         audio_file_link: documentUrl,
-      }),
-    });
+    })
 
-
-    const data = await response.json();
-
+    if(transcriptionStatus !== 200){
+      return new Response("Internal server error", { status: 500 });
+    }
 
     return new Response(JSON.stringify(data), { status: 200 });
   } catch (error) {
