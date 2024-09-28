@@ -8,7 +8,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 const Landing = () => {
-  const router = useRouter();
 
   return (
     <div className="flex flex-col md:flex-row w-full h-full justify-between items-center gap-4 pt-16 px-0 md:px-16">
@@ -24,7 +23,7 @@ const Landing = () => {
           with ease.
         </p>
         <Link
-          href={"/register"}
+          href={"/new"}
           className={buttonVariants({
             className: "!bg-[#668D7E] !hover:bg-[#668D7E] text-white",
           })}

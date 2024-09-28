@@ -1,5 +1,6 @@
 // transcriptions / [transcription_id] / page.tsx
 
+import { validateRequest } from "@/auth";
 import DetailedTranscription from "@/components/DetailedTranscription";
 import NavigateBack from "@/components/NavigateBack";
 import { db } from "@/db";
@@ -7,6 +8,7 @@ import { transcriptions } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 import { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Lingo.ai | Transcription",
@@ -21,6 +23,10 @@ interface PageProps {
 const page = async (props: PageProps) => {
   const { transcription_id } = props.params;
 
+  const { user } = await validateRequest();
+
+  if (!user) return redirect("/signin");
+
   const transcription = await db
     .select()
     .from(transcriptions)
@@ -30,7 +36,7 @@ const page = async (props: PageProps) => {
 
     <div className="flex flex-col w-full h-screen pt-16 px-0 md:px-16">
       <div className="flex justify-start w-full px-4 mt-8">
-        <NavigateBack subHeading={`Transcription for ${transcription[0].documentName}`} />
+        <NavigateBack href="/transcriptions" subHeading={`Transcription for ${transcription[0].documentName}`} />
       </div>
       <div className="flex flex-1 justify-center items-center">
         {transcription.length > 0 && (
