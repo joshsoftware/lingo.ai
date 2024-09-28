@@ -1,5 +1,5 @@
 import NavigateBack from "@/components/NavigateBack";
-import RegisterForm from "@/components/RegisterForm";
+import RegisterForm from "@/components/UserForm";
 
 import { Metadata } from "next";
 
@@ -14,7 +14,7 @@ const page = async () => {
         <NavigateBack />
       </div>
       <div className="flex flex-1 justify-center items-center">
-        <RegisterForm />
+        {/* <RegisterForm /> */}
       </div>
     </div>
   );

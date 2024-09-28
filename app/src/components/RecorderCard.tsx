@@ -23,7 +23,12 @@ import { TranscribeDocumentRequest } from "@/Validators/document";
 import { TranscriptionResponse } from "@/types/TranscriptionResponse";
 import { TranscriptionsPayload, TranscriptionsType } from "@/db/schema";
 
-const RecorderCard = () => {
+interface RecorderCardProps {
+  userId: string;
+}
+const RecorderCard = (props:RecorderCardProps) => {
+  const { userId } = props;
+  
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
@@ -33,21 +38,11 @@ const RecorderCard = () => {
   const [audioURL, setAudioURL] = useState("");
   const [recordingTime, setRecordingTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [user, setUser] = useState<string | null>(null);
 
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const chunks = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (!storedUser) {
-      router.push("/register");
-    } else {
-      setUser(storedUser);
-    }
-  }, [router]);
 
   const handleFileChange = (newFiles: File[]) => {
     if (newFiles.length > 0) {
@@ -102,7 +97,7 @@ const RecorderCard = () => {
         saveTranscribe({
           documentUrl: data.documentUrl,
           documentName: data.documentName,
-          registrationId: JSON.parse(user!).userId,
+          userID: userId,
           summary: res.summary,
           translation: res.translation,
         });
@@ -219,7 +214,7 @@ const RecorderCard = () => {
     return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
   };
 
-  if (!user) {
+  if (!userId) {
     return <Loader2Icon className="w-8 h-8 animate-spin" />;
   }
 

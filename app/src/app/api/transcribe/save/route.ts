@@ -6,7 +6,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const {
       documentUrl,
-      registrationId,
+      userID,
       documentName,
       summary,
       translation,
@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     const response = await db.insert(transcriptions).values({
       documentUrl,
       documentName,
-      registrationId,
+      userID,
       summary,
       translation,
     }).returning();

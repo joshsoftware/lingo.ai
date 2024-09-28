@@ -2,9 +2,9 @@ import { timestamp, pgTable, text, uuid } from "drizzle-orm/pg-core";
 
 export const transcriptions = pgTable("transcriptions", {
   id: uuid("id").primaryKey().defaultRandom(),
-  registrationId: text("registrationId")
-    .notNull()
-    .references(() => registrations.id, { onDelete: "cascade" }),
+  userID: text("user_id")
+  .notNull()
+  .references(() => userTable.id),
   translation: text("translation").notNull(),
   summary: text("summary").notNull(),
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
@@ -19,6 +19,23 @@ export const registrations = pgTable("registrations", {
   userName: text("userName").notNull(),
   userEmail: text("userEmail").notNull(),
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
+});
+
+export const userTable = pgTable("user", {
+	id: text("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  password_hash: text("password_hash").notNull(),
+});
+
+export const sessionTable = pgTable("session", {
+	id: text("id").primaryKey(),
+	userId: text("user_id")
+		.notNull()
+		.references(() => userTable.id),
+	expiresAt: timestamp("expires_at", {
+		withTimezone: true,
+		mode: "date"
+	}).notNull()
 });
 
 export type TranscriptionsPayload = typeof transcriptions.$inferInsert;

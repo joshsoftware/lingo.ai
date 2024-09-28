@@ -1,3 +1,4 @@
+import { validateRequest } from "@/auth";
 import NavigateBack from "@/components/NavigateBack";
 import TranscriptionItem from "@/components/TranscriptionItem";
 import { db } from "@/db";
@@ -9,12 +10,19 @@ export const fetchCache = "force-no-store";
 export const revalidate = 0;
 
 import { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Lingo.ai | Transcriptions",
 };
 
 const page = async () => {
+
+  const {user} = await validateRequest();
+
+  if (!user) return redirect("/signin");
+
+
   const userTranscriptions = await db
     .select({
       id: transcriptions.id,
