@@ -95,3 +95,15 @@ _m4a, mp3, webm, mp4, mpga, wav, mpeg_
 
 **[Frontend Setup instructions](https://github.com/joshsoftware/lingo.ai/blob/dev/app/README.md)**
 
+**Start the services**
+
+For Python server: _sudo service lingo-uvicorn restart_
+
+For Next UI: _sudo service lingo-ui restart_
+
+**Log**
+
+ For Python server: _journalctl -u lingo-uvicorn_
+
+For Next UI: _journalctl -u lingo-ui_
+
