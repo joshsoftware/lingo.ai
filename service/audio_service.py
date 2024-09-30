@@ -36,7 +36,6 @@ def summarize_using_openai(text):
         response = openai.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "You are a helpful assistant that extracts information from Indian multilingual text."},
                 {"role": "user", "content": prompt}
             ],
             max_tokens=500,
