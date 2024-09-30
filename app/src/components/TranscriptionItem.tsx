@@ -35,6 +35,11 @@ const TranscriptionItem = (props: TranscriptionItemProps) => {
     if (transcription.documentUrl) {
       const audio = new Audio(transcription.documentUrl);
       audioRef.current = audio;
+
+      // Add event listener for 'ended' event
+      audio.addEventListener("ended", () => {
+        setIsPlaying(false);
+      });
     }
 
     // Cleanup function to stop audio playback when component unmounts
