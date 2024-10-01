@@ -34,11 +34,11 @@ const page = async (props: PageProps) => {
 
   return (
 
-    <div className="flex flex-col w-full h-screen pt-16 px-0 md:px-16">
-      <div className="flex justify-start w-full px-4 mt-8">
+    <div className="flex flex-col w-full h-full pt-8">
+      <div className="flex justify-start w-full mb-8">
         <NavigateBack href="/transcriptions" subHeading={`Transcription for ${transcription[0].documentName}`} />
       </div>
-      <div className="flex flex-1 justify-center items-center">
+      <div className="flex flex-1 xl:overflow-y-auto">
         {transcription.length > 0 && (
           <DetailedTranscription transcription={transcription[0]} />
         )}

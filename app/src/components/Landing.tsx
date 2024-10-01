@@ -10,7 +10,7 @@ import Link from "next/link";
 const Landing = () => {
 
   return (
-    <div className="flex flex-col md:flex-row w-full h-full justify-between items-center gap-4 pt-16">
+    <div className="flex flex-col md:flex-row w-full h-full justify-between gap-4 pt-16">
       <div className="w-full flex flex-col gap-4 justify-center items-start">
         <h1 className={cn(primaryFont.className, "text-3xl text-[#8CB369] ")}>
           Welcome
@@ -22,11 +22,11 @@ const Landing = () => {
           Translate and summarize content from multiple languages into English
           with ease.
         </p>
-         <div className="w-full flex">
+         <div className="w-full flex gap-3">
         <Link
           href={"/new"}
           className={buttonVariants({
-            className: "!bg-[#668D7E] !hover:bg-[#668D7E] text-white mx-3",
+            className: "!bg-[#668D7E] !hover:bg-[#668D7E] text-white",
           })}
         >
           Take A Demo

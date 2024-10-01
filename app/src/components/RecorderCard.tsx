@@ -285,8 +285,7 @@ const RecorderCard = (props:RecorderCardProps) => {
                     </div>
                   ) : (
                     <p>
-                      Enable mic access, record yourself, or upload an audio
-                      file
+                      Enable mic access, record yourself, or upload an audio file
                     </p>
                   )}
                 </>

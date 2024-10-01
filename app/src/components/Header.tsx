@@ -1,19 +1,21 @@
 "use client";
-import { primaryFont } from "@/fonts";
+import { primaryFont, tertiaryFont } from "@/fonts";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { buttonVariants } from "./ui/button";
 
 const Header = () => {
   const pathName = usePathname();
   return (
-    <div
+    <header
       className={cn(
-        "fixed w-full flex justify-between items-center px-2 bg-[#1D1D1D] md:px-32 py-4",
+        "flex justify-between items-center bg-[#1D1D1D]",
         primaryFont.className
       )}
     >
+      <div className="container flex items-center py-3">
       <Link href={"/"} className="text-3xl text-white">
         LingoAI
       </Link>
@@ -30,7 +32,13 @@ const Header = () => {
         {pathName !== "/" && pathName !== "/new" && (
           <Link
             href={"/new"}
-            className="text-white hover:underline"
+            className={cn(
+              buttonVariants({
+                className: "!bg-[#668D7E] !hover:bg-[#668D7E] text-white text-xs px-3",
+                size: 'xs'
+              }),
+            tertiaryFont.className
+            )}
           >
             Take A Demo
           </Link>
@@ -38,13 +46,20 @@ const Header = () => {
         {pathName !== "/" && pathName !== "/transcriptions" && (
           <Link
             href={"/transcriptions"}
-            className="text-white hover:underline"
+            className={cn(
+              buttonVariants({
+                className: "!bg-[#668D7E] !hover:bg-[#668D7E] text-white text-xs px-3",
+                size: 'xs'
+              }),
+            tertiaryFont.className
+            )}
           >
             View Records
           </Link>
         )}
       </div>
-    </div>
+      </div>
+    </header>
   );
 };
 

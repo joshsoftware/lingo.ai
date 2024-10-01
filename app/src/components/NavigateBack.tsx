@@ -18,7 +18,7 @@ const NavigateBack = (props: NavigateBackProps) => {
   }
 
   return (
-    <div className="flex justify-between items-center w-full">
+    <div className="flex max-sm:flex-col justify-between max-sm:items-start items-center w-full max-sm:gap-2">
         <Button className="flex gap-4" variant={"ghost"} onClick={handleBack}>
           <ArrowLeftIcon className="w-6 h-6" />
           Back

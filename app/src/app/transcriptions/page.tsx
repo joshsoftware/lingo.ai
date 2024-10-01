@@ -35,16 +35,14 @@ const page = async () => {
     .orderBy(desc(transcriptions.createdAt));
 
   return (
-    <div className="flex flex-col w-full h-screen pt-16">
-      <div className="flex justify-start w-full mt-8">
+    <div className="flex flex-col w-full h-full pt-8">
+      <div className="flex justify-start w-full mb-8">
         <NavigateBack subHeading="Transcriptions" />
       </div>
-      <div className="flex flex-1 justify-center items-center">
-        <div className="flex flex-col w-full max-h-96 overflow-y-auto gap-4">
-          {userTranscriptions.map((transcription, idx) => (
-            <TranscriptionItem key={idx} index={idx} transcription={transcription} />
-          ))}
-        </div>
+      <div className="flex flex-col flex-1 items-center gap-4 overflow-y-auto mb-8">
+        {userTranscriptions.map((transcription, idx) => (
+          <TranscriptionItem key={idx} index={idx} transcription={transcription} />
+        ))}
       </div>
     </div>
   );
