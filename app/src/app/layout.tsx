@@ -21,7 +21,7 @@ export default function RootLayout({
         <TanstackQueryProvider>
             <div className="relative">
               <Header />
-              <main className="px-4 md:px-16">{children}</main>
+              <main className="px-4 py-2 md:px-32">{children}</main>
               <Toaster richColors closeButton />
             </div>
         </TanstackQueryProvider>

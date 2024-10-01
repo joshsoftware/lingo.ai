@@ -95,8 +95,12 @@ const UserForm = (props: UserFormProps) => {
         </form>
       </Form>
       <div>
-        {formType === "signup" ? "Already have an account?" : "Don't have an account?"}
-        <Link
+        <div className="flex flex-col text-xs gap-1 justify-center items-center">
+          <h1>{formType === "signup" ? "Already have an account?" : "Please send an email to access the demo:"}</h1>
+          <h1>info@joshsoftware.com</h1>
+        </div>
+        {/* {formType === "signup" ? "Already have an account?" : "To request access, please send an email to:"} */}
+        {/* <Link
           href={formType === "signup" ? "/signin" : "/signup"}
           aria-disabled={disableSubmit || isPending}
           className={cn(
@@ -107,8 +111,8 @@ const UserForm = (props: UserFormProps) => {
             }
             ))}
         >
-          {formType === "signup" ? "Sign In" : "Sign Up"}
-        </Link>
+          {formType === "signup" ? "Sign In" : ""}
+        </Link> */}
       </div>
     </div>
   );

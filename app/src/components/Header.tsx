@@ -3,13 +3,14 @@ import { cn } from "@/lib/utils";
 import { FileIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { Button, buttonVariants } from "./ui/button";
 
 const Header = () => {
   return (
     <div
       className={cn(
-        "fixed w-full flex justify-between items-center bg-[#1D1D1D] px-8 py-4",
-        primaryFont.className,
+        "fixed w-full flex justify-between items-center px-2 bg-[#1D1D1D] md:px-32 py-4",
+        primaryFont.className
       )}
     >
       <Link href={"/"} className="text-3xl text-white">
@@ -24,9 +25,32 @@ const Header = () => {
           alt="Josh Logo"
         />
       </div>
-      <Link href={"/transcriptions"} className="text-3xl text-white">
-        <FileIcon className="w-6 h-6" />
+      <div className="flex gap-2 w-full justify-end">
+      <Link
+        href={"/new"}
+        className="text-white hover:underline"
+        // className={cn(
+        //   buttonVariants({
+        //     className: "text-white text-xs w-full text-nowrap ",
+        //   })
+        // )}
+      >
+        Take A Demo
       </Link>
+      <Link
+        href={"/transcriptions"}
+        className="text-white hover:underline"
+        // className={cn(
+        //   buttonVariants({
+        //     className: "text-white text-xs w-full text-nowrap ",
+        //   })
+        // )}
+      >
+              View Records
+
+      </Link>
+      </div>
+
     </div>
   );
 };
