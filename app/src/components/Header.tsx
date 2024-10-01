@@ -1,11 +1,18 @@
+'use client'
 import { primaryFont } from "@/fonts";
 import { cn } from "@/lib/utils";
 import { FileIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button, buttonVariants } from "./ui/button";
+import { usePathname, useSearchParams } from "next/navigation";
+
 
 const Header = () => {
+  // const params = useSearchParams()
+  const searchParams = useSearchParams()
+  const pathName = usePathname();
+  console.log(pathName)
   return (
     <div
       className={cn(
@@ -26,7 +33,7 @@ const Header = () => {
         />
       </div>
       <div className="flex gap-2 min-w-fit justify-end">
-      <Link
+     { (pathName !== "/" && pathName !== "/new") && <Link
         href={"/new"}
         className="text-white hover:underline"
         // className={cn(
@@ -36,19 +43,21 @@ const Header = () => {
         // )}
       >
         Take A Demo
-      </Link>
-      <Link
-        href={"/transcriptions"}
-        className="text-white hover:underline"
-        // className={cn(
-        //   buttonVariants({
-        //     className: "text-white text-xs w-full text-nowrap ",
-        //   })
-        // )}
-      >
-              View Records
+      </Link>}
+      {(pathName !== "/" && pathName !== "/transcriptions") &&
+        <Link
+          href={"/transcriptions"}
+          className="text-white hover:underline"
+          // className={cn(
+          //   buttonVariants({
+          //     className: "text-white text-xs w-full text-nowrap ",
+          //   })
+          // )}
+        >
+                View Records
 
-      </Link>
+        </Link>
+      }
       </div>
 
     </div>
