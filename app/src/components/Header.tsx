@@ -25,7 +25,7 @@ const Header = () => {
           alt="Josh Logo"
         />
       </div>
-      <div className="flex gap-2 w-full justify-end">
+      <div className="flex gap-2 min-w-fit justify-end">
       <Link
         href={"/new"}
         className="text-white hover:underline"
