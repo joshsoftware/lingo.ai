@@ -31,7 +31,7 @@ def translate_with_whisper(audioPath):
 #Using openaie, summarize the English translation
 def summarize_using_openai(text):
     logger.info("Started summarization")
-    prompt = "Summarize the following text: " +text
+    prompt = "Give me action points from the given text: " +text
     try:
         response = openai.chat.completions.create(
             model="gpt-4o",
