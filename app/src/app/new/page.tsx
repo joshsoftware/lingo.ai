@@ -14,11 +14,11 @@ const page = async () => {
 	if (!user) return redirect("/signin");
 
   return (
-    <div className="flex flex-col w-full h-screen pt-12 px-0">
-      <div className="flex justify-start w-full mt-4">
+    <div className="flex flex-col w-full pt-8">
+      <div className="flex justify-start w-full mb-8">
         <NavigateBack href="/" />
       </div>
-      <div className="flex flex-1 justify-center items-start md:mt-16">
+      <div className="flex flex-1 justify-center items-start">
         <RecorderCard userId={user.id} />
       </div>
     </div>

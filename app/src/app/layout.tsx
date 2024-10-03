@@ -17,13 +17,13 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head />
-      <body className={secondaryFont.className}>
+      <body className={`h-screen flex flex-col overflow-y-auto ${secondaryFont.className}`}>
         <TanstackQueryProvider>
-            <div className="relative">
-              <Header />
-              <main className="px-4 py-2 md:px-32">{children}</main>
-              <Toaster richColors closeButton />
-            </div>
+          <Header />
+          <section className="flex-1 overflow-y-auto">
+            <div className="container h-full">{children}</div>
+          </section>
+          <Toaster richColors closeButton />
         </TanstackQueryProvider>
       </body>
     </html>
