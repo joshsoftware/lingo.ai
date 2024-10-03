@@ -16,11 +16,10 @@ const Landing = () => {
           Welcome
         </h1>
         <h1 className={cn(primaryFont.className, "text-5xl")}>
-          Speak, Translate & Summarise
+          Transform Speech into Action: Translate, Transcribe, and Summarize Effortlessly
         </h1>
-        <p>
-          Translate and summarize content from multiple languages into English
-          with ease.
+        <p>  
+          Unleash the power of seamless communication with a tool that does it all—accurate transcription, real-time translation, and intelligent summaries in one go.
         </p>
          <div className="w-full flex gap-3">
         <Link
