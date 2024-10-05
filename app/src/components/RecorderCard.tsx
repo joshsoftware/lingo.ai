@@ -22,13 +22,14 @@ import { useUploadThing } from "@/utils/uploadthing";
 import { TranscribeDocumentRequest } from "@/Validators/document";
 import { TranscriptionResponse } from "@/types/TranscriptionResponse";
 import { TranscriptionsPayload, TranscriptionsType } from "@/db/schema";
+import { Fragment } from "react";
 
 interface RecorderCardProps {
   userId: string;
 }
 const RecorderCard = (props:RecorderCardProps) => {
   const { userId } = props;
-  
+
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
@@ -267,7 +268,7 @@ const RecorderCard = (props:RecorderCardProps) => {
                   )}
                 </div>
               ) : (
-                <>
+                <Fragment>
                   {isRecording ? (
                     <Image
                       src="/recordingIcon.svg"
@@ -288,14 +289,14 @@ const RecorderCard = (props:RecorderCardProps) => {
                       Enable mic access, record yourself, or upload an audio file
                     </p>
                   )}
-                </>
+                </Fragment>
               )}
             </div>
           </CardContent>
           <CardFooter>
             <div className="flex flex-col justify-center items-center w-full md:flex-row gap-4">
               {file ? (
-                <>
+                <Fragment>
                   <Button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -320,9 +321,9 @@ const RecorderCard = (props:RecorderCardProps) => {
                     <SendIcon className="w-4 h-4" />
                     Transcribe
                   </Button>
-                </>
+                </Fragment>
               ) : (
-                <>
+                <Fragment>
                   {!isRecording && (
                     <Button
                       onClick={handleUploadClick}
@@ -355,7 +356,7 @@ const RecorderCard = (props:RecorderCardProps) => {
                       Start Recording
                     </Button>
                   )}
-                </>
+                </Fragment>
               )}
             </div>
           </CardFooter>
