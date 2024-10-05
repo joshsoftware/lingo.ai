@@ -26,19 +26,18 @@ class Body(BaseModel):
 
 @app.post("/upload-audio")
 async def upload_audio(body: Body):
-    print("------------body--------------",body,"--------------------------")
     try:
-        print("----------audio file link-----------",body.audio_file_link,"-----------------------")
+        #check if string is empty
+        if body.audio_file_link == "":
+            return JSONResponse(status_code=400, content={"message":"Invalid file link"})
         # Check file type
-        if not body.audio_file_link.endswith(('.m4a', '.mp4','.mp3','.webm','.mpga','.wav','.mpeg')):
+        if not body.audio_file_link.endswith(('.m4a', '.mp4','.mp3','.webm','.mpga','.wav','.mpeg','.ogg')):
             logger.error("invalid file type")
-            raise HTTPException(status_code=400, detail="Invalid file type")
-        print("---------------------translation started-----------------------")
+            return JSONResponse(status_code=400, content={"message":"Invalid file type"})
         #translation = translate_with_whisper(transcription)
         translation = translate_with_whisper(body.audio_file_link)
 
         logger.info("translation done")
-        print("---------------------summary started-----------------------")
         #summary = summarize_using_openai(translation)
         summary = summarize_using_openai(translation)
 
@@ -47,5 +46,4 @@ async def upload_audio(body: Body):
         return JSONResponse(content={"message": "File processed successfully!", "translation":translation, "summary": summary}, status_code=200)
 
     except Exception as e:
-        print("---------------",e,"-------------------")
         return JSONResponse(content={"message": str(e)}, status_code=500)
