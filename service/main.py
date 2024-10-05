@@ -30,9 +30,9 @@ async def upload_audio(body: Body):
     try:
         print("----------audio file link-----------",body.audio_file_link,"-----------------------")
         # Check file type
-        if not body.audio_file_link.endswith(('.m4a', '.mp4','.mp3','.webm','.mpga','.wav','.mpeg')):
+        if not body.audio_file_link.endswith(('.m4a', '.mp4','.mp3','.webm','.mpga','.wav','.mpeg','.ogg')):
             logger.error("invalid file type")
-            raise HTTPException(status_code=400, detail="Invalid file type")
+            return JSONResponse(status_code=400, content={"message":"Invalid file type"})
         print("---------------------translation started-----------------------")
         #translation = translate_with_whisper(transcription)
         translation = translate_with_whisper(body.audio_file_link)
