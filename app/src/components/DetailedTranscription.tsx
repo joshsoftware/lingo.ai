@@ -6,6 +6,7 @@ import { TranscriptionsType } from "@/db/schema";
 import { PauseCircleIcon, PlayCircleIcon } from "lucide-react";
 import { Card } from "./ui/card";
 import { getAudioDuration } from "@/utils/recording";
+import Markdown from "react-markdown";
 
 interface DetailedTranscriptionProps {
   transcription: TranscriptionsType;
@@ -87,13 +88,17 @@ const DetailedTranscription = ({
         <div className="flex flex-1 flex-col max-h-full w-full gap-2 justify-start items-start xl:overflow-y-auto">
           <h1 className="text-xl font-bold">Translation</h1>
           <Card className="flex-1 w-full max-w-xs md:max-w-full xl:overflow-y-auto p-4 rounded-lg">
+          <Markdown>
             {transcription.translation || "No translation available"}
+          </Markdown>
           </Card>
         </div>
         <div className="flex flex-1 flex-col max-h-full w-full gap-2 justify-start items-start xl:overflow-y-auto">
           <h1 className="text-xl font-bold">Summary</h1>
           <Card className="w-full flex-1 max-w-xs md:max-w-full xl:overflow-y-auto p-4 rounded-lg">
+            <Markdown>
             {transcription.summary || "No summary available"}
+            </Markdown>
           </Card>
         </div>
       </div>
