@@ -32,6 +32,9 @@ def translate_with_whisper(audioPath):
 def summarize_using_openai(text):
     logger.info("Started summarization")
     prompt = "Give me action points from the given text: " +text
+    prompt += '''Based on the following rules 
+                rule_1:number of words in the given test  should be more than 30 words, if not then give "insufficient Content",
+                rule_2: give me action points without any briefing'''
     try:
         response = openai.chat.completions.create(
             model="gpt-4o",
