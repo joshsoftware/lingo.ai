@@ -40,7 +40,7 @@ const Header = () => {
             tertiaryFont.className
             )}
           >
-            Take A Demo
+            Try It
           </Link>
         )}
         {pathName !== "/" && pathName !== "/transcriptions" && (

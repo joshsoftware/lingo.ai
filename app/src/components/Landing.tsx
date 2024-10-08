@@ -28,7 +28,7 @@ const Landing = () => {
             className: "!bg-[#668D7E] !hover:bg-[#668D7E] text-white",
           })}
         >
-          Take A Demo
+          Try It
         </Link>
 
         <Link
