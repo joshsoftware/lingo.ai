@@ -18,10 +18,7 @@ export const metadata: Metadata = {
 
 const page = async () => {
 
-  const {user} = await validateRequest();
-
-  if (!user) return redirect("/signin");
-
+  // skip user signin validation for now
 
   const userTranscriptions = await db
     .select({

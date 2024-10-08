@@ -23,9 +23,7 @@ interface PageProps {
 const page = async (props: PageProps) => {
   const { transcription_id } = props.params;
 
-  const { user } = await validateRequest();
-
-  if (!user) return redirect("/signin");
+  // skip user signin validation for now
 
   const transcription = await db
     .select()
