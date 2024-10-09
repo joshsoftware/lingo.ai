@@ -1,14 +1,46 @@
-# Installations
+# Setup Instructions
+**Pre-requisite: Note: Following instructions a for linux, python 3.8.1 or above**
 
-pip install uvicorn
+    sudo apt-get update
+    sudo apt-get install python3.8.1
 
-# Start Server
+ffmpeg
 
-source venv/bin/activate
+    sudo apt update && sudo apt install ffmpeg
 
-cd service
+Ollam
 
-uvicorn main:app --host localhost --port 8000 --reload
+For Linux:
+
+     curl -fsSL https://ollama.com/install.sh | sh
+
+For Mac:
+
+    https://ollama.com/download/Ollama-darwin.zip
+
+For Windows:
+
+    https://ollama.com/download/OllamaSetup.exe
+
+Llama 3.1 model
+
+     ollama run llama3.1
+
+Setup Clone this github repository git clone
+
+Create python virtual environment
+
+    python3 -m venv lingo .
+
+Activate the virtual environment
+
+    source lingo/bin/activate
+
+Install dependencies
+
+    pip install -r requirements.txt
+
+    uvicorn main:app --host localhost --port 8000 --reload
 
 # Api endpoints
 
