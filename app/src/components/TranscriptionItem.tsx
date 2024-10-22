@@ -46,7 +46,7 @@ const TranscriptionItem = (props: TranscriptionItemProps) => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="true">Demo Transcriptions</SelectItem>
-            <SelectItem value="false">All Transcriptions</SelectItem>
+            <SelectItem value="false">Recent Transcriptions</SelectItem>
           </SelectContent>
         </Select>
       </div>
