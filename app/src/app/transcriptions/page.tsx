@@ -1,4 +1,3 @@
-import { validateRequest } from "@/auth";
 import NavigateBack from "@/components/NavigateBack";
 import TranscriptionItem from "@/components/TranscriptionItem";
 import { db } from "@/db";
@@ -10,7 +9,6 @@ export const fetchCache = "force-no-store";
 export const revalidate = 0;
 
 import { Metadata } from "next";
-import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Lingo.ai | Transcriptions",
@@ -26,9 +24,9 @@ const page = async () => {
       documentName: transcriptions.documentName,
       createdAt: transcriptions.createdAt,
       documentUrl: transcriptions.documentUrl,
+      isDefault: transcriptions.isDefault,
     })
     .from(transcriptions)
-    .limit(10)
     .orderBy(desc(transcriptions.createdAt));
 
   return (
@@ -36,10 +34,8 @@ const page = async () => {
       <div className="flex justify-start w-full mb-8">
         <NavigateBack subHeading="Transcriptions" />
       </div>
-      <div className="flex flex-col flex-1 items-center gap-4 overflow-y-auto mb-8">
-        {userTranscriptions.map((transcription, idx) => (
-          <TranscriptionItem key={idx} index={idx} transcription={transcription} />
-        ))}
+      <div className="flex flex-col items-center overflow-y-auto h-fit w-full">
+          <TranscriptionItem userTranscriptions={userTranscriptions} />
       </div>
     </div>
   );

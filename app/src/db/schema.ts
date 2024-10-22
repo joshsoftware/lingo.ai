@@ -1,4 +1,4 @@
-import { timestamp, pgTable, text, uuid } from "drizzle-orm/pg-core";
+import { timestamp, pgTable, text, uuid, boolean } from "drizzle-orm/pg-core";
 
 export const transcriptions = pgTable("transcriptions", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -10,6 +10,7 @@ export const transcriptions = pgTable("transcriptions", {
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
   documentUrl: text("documentUrl").notNull(),
   documentName: text("documentName").notNull(),
+  isDefault: boolean("isDefault").notNull().default(false),
 });
 
 export const registrations = pgTable("registrations", {
