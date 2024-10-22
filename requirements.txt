@@ -8,5 +8,8 @@ uvicorn
 pytest
 pytest-asyncio
 httpx
+langchain
+langchain-openai
+langchain-core
 #logging
 #logging-conf
