@@ -3,7 +3,8 @@ from fastapi.responses import JSONResponse
 from logger import logger
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
-from audio_service import translate_with_whisper,summarize_using_openai
+from audio_service import translate_with_whisper
+from summarizer import summarize_using_openai
 from pydantic import BaseModel
 
 app = FastAPI()
