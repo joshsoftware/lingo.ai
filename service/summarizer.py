@@ -2,6 +2,10 @@ from langchain.chains import LLMChain
 from langchain_openai import ChatOpenAI
 from langchain.schema.runnable.base import RunnableSequence
 from template_config import get_summarization_template
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Initialize OpenAI model and LLMChain globally for reuse
 model = ChatOpenAI(
@@ -24,14 +28,13 @@ def summarize_using_openai(text):
     if not text or len(text.strip()) == 0:
         return "The conversation text is empty. Please provide valid input."
     
-    print("Summarization Started")
+    logger.info("summary started")
     try:
         # Run the chain with the conversation text
         
         summary = llm_chain.invoke({"conversation_text": text})
-        print("Summarization Completed")
         return summary.content
     except Exception as e:
-        print(f"Error occurred during summarization: {str(e)}")
+        logger.error(f"Error occurred during summarization: {str(e)}")
         return "An error occurred while summarizing the text."
     
