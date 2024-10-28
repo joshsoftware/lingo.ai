@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardFooter } from "./ui/card";
 import { Button } from "./ui/button";
 import {
-  ArrowLeftIcon,
   Loader2Icon,
   MicIcon,
   PauseCircleIcon,
@@ -54,10 +53,11 @@ const RecorderCard = (props:RecorderCardProps) => {
 
   const { getRootProps, getInputProps } = useDropzone({
     maxFiles: 1,
-    maxSize: 5 * 1024 * 1024, // 5MB
+    // maxSize: 5 * 1024 * 1024, // 5MB
     onDrop: handleFileChange,
     accept: {
       "audio/*": [".mp3", ".wav"],
+      "video/*": [".mp4"],
     },
     onDropRejected: (error) => console.log(error),
     noDrag: true,
@@ -74,7 +74,7 @@ const RecorderCard = (props:RecorderCardProps) => {
       });
     },
     onUploadError: () => {
-      toast.error("Failed to upload audio, please try again in some time", {
+      toast.error(`Failed to upload ${file?.type}, please try again in some time`, {
         description: "If the issue persists, please contact support",
       });
       setFile(null);
@@ -109,7 +109,8 @@ const RecorderCard = (props:RecorderCardProps) => {
         setUploadProgress(0);
         setRecordingTime(0);
 
-        toast.success("Audio transcribed successfully");
+
+        toast.success(`${file?.type} transcribed successfully`);
       },
       onError: (error) => {
         // reset all
@@ -120,7 +121,7 @@ const RecorderCard = (props:RecorderCardProps) => {
         setRecordingTime(0);
 
         return toast.error(
-          "Failed to transcribe audio, please try again in some time",
+          `Failed to transcribe ${file?.type}, please try again in some time`,
           {
             description: error.message,
           },
@@ -286,7 +287,7 @@ const RecorderCard = (props:RecorderCardProps) => {
                     </div>
                   ) : (
                     <p>
-                      Enable mic access, record yourself, or upload an audio file
+                      Enable mic access, record yourself, or upload an audio or video file
                     </p>
                   )}
                 </Fragment>
@@ -330,7 +331,7 @@ const RecorderCard = (props:RecorderCardProps) => {
                       className="flex gap-2 bg-white border-2 border-[#668D7E] hover:bg-white hover:border-2 hover:border-[#668D7E] text-[#668D7E]"
                     >
                       <UploadIcon className="w-4 h-4" />
-                      Upload Audio
+                      Upload File
                     </Button>
                   )}
 
