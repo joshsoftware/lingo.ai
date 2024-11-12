@@ -13,3 +13,8 @@ langchain-openai
 langchain-core
 #logging
 #logging-conf
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+google-api-python-client
+python-dotenv
