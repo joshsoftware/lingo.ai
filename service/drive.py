@@ -10,8 +10,15 @@ from datetime import datetime, timezone
 from audio_service import translate_with_whisper
 from summarizer import summarize_using_openai
 from logger import logger
+import ssl
+import httplib2
+from google_auth_httplib2 import AuthorizedHttp
+import time
+import logging
 
 load_dotenv()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = [
@@ -55,11 +62,11 @@ def get_folder_id(service, folder_name):
         )
         items = results.get("files", [])
         if not items:
-            print(f"No folder found with the name '{folder_name}'.")
+            logger.info(f"No folder found with the name '{folder_name}'.")
             return None
         return items[0]['id']
     except HttpError as error:
-        print(f"An error occurred: {error}")
+        logger.warning(f"An error occurred: {error}")
         return None
 
 def get_files_in_folder(service, folder_id):
@@ -73,7 +80,7 @@ def get_files_in_folder(service, folder_id):
         items = results.get("files", [])
         return items
     except HttpError as error:
-        print(f"An error occurred: {error}")
+        logger.warning(f"An error occurred: {error}")
         return []
     
 def make_file_public(service, file_id):
@@ -87,18 +94,24 @@ def make_file_public(service, file_id):
         service.files().get(fileId=file_id, fields='webViewLink').execute()
         return 'https://www.googleapis.com/drive/v3/files/'+ file_id + '?alt=media&key=' + os.getenv("GCP_API_KEY")
     except HttpError as error:
-        print(f"An error occurred: {error}")
+        logger.warning(f"An error occurred while making file Public: {error}")
         return None
 
-def revoke_public_access(service, file_id):
-    """Revoke public access to a file."""
-    try:
-        permissions = service.permissions().list(fileId=file_id).execute()
-        for permission in permissions.get('permissions', []):
-            if permission.get('type') == 'anyone':
-                service.permissions().delete(fileId=file_id, permissionId=permission['id']).execute()
-    except HttpError as error:
-        print(f"An error occurred: {error}")
+def revoke_public_access_with_retry(service, file_id, max_retries=3):
+    """Attempt to revoke public access, with retries in case of SSL errors."""
+    for attempt in range(max_retries):
+        try:
+            permissions = service.permissions().list(fileId=file_id).execute()
+            for permission in permissions.get('permissions', []):
+                if permission['role'] == 'reader' and permission['type'] == 'anyone':
+                    service.permissions().delete(fileId=file_id, permissionId=permission['id']).execute()
+            break
+        except (HttpError, ssl.SSLEOFError) as e:
+            logger.warning(f"Attempt {attempt + 1} failed for revoke public access: {e}")
+            if attempt < max_retries - 1:
+                time.sleep(2 ** attempt)
+            else:
+                logger.warning("Max retries reached. Could not revoke public access.")
 
 
 def filter_files_by_date(files):
@@ -108,47 +121,100 @@ def filter_files_by_date(files):
     for file in files:
         created_time = datetime.fromisoformat(file['createdTime'][:-1]).date()
         modified_time = datetime.fromisoformat(file['modifiedTime'][:-1]).date()
-        if created_time == today and modified_time == today:
+        if created_time == today:
             filtered_files.append(file)
     return filtered_files
 
+ssl_context = ssl.create_default_context()
+ssl_context.set_ciphers("DEFAULT@SECLEVEL=1")
+
+def append_to_sheet(sheets_service, sheet_id, data, retries=3):
+    body = {'values': data}
+    for attempt in range(retries):
+        try:
+            sheets_service.spreadsheets().values().append(
+                spreadsheetId=sheet_id,
+                range="Sheet1!A:C",
+                valueInputOption="RAW",
+                insertDataOption="INSERT_ROWS",
+                body=body
+            ).execute()
+            break
+        except ssl.SSLEOFError:
+            if attempt < retries - 1:
+                time.sleep(2 ** attempt)
+                continue
+            else:
+                raise
+
+def get_transcription_and_summary(file, drive_service, existing_file_ids, new_rows, results):
+    public_link = make_file_public(drive_service, file['id'])
+    if file['id'] and file['id'] not in existing_file_ids:
+        
+        mime_type = file.get('mimeType', '')
+        if mime_type.startswith('audio/') or mime_type.startswith('video/'):
+            translation = translate_with_whisper(public_link)
+            logger.info(f"Translation for file '{file['name']}' completed.")
+            logger.info("Translation: %s", translation)
+            
+            summary = summarize_using_openai(translation)
+            logger.info(f"Summary for file '{file['name']}' completed.")
+            logger.info("Summary: %s", summary)
+
+            created_time_str = file['createdTime'].replace("Z", "+00:00")
+            created_time = datetime.fromisoformat(created_time_str).date()
+
+            results.append({
+                'file id': file['id'],
+                'transcription': translation,
+                'summary': summary
+            })
+            
+            new_rows.append([file['id'], file['name'], translation, summary, created_time.isoformat()])
+            
+        revoke_public_access_with_retry(drive_service, file['id'])
+
 
 def main():
-    """Main function to return the names and ids of all files in the 'recordings' folder."""
+    ssl_context = ssl.create_default_context()
+    ssl_context.set_ciphers("DEFAULT@SECLEVEL=1")
+
+    http = httplib2.Http()
+    http.ssl_context = ssl_context
     creds = get_credentials()
-    service = build("drive", "v3", credentials=creds)
+    authed_http = AuthorizedHttp(creds, http=http)
+
+    drive_service = build("drive", "v3", http=authed_http)
+    sheets_service = build("sheets", "v4", http=authed_http)
+ 
+    sheet_id = "1fDoslff2Asbrys5xvFtHgiBWW02555Or_vOTurTC1yk"
     
     folder_name = "Interview Recordings"
-    folder_id = get_folder_id(service, folder_name)
+    folder_id = get_folder_id(drive_service, folder_name)
     
+    try:
+        result = sheets_service.spreadsheets().values().get(
+            spreadsheetId=sheet_id, range="Sheet1!A:A"
+        ).execute()
+        values = result.get('values', [])
+        existing_file_ids = {row[0] for row in values if row}
+    except HttpError as error:
+        logger.warning(f"An error occurred while retrieving sheet data: {error}")
+        return
+
     results = []
-    
+
     if folder_id:
-        files = get_files_in_folder(service, folder_id)
-        files = filter_files_by_date(files)
-        
+        files = get_files_in_folder(drive_service, folder_id)
+        files = filter_files_by_date(files)        
+        new_rows = []
+
         for file in files:
-            public_link = make_file_public(service, file['id'])
-            if public_link:
-                print(f"Public link for file '{file['name']}': {public_link}")
-                
-                translation = translate_with_whisper(public_link)
-                logger.info(f"Translation for file '{file['name']}' completed.")
-                print("Translation:",translation)
-                summary = summarize_using_openai(translation)
-                
-                logger.info(f"Summary for file '{file['name']}' completed.")
-                print("Summary:",summary)
-                                
-                revoke_public_access(service, file['id'])
-                print(f"Public access revoked for file '{file['name']}'")
-                
-                results.append({
-                    'file_url': public_link,
-                    'translation': translation,
-                    'summary': summary
-                })
-            
+            get_transcription_and_summary(file, drive_service, existing_file_ids, new_rows, results)
+
+        if new_rows:
+            append_to_sheet(sheets_service, sheet_id, new_rows)
+        
         return results
     
     else:
@@ -157,4 +223,3 @@ def main():
 
 if __name__ == "__main__":
     files = main()
-    print(files)
