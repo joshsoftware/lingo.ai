@@ -27,7 +27,6 @@ const TranscriptionItem = (props: TranscriptionItemProps) => {
   const [defaultTranscriptionFilter, setDefaultTranscriptionFilter] = useState<boolean>(false);
   const [filteredTranscriptions, setFilteredTranscriptions] = useState(userTranscriptions);
 
-  console.log({ userTranscriptions }, { filteredTranscriptions }, { defaultTranscriptionFilter });
 
   useEffect(() => {
     if (defaultTranscriptionFilter) {
