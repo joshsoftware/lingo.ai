@@ -26,7 +26,7 @@ import { Fragment } from "react";
 interface RecorderCardProps {
   userId: string;
 }
-const RecorderCard = (props:RecorderCardProps) => {
+const RecorderCard = (props: RecorderCardProps) => {
   const { userId } = props;
 
   const router = useRouter();
@@ -51,15 +51,41 @@ const RecorderCard = (props:RecorderCardProps) => {
     }
   };
 
+  const handleFileError = (file: any) => {
+    file.errors.forEach((error: any) => {
+      switch (error.code) {
+        case "file-too-large":
+          toast.error(`File ${file.file.name} is too large`, {
+            description: "Please upload a file less than 5MB",
+          });
+          break;
+        case "file-invalid-type":
+          toast.error(`File ${file.file.name} is invalid`, {
+            description: "Please upload a valid audio or video file",
+          });
+          break;
+        default:
+          toast.error(`File ${file.file.name} encountered an error`, {
+            description: error.message,
+          });
+          break;
+      }
+    });
+  };
+
   const { getRootProps, getInputProps } = useDropzone({
     maxFiles: 1,
-    // maxSize: 5 * 1024 * 1024, // 5MB
-    onDrop: handleFileChange,
+    maxSize: 5 * 1024 * 1024, // 5MB
+    onDrop: (acceptedFiles, rejectedFiles) => {
+      if (rejectedFiles.length > 0) {
+        rejectedFiles.forEach(handleFileError);
+      }
+      handleFileChange(acceptedFiles);
+    },
     accept: {
       "audio/*": [".mp3", ".wav"],
       "video/*": [".mp4"],
     },
-    onDropRejected: (error) => console.log(error),
     noDrag: true,
   });
 
@@ -137,7 +163,7 @@ const RecorderCard = (props:RecorderCardProps) => {
         return response.data[0] as TranscriptionsType;
       },
       onSuccess: async (res) => {
-        if(res.id){
+        if (res.id) {
           router.push(`/transcriptions/${res.id}`);
         }
         return toast.success("Transcription saved successfully");
@@ -286,9 +312,14 @@ const RecorderCard = (props:RecorderCardProps) => {
                       <p className="mt-2">{formatTime(recordingTime)}</p>
                     </div>
                   ) : (
-                    <p>
-                      Enable mic access, record yourself, or upload an audio or video file
-                    </p>
+                    <>
+                      <p>
+                        Enable mic access, record yourself, or upload an audio or video file
+                      </p>
+                      <p className="text-gray-400 text-sm">
+                        Max file size: 5MB
+                      </p>
+                    </>
                   )}
                 </Fragment>
               )}
