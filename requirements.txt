@@ -1,9 +1,12 @@
+# Common
+fastapi
+
+# For Lingo AI
 openai-whisper
 ollama
 gradio
 load_dotenv
 openai
-fastapi
 uvicorn
 pytest
 pytest-asyncio
@@ -18,3 +21,13 @@ google-auth-oauthlib
 google-auth-httplib2
 google-api-python-client
 python-dotenv
+
+# For Conversation Analysis
+torch
+huggingface_hub<0.24
+numpy<2
+wget
+nemo_toolkit[asr]==2.0.0rc0
+nltk
+git+https://github.com/SYSTRAN/faster-whisper.git #Reaplce with 'faster-whisper==VERSION' once a new version with BatchedInferencePipeline is deployed to PYPI
+git+https://github.com/MahmoudAshraf97/ctc-forced-aligner.git

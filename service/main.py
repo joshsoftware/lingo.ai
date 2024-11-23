@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from logger import logger
 from dotenv import load_dotenv
+from conversation_diarization.speaker_diarization import transcription_with_speaker_diarization
 from starlette.middleware.cors import CORSMiddleware
 from audio_service import translate_with_whisper
 from summarizer import summarize_using_openai
@@ -24,6 +25,7 @@ def root_route():
 
 class Body(BaseModel):
     audio_file_link: str
+    speaker_diarization: bool
 
 @app.post("/upload-audio")
 async def upload_audio(body: Body):
@@ -35,16 +37,26 @@ async def upload_audio(body: Body):
         if not body.audio_file_link.endswith(('.m4a', '.mp4','.mp3','.webm','.mpga','.wav','.mpeg','.ogg')):
             logger.error("invalid file type")
             return JSONResponse(status_code=400, content={"message":"Invalid file type"})
-        #translation = translate_with_whisper(transcription)
-        translation = translate_with_whisper(body.audio_file_link)
+        
+        # Check if speaker diarization requested
+        if body.speaker_diarization:
+            # Continue with conversation diarization service
+            transcription = transcription_with_speaker_diarization(body.audio_file_link)
+            return JSONResponse(content={"message": "File processed successfully!", "transcription": transcription}, status_code=200)
+            
+        else:
+            # Continue with original diarization service
+            
+            #translation = translate_with_whisper(transcription)
+            translation = translate_with_whisper(body.audio_file_link)
 
-        logger.info("translation done")
-        #summary = summarize_using_openai(translation)
-        summary = summarize_using_openai(translation)
+            logger.info("translation done")
+            #summary = summarize_using_openai(translation)
+            summary = summarize_using_openai(translation)
 
-        logger.info("summary done")
+            logger.info("summary done")
 
-        return JSONResponse(content={"message": "File processed successfully!", "translation":translation, "summary": summary}, status_code=200)
+            return JSONResponse(content={"message": "File processed successfully!", "translation":translation, "summary": summary}, status_code=200)
 
     except Exception as e:
         return JSONResponse(content={"message": str(e)}, status_code=500)
