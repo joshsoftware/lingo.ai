@@ -55,6 +55,8 @@ const UserForm = (props: UserFormProps) => {
               formType === "signup" ? "Sign Up" : "Sign In"
             }
           </h1>
+          {formType === "signup" && (
+            <>
           <div className="grid w-full max-w-sm items-center gap-1.5">
             <FormField
               control={form.control}
@@ -85,6 +87,8 @@ const UserForm = (props: UserFormProps) => {
               )}
             />
           </div>
+          </>
+          )}
           <div className="grid w-full max-w-sm items-center gap-1.5">
             <FormField
               control={form.control}
@@ -141,7 +145,7 @@ const UserForm = (props: UserFormProps) => {
             }
             ))}
         >
-          {formType === "signup" ? "Already have an Acount? Sign In" : "Dont have an Account ? Sign Up "}
+          {formType === "signup" ? "Already have an Acount? Sign In" : "Don't have an Account ? Sign Up "}
         </Link>
 
         </div>
