@@ -1,5 +1,6 @@
 import os
 import uuid
+import ollama
 import faster_whisper
 import torch
 import torchaudio
@@ -23,8 +24,16 @@ from conversation_diarization.helpers import (
     langs_to_iso,
     write_srt,
 )
+from conversation_diarization.prompt import QNA_PROMPT_MESSAGE
+from conversation_diarization.request import InterviewAnalysisRequest
 
-def transcription_with_speaker_diarization(audio_link):
+LLM = "llama3"
+TEMPERATURE = 0.2
+
+def create_prompt(transcription: str) -> str:
+    return QNA_PROMPT_MESSAGE.replace("<TRANSCRIPTION>", transcription)
+
+def transcription_with_speaker_diarization(request: InterviewAnalysisRequest):
     """
     Method to transcribe the audio, with speaker diarization using Faster Whisper, NeMo and ForceAligner.
     :param audio_link: The conversation text to be transcribed.
@@ -42,7 +51,7 @@ def transcription_with_speaker_diarization(audio_link):
     session_path = os.path.join("service/conversation_diarization/temp_outputs", session_id)
     os.makedirs(session_path, exist_ok=True)
 
-    AUDIO_FILE_PATH = audio_link #"./service/conversation_diarization/asset/sample_audio_1.mp3"
+    AUDIO_FILE_PATH = request.interview_link #"./service/conversation_diarization/asset/sample_audio_1.mp3"
 
     # if not os.path.exists(AUDIO_FILE_PATH):
     #     sys.exit(f"Audio file does not exist. Path provided: {AUDIO_FILE_PATH}")
@@ -143,5 +152,20 @@ def transcription_with_speaker_diarization(audio_link):
     # Cleanup after processing
     # deleteFileOrDir(session_path)
     
-    result = get_speaker_aware_transcript(ssm)
-    return result
+    processed_transcript = get_speaker_aware_transcript(ssm)
+    
+    prompt = create_prompt(processed_transcript)
+            
+    response = ollama.chat(
+        model=LLM,
+        options={"temperature": TEMPERATURE},
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+    response_text = response.get("message", {}).get("content", "")
+    qna_result = response_text.strip().replace('\\n', ' ').replace('\\"', '"')
+    
+    return {
+        "transcript": processed_transcript,
+        "qna": qna_result,
+    }

@@ -23,11 +23,19 @@ google-api-python-client
 python-dotenv
 
 # For Conversation Analysis
+pypdf2==3.0.1    
+python-docx==1.1.2    
+langchain-community==0.2.19   
+langchain-text-splitters==0.2.4
 torch
 huggingface_hub<0.24
 numpy<2
 wget
 nemo_toolkit[asr]==2.0.0rc0
 nltk
+psycopg2
 git+https://github.com/SYSTRAN/faster-whisper.git #Reaplce with 'faster-whisper==VERSION' once a new version with BatchedInferencePipeline is deployed to PYPI
 git+https://github.com/MahmoudAshraf97/ctc-forced-aligner.git
+
+
+
