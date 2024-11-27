@@ -1,4 +1,4 @@
-import { timestamp, pgTable, text, uuid, boolean } from "drizzle-orm/pg-core";
+import { timestamp, pgTable, text, uuid, boolean, integer } from "drizzle-orm/pg-core";
 
 export const transcriptions = pgTable("transcriptions", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -11,6 +11,7 @@ export const transcriptions = pgTable("transcriptions", {
   documentUrl: text("documentUrl").notNull(),
   documentName: text("documentName").notNull(),
   isDefault: boolean("isDefault").notNull().default(false),
+  audioDuration: integer("audioDuration")
 });
 
 export const registrations = pgTable("registrations", {
@@ -23,20 +24,23 @@ export const registrations = pgTable("registrations", {
 });
 
 export const userTable = pgTable("user", {
-	id: text("id").primaryKey(),
+  id: text("id").primaryKey(),
   username: text("username").notNull().unique(),
   password_hash: text("password_hash").notNull(),
+  role: text("role"),
+  createdAt: timestamp("createdAt",{mode:"date"}).defaultNow()
 });
 
 export const sessionTable = pgTable("session", {
-	id: text("id").primaryKey(),
-	userId: text("user_id")
-		.notNull()
-		.references(() => userTable.id),
-	expiresAt: timestamp("expires_at", {
-		withTimezone: true,
-		mode: "date"
-	}).notNull()
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => userTable.id),
+  expiresAt: timestamp("expires_at", {
+    withTimezone: true,
+    mode: "date"
+  }).notNull(),
+  createdAt: timestamp("createdAt",{mode:"date"}).defaultNow()
 });
 
 export type TranscriptionsPayload = typeof transcriptions.$inferInsert;
