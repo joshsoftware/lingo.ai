@@ -25,6 +25,7 @@ const page = async () => {
       createdAt: transcriptions.createdAt,
       documentUrl: transcriptions.documentUrl,
       isDefault: transcriptions.isDefault,
+      audioDuration: transcriptions.audioDuration,
     })
     .from(transcriptions)
     .orderBy(desc(transcriptions.createdAt));

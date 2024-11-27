@@ -159,6 +159,21 @@ const RecorderCard = (props: RecorderCardProps) => {
     {
       mutationKey: ["saveTranscribe"],
       mutationFn: async (data: TranscriptionsPayload) => {
+
+        if(recordingTime > 0) {
+          // recorded
+          data.audioDuration = recordingTime;
+        }
+        else{
+          // uploaded
+          const audio = new Audio(data.documentUrl);
+          await new Promise<void>((resolve) => {
+            audio.onloadedmetadata = () => {
+              data.audioDuration = Math.round(audio.duration);
+              resolve();
+            };
+          });
+        }
         const response = await axios.post("/api/transcribe/save", data);
         return response.data[0] as TranscriptionsType;
       },

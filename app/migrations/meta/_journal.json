@@ -36,6 +36,13 @@
       "when": 1729509556889,
       "tag": "0004_chunky_amazoness",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1732692329007,
+      "tag": "0005_blue_prowler",
+      "breakpoints": true
     }
   ]
 }
