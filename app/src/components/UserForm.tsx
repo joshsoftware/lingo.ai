@@ -34,6 +34,9 @@ const UserForm = (props: UserFormProps) => {
     defaultValues: {
       password: "",
       userEmail: "",
+      userName:"",
+      contact:"",
+
     },
     mode: "all",
   });
@@ -52,6 +55,40 @@ const UserForm = (props: UserFormProps) => {
               formType === "signup" ? "Sign Up" : "Sign In"
             }
           </h1>
+          {formType === "signup" && (
+            <>
+          <div className="grid w-full max-w-sm items-center gap-1.5">
+            <FormField
+              control={form.control}
+              name="userName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="text" placeholder="Enter your Name" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid w-full max-w-sm items-center gap-1.5">
+            <FormField
+              control={form.control}
+              name="contact"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Contact</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="contact" placeholder="Enter Contact number" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          </>
+          )}
           <div className="grid w-full max-w-sm items-center gap-1.5">
             <FormField
               control={form.control}
@@ -82,6 +119,7 @@ const UserForm = (props: UserFormProps) => {
               )}
             />
           </div>
+        
           <Button
             isLoading={disableSubmit || isPending}
             disabled={disableSubmit || isPending}
@@ -96,11 +134,7 @@ const UserForm = (props: UserFormProps) => {
       </Form>
       <div>
         <div className="flex flex-col text-sm gap-1 justify-center items-center">
-          <h1>{formType === "signup" ? "Already have an account?" : "Please send an email to access the demo:"}</h1>
-          <a className="text-blue-500" href="mailto:info@joshsoftware.com">info@joshsoftware.com</a>
-        </div>
-        {/* {formType === "signup" ? "Already have an account?" : "To request access, please send an email to:"} */}
-        {/* <Link
+        <Link
           href={formType === "signup" ? "/signin" : "/signup"}
           aria-disabled={disableSubmit || isPending}
           className={cn(
@@ -111,8 +145,10 @@ const UserForm = (props: UserFormProps) => {
             }
             ))}
         >
-          {formType === "signup" ? "Sign In" : ""}
-        </Link> */}
+          {formType === "signup" ? "Already have an Acount? Sign In" : "Don't have an Account ? Sign Up "}
+        </Link>
+
+        </div>
       </div>
     </div>
   );
