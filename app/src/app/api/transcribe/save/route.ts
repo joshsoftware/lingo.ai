@@ -10,6 +10,7 @@ export async function POST(req: Request) {
       documentName,
       summary,
       translation,
+      audioDuration
     }: TranscriptionsPayload = body;
 
     const response = await db.insert(transcriptions).values({
@@ -18,6 +19,7 @@ export async function POST(req: Request) {
       userID,
       summary,
       translation,
+      audioDuration
     }).returning();
 
     return new Response(JSON.stringify(response), { status: 200 });
