@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { RegisterUserRequest, registerUserSchema } from "@/Validators/register";
+import { SignupUserRequest, signupUserSchema, SigninUserRequest , signinUserSchema} from "@/Validators/register";
 
 import { useUser } from "@/hooks/useUser";
 import Link from "next/link";
@@ -28,30 +28,60 @@ const UserForm = (props: UserFormProps) => {
   const { formType } = props;
 
   const { disableSubmit, isPending, signupUser, signinUser } = useUser();
-
-  const form = useForm<RegisterUserRequest>({
-    resolver: zodResolver(registerUserSchema),
-    defaultValues: {
-      password: "",
-      userEmail: "",
-    },
+  const isSignup = formType === "signup";
+  const form = useForm<SignupUserRequest | SigninUserRequest>({
+    resolver: zodResolver(isSignup ? signupUserSchema : signinUserSchema),
+    defaultValues: isSignup ? { password: "", userEmail: "", userName: "", contact: "" } : { password: "", userEmail: "" },
     mode: "all",
   });
 
-  const onSubmit = (data: RegisterUserRequest) => formType === "signup" ? signupUser(data) : signinUser(data);
+  const onSubmit = (data: SignupUserRequest | SigninUserRequest) =>
+    isSignup ? signupUser(data as SignupUserRequest) : signinUser(data as SigninUserRequest);
 
   return (
     <div className="flex flex-col gap-2 w-full justify-center items-center">
       <Form {...form}>
-        <form
+      <form
           onSubmit={form.handleSubmit(onSubmit)}
           className="w-full max-w-sm flex flex-col gap-4 justify-center items-center"
         >
           <h1 className="text-3xl font-bold">
-            {
-              formType === "signup" ? "Sign Up" : "Sign In"
-            }
+            {isSignup ? "Sign Up" : "Sign In"}
           </h1>
+          {isSignup && (
+            <>
+          <div className="grid w-full max-w-sm items-center gap-1.5">
+            <FormField
+              control={form.control}
+              name="userName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="text" placeholder="Enter your Name" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid w-full max-w-sm items-center gap-1.5">
+            <FormField
+              control={form.control}
+              name="contact"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Contact</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="contact" placeholder="Enter Contact number" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          </>
+          )}
           <div className="grid w-full max-w-sm items-center gap-1.5">
             <FormField
               control={form.control}
@@ -88,20 +118,14 @@ const UserForm = (props: UserFormProps) => {
             type="submit"
             className="bg-[#668D7E] hover:bg-[#668D7E] text-white w-full"
           >
-            {
-              formType === "signup" ? "Sign Up" : "Sign In"
-            }
+            {isSignup ? "Sign Up" : "Sign In"}
           </Button>
         </form>
       </Form>
       <div>
         <div className="flex flex-col text-sm gap-1 justify-center items-center">
-          <h1>{formType === "signup" ? "Already have an account?" : "Please send an email to access the demo:"}</h1>
-          <a className="text-blue-500" href="mailto:info@joshsoftware.com">info@joshsoftware.com</a>
-        </div>
-        {/* {formType === "signup" ? "Already have an account?" : "To request access, please send an email to:"} */}
-        {/* <Link
-          href={formType === "signup" ? "/signin" : "/signup"}
+        <Link
+          href={isSignup ? "/signin" : "/signup"}
           aria-disabled={disableSubmit || isPending}
           className={cn(
             disableSubmit || isPending ? 'pointer-events-none' : '',
@@ -111,8 +135,10 @@ const UserForm = (props: UserFormProps) => {
             }
             ))}
         >
-          {formType === "signup" ? "Sign In" : ""}
-        </Link> */}
+          {isSignup ? "Already have an Acount? Sign In" : "Don't have an Account ? Sign Up "}
+        </Link>
+
+        </div>
       </div>
     </div>
   );
