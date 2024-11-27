@@ -1,4 +1,6 @@
+import json
 import os
+import re
 import uuid
 import ollama
 import faster_whisper
@@ -163,9 +165,19 @@ def transcription_with_speaker_diarization(request: InterviewAnalysisRequest):
     )
 
     response_text = response.get("message", {}).get("content", "")
-    qna_result = response_text.strip().replace('\\n', ' ').replace('\\"', '"')
+    response_text_json = re.search(r"\{.*\}", response_text, re.DOTALL)
+    
+    if response_text_json:
+        try:
+            response_text_json = json.loads(response_text_json.group())
+        except json.JSONDecodeError as e:
+            print("Failed to parse JSON:", e)
+            response_text_json = None
+    else:
+        print("No JSON found in the response.")
+        response_text_json = None
     
     return {
         "transcript": processed_transcript,
-        "qna": qna_result,
+        "qna": response_text_json
     }

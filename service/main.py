@@ -73,8 +73,12 @@ async def analyse_interview(request: InterviewAnalysisRequest):
         # Perform transcription and speaker diarization
         transcription_result = transcription_with_speaker_diarization(request)
         
+        return JSONResponse(content={"message": transcription_result}, status_code=200)
+        
         # Go further with job description based analysis
-        jd_description = align_interview_with_job_description(request.job_description_link, transcription_result.qna)
+        jd_description = align_interview_with_job_description(request.job_description_link, transcription_result['qna'])
+        
+        return JSONResponse(content={"message": jd_description}, status_code=200)
         
         # Update DB record
         # Pending

@@ -358,7 +358,9 @@ def get_speaker_aware_transcript(sentences_speaker_mapping):
 
         # No matter what, write the current sentence
         # f.write(sentence + " ")
-        transcript = transcript + " "
+        transcript = transcript + sentence + " "
+        
+    return transcript
 
 def format_timestamp(
     milliseconds: float, always_include_hours: bool = False, decimal_marker: str = "."
