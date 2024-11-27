@@ -43,6 +43,13 @@
       "when": 1732692329007,
       "tag": "0005_blue_prowler",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1732709159106,
+      "tag": "0006_stormy_rocket_racer",
+      "breakpoints": true
     }
   ]
 }
