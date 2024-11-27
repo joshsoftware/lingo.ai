@@ -6,14 +6,13 @@ import { hash } from "@node-rs/argon2";
 import { eq } from "drizzle-orm";
 import { generateIdFromEntropySize } from "lucia";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import { z } from "zod";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const { password, userEmail } = signupUserSchema.parse(body);
+    const { password, userEmail, userName, contact } = signupUserSchema.parse(body);
 
     // check if user already exists
     const user = await db
@@ -47,6 +46,8 @@ export async function POST(req: Request) {
         id: userId,
         username:userEmail,
         password_hash: passwordHash,
+        name: userName || "",
+        contactNumber: contact || "",
       })
       .returning();
 
