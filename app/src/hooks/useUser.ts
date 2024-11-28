@@ -4,7 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import axios, { AxiosError } from "axios";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { RegisterUserRequest } from "@/Validators/register";
+import { SigninUserRequest, SignupUserRequest } from "@/Validators/register";
 import { useState } from "react";
 
 export const useUser = () => {
@@ -14,7 +14,7 @@ export const useUser = () => {
     const [disableSubmit,setDisableSubmit] = useState(false);
     const { mutate:signup, isPending:isSigningUp } = useMutation({
         mutationKey: ["signup-user"],
-        mutationFn: async (payload: RegisterUserRequest) => {
+        mutationFn: async (payload: SignupUserRequest) => {
           const response = await axios.post("/api/signup", payload);
           return response.data;
         },
@@ -49,7 +49,7 @@ export const useUser = () => {
 
     const { mutate:signin, isPending:isSigningIn } = useMutation({
       mutationKey: ["signin-user"],
-      mutationFn: async (payload: RegisterUserRequest) => {
+      mutationFn: async (payload: SigninUserRequest) => {
         const response = await axios.post("/api/signin", payload);
         return response.data;
       },
@@ -85,12 +85,12 @@ export const useUser = () => {
       }
   });
 
-    const signupUser = (data: RegisterUserRequest) => {
+    const signupUser = (data: SignupUserRequest) => {
         setDisableSubmit(true);
         signup(data);
     }
 
-    const signinUser = (data: RegisterUserRequest) => {
+    const signinUser = (data: SigninUserRequest) => {
       setDisableSubmit(true);
       signin(data);
     }
