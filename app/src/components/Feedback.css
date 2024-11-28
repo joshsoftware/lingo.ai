@@ -1,0 +1,18 @@
+.feedback-positive-button,
+.feedback-negative-button {
+    height: auto;
+}
+.feedback-positive-button {
+    color: #388e3c;
+}
+.feedback-negative-button {
+    color: #f44336;
+}
+.feedback-positive-button:hover,
+.feedback-negative-button:hover {
+    opacity: 0.85;
+}
+.feedback-positive-button:hover,
+.feedback-negative-button:hover {
+    color: #ffffff;
+}

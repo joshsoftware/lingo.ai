@@ -24,7 +24,7 @@ import { TranscriptionsPayload, TranscriptionsType } from "@/db/schema";
 import { Fragment } from "react";
 
 interface RecorderCardProps {
-  userId: string;
+  userId: any;
 }
 const RecorderCard = (props: RecorderCardProps) => {
   const { userId } = props;

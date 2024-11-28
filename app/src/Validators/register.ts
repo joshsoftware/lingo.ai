@@ -18,4 +18,22 @@ export const registerUserSchema = z.object({
 
 });
 
+export const aiCruitRequestSchema = z.object({
+  interview_link: z.string().url({
+    message: "Invalid URL format for the interview link",
+  }),
+  job_description_link: z.string().url({
+    message: "Invalid URL format for the job description link",
+  }),
+  candidate_name: z.string().min(2, {
+    message: "Candidate Name should be at least 2 characters long",
+  }),
+  interviewer_name: z.string().min(2, {
+    message: "Interviewer Name should be at least 2 characters long",
+  }),
+});
+
+
 export type RegisterUserRequest = z.infer<typeof registerUserSchema>;
+
+export type AiCruitRequest = z.infer<typeof aiCruitRequestSchema>;

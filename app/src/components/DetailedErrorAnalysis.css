@@ -1,0 +1,21 @@
+.analysis-section-subtitle {
+    padding-bottom: 8px;
+    border-bottom: solid 2px;
+}
+.analysis-section-cause {
+    border-color: #ffaa00;
+}
+.analysis-section-impact {
+    border-color: #f97315;
+}
+.analysis-section-fix {
+    border-color: #15b8a6;
+}
+.analysis-section li,
+.analysis-section li,
+.analysis-section li {
+    margin-bottom: 12px;
+}
+.analysis-section-card  {
+    word-break: break-word;
+}

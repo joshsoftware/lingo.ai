@@ -45,5 +45,40 @@ export const sessionTable = pgTable("session", {
   createdAt: timestamp("createdAt",{mode:"date"}).defaultNow()
 });
 
+export const interviewAnalysis = pgTable("interview_analysis", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userID: text("user_id")
+  .notNull()
+  .references(() => userTable.id),
+  candidateName: text("candidate_name").notNull(),
+  interviewerName: text("interviewer_name").notNull().$default(()=> ""),
+  interviewRecordingLink: text("interview_recording_link").notNull(),
+  jobDescriptionDocumentLink: text("job_description_document_link").notNull(),
+  transcript: text("transcript"),
+  questions_answers: text("questions_answers"),
+  parsedJobDescription: text("parsed_job_description"),
+  analysisResult: text("analysis_result"),
+  conversation: text("conversation").$defaultFn(() => ""),
+  status: text("status").$default(()=> "pending"),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+});
+
+export const analysisFeedback = pgTable("analysis_feedback", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userID: text("user_id").notNull(),
+  analysisId: text("analysis_id")
+  .notNull()
+  .references(() => interviewAnalysis.id),
+  isFoundUseful: boolean("is_found_useful").notNull(),
+  comment: text("impact"),
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
+});
+
 export type TranscriptionsPayload = typeof transcriptions.$inferInsert;
 export type TranscriptionsType = typeof transcriptions.$inferSelect;
+
+export type interviewAnalysisPayload = typeof interviewAnalysis.$inferInsert;
+export type interviewAnalysisType = typeof interviewAnalysis.$inferSelect;
+
+export type feedbackPayload = typeof analysisFeedback.$inferInsert;
+export type feedbackType = typeof analysisFeedback.$inferSelect;
