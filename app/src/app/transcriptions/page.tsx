@@ -1,5 +1,6 @@
 import NavigateBack from "@/components/NavigateBack";
 import TranscriptionItem from "@/components/TranscriptionItem";
+import { PAGINATION_LIMIT } from "@/constants/pagination";
 import { db } from "@/db";
 import { transcriptions } from "@/db/schema";
 import { desc } from "drizzle-orm";
@@ -16,8 +17,6 @@ export const metadata: Metadata = {
 
 const page = async () => {
 
-  // skip user signin validation for now
-
   const userTranscriptions = await db
     .select({
       id: transcriptions.id,
@@ -28,7 +27,8 @@ const page = async () => {
       audioDuration: transcriptions.audioDuration,
     })
     .from(transcriptions)
-    .orderBy(desc(transcriptions.createdAt));
+    .orderBy(desc(transcriptions.createdAt))
+    .limit(PAGINATION_LIMIT);
 
   return (
     <div className="flex flex-col w-full h-full pt-8">
@@ -36,7 +36,7 @@ const page = async () => {
         <NavigateBack subHeading="Transcriptions" />
       </div>
       <div className="flex flex-col items-center overflow-y-auto h-fit w-full">
-          <TranscriptionItem userTranscriptions={userTranscriptions} />
+          <TranscriptionItem initialTranscriptionsData={userTranscriptions} />
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const registerUserSchema = z.object({
+export const signupUserSchema = z.object({
   userEmail: z.string().email({
     message: "Invalid email",
   }),
@@ -34,6 +34,16 @@ export const aiCruitRequestSchema = z.object({
 });
 
 
-export type RegisterUserRequest = z.infer<typeof registerUserSchema>;
+export const signinUserSchema = z.object({
+  userEmail: z.string().email({
+    message: "Invalid email",
+  }),
+  password: z.string().min(8, {
+    message: "Password must be at least 8 characters long",
+  }).max(16, {
+    message: "Password must be at most 16 characters long",
+  }),
+});
 
-export type AiCruitRequest = z.infer<typeof aiCruitRequestSchema>;
+export type SignupUserRequest = z.infer<typeof signupUserSchema>;
+export type SigninUserRequest = z.infer<typeof signinUserSchema>;

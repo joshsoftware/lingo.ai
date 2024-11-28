@@ -1,7 +1,7 @@
 import { lucia } from "@/auth";
 import { db } from "@/db";
 import { registrations, userTable } from "@/db/schema";
-import { registerUserSchema } from "@/Validators/register";
+import { signupUserSchema } from "@/Validators/register";
 import { hash } from "@node-rs/argon2";
 import { eq } from "drizzle-orm";
 import { generateIdFromEntropySize } from "lucia";
@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const { password, userEmail, userName, contact } = registerUserSchema.parse(body);
+    const { password, userEmail, userName, contact } = signupUserSchema.parse(body);
 
     // check if user already exists
     const user = await db
