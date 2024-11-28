@@ -27,6 +27,7 @@ const TranscriptionItem = (props: TranscriptionItemProps) => {
 
   const [defaultTranscriptionFilter, setDefaultTranscriptionFilter] = useState<boolean>(false);
   const [filteredTranscriptions, setFilteredTranscriptions] = useState(userTranscriptions);
+  const [currentPlayingIndex, setCurrentPlayingIndex] = useState<number | null>(null);
 
 
   useEffect(() => {
@@ -36,6 +37,15 @@ const TranscriptionItem = (props: TranscriptionItemProps) => {
       setFilteredTranscriptions(userTranscriptions);
     }
   }, [defaultTranscriptionFilter, userTranscriptions]);
+
+
+  const handlePlayPause = (index:number) => {
+    if(currentPlayingIndex === index ){
+      setCurrentPlayingIndex(null);
+    } else {
+      setCurrentPlayingIndex(index);
+    }
+  }
 
   return (
     <div className="flex flex-col w-full h-full gap-4">
@@ -52,7 +62,13 @@ const TranscriptionItem = (props: TranscriptionItemProps) => {
       </div>
       <div className="flex flex-col gap-2 overflow-y-auto">
       {filteredTranscriptions.slice(0, 10).map((transcription, idx) => (
-        <TranscriptionCard key={idx} transcription={transcription} index={idx} />
+        <TranscriptionCard 
+          key={idx} 
+          transcription={transcription} 
+          index={idx} 
+          isPlaying={currentPlayingIndex===idx}
+          onPlayPause={()=> handlePlayPause(idx)}
+        />
       ))}
       </div>
     </div>
