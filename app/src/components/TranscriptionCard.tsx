@@ -1,7 +1,7 @@
 "use client";
 import { TranscriptionsType } from "@/db/schema";
 import { format } from "date-fns";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, forwardRef } from "react";
 import { Button } from "./ui/button";
 import Link from "next/link";
 import { PauseCircleIcon, PlayCircleIcon } from "lucide-react";
@@ -12,17 +12,18 @@ interface TranscriptionCardProps {
   index: number;
   isPlaying: boolean;
   onPlayPause: () => void;
+  onAudioEnd: () => void;
 }
 
-const TranscriptionCard = (props: TranscriptionCardProps) => {
-  const { transcription, index, isPlaying, onPlayPause } = props;
+const TranscriptionCard = forwardRef<HTMLDivElement, TranscriptionCardProps>((props, ref) => {
+  const { transcription, index, isPlaying, onPlayPause, onAudioEnd } = props;
 
   const [audioDuration, setAudioDuration] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const fetchAudioDuration = async () => {
-      if (transcription.documentUrl) {
+      if (transcription?.documentUrl) {
         const duration = await getAudioDuration(transcription.documentUrl);
         setAudioDuration(duration);
       }
@@ -31,7 +32,7 @@ const TranscriptionCard = (props: TranscriptionCardProps) => {
     fetchAudioDuration();
 
     // Create audio element and set ref
-    if (transcription.documentUrl) {
+    if (transcription?.documentUrl) {
       const audio = new Audio(transcription.documentUrl);
       audioRef.current = audio;
 
@@ -39,6 +40,7 @@ const TranscriptionCard = (props: TranscriptionCardProps) => {
       audio.addEventListener("ended", () => {
         if (audioRef.current) {
           audioRef.current.pause();
+          onAudioEnd(); // Call the onAudioEnd prop
         }
       });
     }
@@ -50,7 +52,7 @@ const TranscriptionCard = (props: TranscriptionCardProps) => {
         audioRef.current = null;
       }
     };
-  }, [transcription.documentUrl]);
+  }, [transcription?.documentUrl, onAudioEnd]);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -66,17 +68,18 @@ const TranscriptionCard = (props: TranscriptionCardProps) => {
     <div
       key={index}
       className="flex flex-col md:flex-row gap-4 w-full h-full bg-[#F9F9F9] p-2 px-8 rounded-xl justify-between items-center"
+      ref={ref}
     >
       <Link
         className="flex-1 h-fit w-full"
-        href={`/transcriptions/${transcription.id}`}
+        href={`/transcriptions/${transcription?.id}`}
       >
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <h1 className="w-full md:w-1/3 overflow-hidden text-ellipsis whitespace-nowrap">
-            {index + 1} {transcription.documentName}
+            {index + 1} {transcription?.documentName}
           </h1>
           <h1 className="w-full md:w-1/3 overflow-hidden text-ellipsis whitespace-nowrap">
-            {transcription.createdAt
+            {transcription?.createdAt
               ? format(
                   new Date(transcription.createdAt),
                   "dd MMM yyyy | hh:mm a",
@@ -92,6 +95,7 @@ const TranscriptionCard = (props: TranscriptionCardProps) => {
         <Button
           className="flex gap-2 bg-[#668D7E] hover:bg-[#668D7E] text-white"
           onClick={onPlayPause}
+          disabled={!audioDuration}
         >
           {isPlaying ? (
             <PauseCircleIcon className="w-6 h-6" />
@@ -103,6 +107,8 @@ const TranscriptionCard = (props: TranscriptionCardProps) => {
       </div>
     </div>
   );
-};
+});
+
+TranscriptionCard.displayName = "TranscriptionCard";
 
 export default TranscriptionCard;
