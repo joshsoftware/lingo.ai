@@ -1,5 +1,6 @@
 import { db } from "@/db";
-import { transcriptions, TranscriptionsPayload } from "@/db/schema";
+import { transcriptions, TranscriptionsPayload, userTable } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 export async function POST(req: Request) {
   try {
@@ -10,8 +11,22 @@ export async function POST(req: Request) {
       documentName,
       summary,
       translation,
-      audioDuration
+      audioDuration,
     }: TranscriptionsPayload = body;
+
+    const userResponse = await db
+      .select({
+        userName: userTable.name
+      })
+      .from(userTable)
+      .where(eq(userTable.id, userID))
+
+    if (!userResponse[0]) {
+      return new Response("User not found", {
+        status: 404,
+      })
+    }
+
 
     const response = await db.insert(transcriptions).values({
       documentUrl,
@@ -19,7 +34,8 @@ export async function POST(req: Request) {
       userID,
       summary,
       translation,
-      audioDuration
+      audioDuration,
+      userName: userResponse[0].userName
     }).returning();
 
     return new Response(JSON.stringify(response), { status: 200 });
