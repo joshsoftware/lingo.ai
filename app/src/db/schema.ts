@@ -11,7 +11,8 @@ export const transcriptions = pgTable("transcriptions", {
   documentUrl: text("documentUrl").notNull(),
   documentName: text("documentName").notNull(),
   isDefault: boolean("isDefault").notNull().default(false),
-  audioDuration: integer("audioDuration")
+  audioDuration: integer("audioDuration"),
+  userName: text("user_name")
 });
 
 export const registrations = pgTable("registrations", {

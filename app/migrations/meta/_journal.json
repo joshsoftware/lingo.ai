@@ -50,6 +50,13 @@
       "when": 1732709159106,
       "tag": "0006_stormy_rocket_racer",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1732817602505,
+      "tag": "0007_chilly_arachne",
+      "breakpoints": true
     }
   ]
 }
