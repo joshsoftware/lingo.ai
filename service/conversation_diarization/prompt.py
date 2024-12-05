@@ -58,5 +58,32 @@ QNA_PROMPT_MESSAGE = """
         ]
     }
     
-    I'll be parsing your response directly as a JSON string, so make sure apart JSON, no other text is present in response.
+    I'll be parsing your response directly as a JSON string, so make sure apart from JSON, no other text is present in response.
     """
+    
+JD_INTERVIEW_ALIGNMENT_PROMPT = """
+Read the given Job Description below:
+
+<JOB_DESCRIPTION>
+
+and also Read the below Questions of the Interview:
+
+<QUESTIONS_AND_ANSWERS>
+
+Now do this:
+1. Analyze the above Questions with JD, and evaluate if these Question's are relevant to the JD
+2. Based on whole evaluation you've done, add the strengths and weaknesses of the candidate.
+3. I want your response as a **pure JSON string**, in the following format:
+
+```json
+{
+    "core_skills": ["Question Numbers which are aligned for Skills (Must have)"],
+    "secondary_skills": ["Question Numbers which are aligned for (Good to have)"],
+    "domain_expertise": ["Question Numbers which are aligned for Responsibilities"],
+    "strengths":["These are candidate's qualities"],
+    "weaknesses":["These are candidate's weaknesses"]
+}
+
+Important: You must return only the JSON object. Do not add any explanations, headers, or other text outside the JSON object. If you include anything outside of the JSON, the response will be considered invalid.
+Do not prefix or suffix the response with anything like "Here is the analysis."
+"""
