@@ -1,6 +1,4 @@
 "use client";
-
-import { tertiaryFont } from "@/fonts";
 import { cn } from "@/lib/utils";
 import { Input } from "./ui/input";
 import { Button, buttonVariants } from "./ui/button";
@@ -14,49 +12,76 @@ import {
 } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { SignupUserRequest, signupUserSchema, SigninUserRequest , signinUserSchema} from "@/Validators/register";
+import { AiCruitRequest, aiCruitRequestSchema } from "@/Validators/register";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
+import axios, { AxiosError } from "axios";
 
-import { useUser } from "@/hooks/useUser";
 import Link from "next/link";
 
-interface UserFormProps {
-  formType: "signin" | "signup";
-}
+const AiCruitFrom = () => {
+  const router = useRouter();
 
-const UserForm = (props: UserFormProps) => {
-
-  const { formType } = props;
-
-  const { disableSubmit, isPending, signupUser, signinUser } = useUser();
-  const isSignup = formType === "signup";
-  const form = useForm<SignupUserRequest | SigninUserRequest>({
-    resolver: zodResolver(isSignup ? signupUserSchema : signinUserSchema),
-    defaultValues: isSignup ? { password: "", userEmail: "", userName: "", contact: "" } : { password: "", userEmail: "" },
+  const form = useForm<AiCruitRequest>({
+    resolver: zodResolver(aiCruitRequestSchema),
+    defaultValues: {
+      interview_link: "",
+      job_description_link: "",
+      candidate_name: "",
+      interviewer_name: "",
+    },
     mode: "all",
   });
 
-  const onSubmit = (data: SignupUserRequest | SigninUserRequest) =>
-    isSignup ? signupUser(data as SignupUserRequest) : signinUser(data as SigninUserRequest);
+  const [disableSubmit, setDisableSubmit] = useState(false);
+  const { mutate: submitForm, isPending: isSubmitting } = useMutation({
+    mutationKey: ["submit-interview-analysis"],
+    mutationFn: async (payload: AiCruitRequest) => {
+      const response = await axios.post("/analyse-interview", payload);
+      return response.data;
+    },
+    onSuccess: async (res) => {
+      toast.success("Your Details Received successfully!, Once Completed, You can visit listing page");
+      router.push("/analyse");
+    },
+    onError: (error) => {
+      if (error instanceof AxiosError) {
+        toast.error("Failed to submit form", {
+          description: error.message,
+        });
+      } else {
+        toast.error("An unexpected error occurred. Please try again later.");
+      }
+    },
+    onSettled: () => {
+      setDisableSubmit(false);
+    },
+  });
+
+  const onSubmit = (data: AiCruitRequest) => {
+    setDisableSubmit(true);
+    submitForm(data);
+  };
 
   return (
     <div className="flex flex-col gap-2 w-full justify-center items-center">
       <Form {...form}>
-      <form
+        <form
           onSubmit={form.handleSubmit(onSubmit)}
           className="w-full max-w-sm flex flex-col gap-4 justify-center items-center"
         >
           <h1 className="text-3xl font-bold">
-            {isSignup ? "Sign Up" : "Sign In"}
+            New Interview Analysis
           </h1>
-          {isSignup && (
-            <>
           <div className="grid w-full max-w-sm items-center gap-1.5">
             <FormField
               control={form.control}
-              name="userName"
+              name="candidate_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>Candidate Name</FormLabel>
                   <FormControl>
                     <Input {...field} type="text" placeholder="Enter your Name" />
                   </FormControl>
@@ -68,29 +93,12 @@ const UserForm = (props: UserFormProps) => {
           <div className="grid w-full max-w-sm items-center gap-1.5">
             <FormField
               control={form.control}
-              name="contact"
+              name="interviewer_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Contact</FormLabel>
+                  <FormLabel>Interviewer Name</FormLabel>
                   <FormControl>
-                    <Input {...field} type="contact" placeholder="Enter Contact number" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          </>
-          )}
-          <div className="grid w-full max-w-sm items-center gap-1.5">
-            <FormField
-              control={form.control}
-              name="userEmail"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Enter your Email" />
+                    <Input {...field} type="text" placeholder="Enter Interviewer Name" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -100,12 +108,27 @@ const UserForm = (props: UserFormProps) => {
           <div className="grid w-full max-w-sm items-center gap-1.5">
             <FormField
               control={form.control}
-              name="password"
+              name="interview_link"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel>Interview Link</FormLabel>
                   <FormControl>
-                    <Input {...field} type="password" placeholder="Enter your Pasword" />
+                    <Input {...field} type="text" placeholder="Enter Interview Link" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid w-full max-w-sm items-center gap-1.5">
+            <FormField
+              control={form.control}
+              name="job_description_link"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Job Description Link</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="text" placeholder="Enter Job Description Link" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -114,35 +137,16 @@ const UserForm = (props: UserFormProps) => {
           </div>
         
           <Button
-            isLoading={disableSubmit || isPending}
-            disabled={disableSubmit || isPending}
+            isLoading={isSubmitting}
             type="submit"
             className="bg-[#668D7E] hover:bg-[#668D7E] text-white w-full"
           >
-            {isSignup ? "Sign Up" : "Sign In"}
+            Submit
           </Button>
         </form>
       </Form>
-      <div>
-        <div className="flex flex-col text-sm gap-1 justify-center items-center">
-        <Link
-          href={isSignup ? "/signin" : "/signup"}
-          aria-disabled={disableSubmit || isPending}
-          className={cn(
-            disableSubmit || isPending ? 'pointer-events-none' : '',
-            buttonVariants({
-              variant: "link",
-              className: "text-[#668D7E] hover:text-[#668D7E] font-bold"
-            }
-            ))}
-        >
-          {isSignup ? "Already have an Acount? Sign In" : "Don't have an Account ? Sign Up "}
-        </Link>
-
-        </div>
-      </div>
     </div>
   );
 };
 
-export default UserForm;
+export default AiCruitFrom;
