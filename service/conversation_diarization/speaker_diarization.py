@@ -165,6 +165,6 @@ def transcription_with_speaker_diarization(request: InterviewAnalysisRequest):
     
     return {
         "transcript": full_transcript,
-        "communication": processed_transcript,
+        "conversation": processed_transcript,
         "qna": response_text_json
     }

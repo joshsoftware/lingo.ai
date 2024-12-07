@@ -1,3 +1,4 @@
+import json
 import os
 from fastapi import FastAPI, BackgroundTasks
 from fastapi.responses import JSONResponse
@@ -77,11 +78,6 @@ async def analyse_interview(request: InterviewAnalysisRequest, background_tasks:
             interviewer_name=request.interviewer_name,
             interview_recording_link=request.interview_link,
             job_description_document_link=request.job_description_link,
-            transcript=None,
-            questions_answers=None,
-            parsed_job_description=None,
-            analysis_result=None,
-            conversation=None,
             status=ANALYSIS_STATUS
         )
         
@@ -200,11 +196,11 @@ def update_interview_analysis(conn_string, record_id, transcript, questions_answ
                 # Execute the UPDATE statement with parameterized values
                 cur.execute(query, (
                     transcript, 
-                    questions_answers, 
-                    parsed_job_description, 
-                    analysis_result, 
-                    conversation, 
-                    status, 
+                    json.dumps(questions_answers),
+                    json.dumps(parsed_job_description),
+                    json.dumps(analysis_result),
+                    conversation,
+                    status,
                     record_id
                 ))
                 # Check if any row was updated
