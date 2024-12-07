@@ -46,7 +46,7 @@ export const sessionTable = pgTable("session", {
 });
 
 export const interviewAnalysis = pgTable("interview_analysis", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  id: uuid("id").primaryKey().defaultRandom(),
   userID: text("user_id")
   .notNull()
   .references(() => userTable.id),
@@ -66,7 +66,7 @@ export const interviewAnalysis = pgTable("interview_analysis", {
 export const analysisFeedback = pgTable("analysis_feedback", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   userID: text("user_id").notNull(),
-  analysisId: text("analysis_id")
+  analysisId: uuid("analysis_id")
   .notNull()
   .references(() => interviewAnalysis.id),
   isFoundUseful: boolean("is_found_useful").notNull(),

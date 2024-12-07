@@ -1,1 +1,0 @@
-ALTER TABLE "transcriptions" ADD COLUMN "documentName" text NOT NULL;

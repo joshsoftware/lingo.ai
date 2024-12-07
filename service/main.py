@@ -1,9 +1,8 @@
-from multiprocessing import pool
 import os
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, BackgroundTasks
 from fastapi.responses import JSONResponse
+import psycopg2
 from logger import logger
-from dotenv import load_dotenv
 from conversation_diarization.speaker_diarization import transcription_with_speaker_diarization
 from starlette.middleware.cors import CORSMiddleware
 from audio_service import translate_with_whisper
@@ -12,7 +11,6 @@ from conversation_diarization.jd_interview_aligner import align_interview_with_j
 from conversation_diarization.request import InterviewAnalysisRequest
 from summarizer import summarize_using_openai
 from pydantic import BaseModel
-from psycopg2 import pool
 
 dbCursor = initDbConnection()
 
@@ -61,28 +59,159 @@ async def upload_audio(body: Body):
 
 
 @app.post("/analyse-interview")
-async def analyse_interview(request: InterviewAnalysisRequest):
+async def analyse_interview(request: InterviewAnalysisRequest, background_tasks: BackgroundTasks):
+    ANALYSIS_STATUS = "pending"
+    
     try:
+        db_connection_string = os.getenv('DATABASE_URL')
+    
         # Request payload validation
-        if request.interviewer_name == "" or request.candidate_name == "" or request.job_description_link == "" or request.interview_link == "":
-            return JSONResponse(status_code=400, content={"message":"Invalid request, missing params"})
+        if not all([request.interviewer_name, request.candidate_name, request.job_description_link, request.interview_link]):
+            return JSONResponse(status_code=400, content={"message": "Invalid request, missing params"})
         
-        # Create DB record
-        # Pending
+        # Create record
+        analysis_id = insert_interview_analysis(
+            conn_string=db_connection_string,
+            user_id='x7w6qksaibnh2usz', #TODO: replace with actual user's id
+            candidate_name=request.candidate_name,
+            interviewer_name=request.interviewer_name,
+            interview_recording_link=request.interview_link,
+            job_description_document_link=request.job_description_link,
+            transcript=None,
+            questions_answers=None,
+            parsed_job_description=None,
+            analysis_result=None,
+            conversation=None,
+            status=ANALYSIS_STATUS
+        )
         
-        # Perform transcription and speaker diarization
-        transcription_result = transcription_with_speaker_diarization(request)
+        if not analysis_id:
+            return JSONResponse(content={"message": "Failed to process the request, please try again."}, status_code=500)
         
-        # Go further with job description based analysis
-        analysis_result = align_interview_with_job_description(request.job_description_link, transcription_result['qna'])
-        return JSONResponse(content={"result": analysis_result}, status_code=200)
+        # Schedule background task for analysis
+        background_tasks.add_task(
+            process_interview_analysis,
+            db_connection_string,
+            analysis_id,
+            request
+        )
         
-        # Update DB record
-        # Pending
-        
-        # Return response
-        #TODO: include record id below
-        return JSONResponse(content={"message": "Request processed successfully"}, status_code=200)
+        # Respond immediately to the client
+        return JSONResponse(content={"message": "Request received and is in progress", "analysis_id": analysis_id}, status_code=202)
 
     except Exception as e:
         return JSONResponse(content={"result": str(e)}, status_code=500)
+
+def process_interview_analysis(conn_string, analysis_id, request):
+    """
+    Background task to handle transcription, speaker diarization, and job description alignment.
+    """
+    ANALYSIS_STATUS = "completed"
+    
+    # Perform transcription and speaker diarization
+    transcription_result = transcription_with_speaker_diarization(request)
+    
+    # Go further with job description based analysis
+    analysis_result = align_interview_with_job_description(request.job_description_link, transcription_result['qna'])
+    
+    # Update record
+    analysis_updated = update_interview_analysis(
+        conn_string=conn_string,
+        record_id=analysis_id,
+        transcript=transcription_result["transcript"],
+        questions_answers=transcription_result["qna"],
+        parsed_job_description=analysis_result["parsed_job_description"],
+        analysis_result=analysis_result["analysis"],
+        conversation=transcription_result["conversation"],
+        status=ANALYSIS_STATUS
+    )
+    
+    if analysis_updated:
+        print(f"Analysis for record ID {analysis_id} completed successfully.")
+    else:
+        print(f"Analysis for record ID {analysis_id} failed.")
+
+def insert_interview_analysis(conn_string, user_id, candidate_name, interviewer_name, 
+                              interview_recording_link, job_description_document_link, status):
+    """
+    Insert a new record into the interview_analysis table and return the generated ID.
+    """
+    query = """
+    INSERT INTO interview_analysis (
+        user_id, 
+        candidate_name, 
+        interviewer_name, 
+        interview_recording_link, 
+        job_description_document_link, 
+        status
+    ) 
+    VALUES (%s, %s, %s, %s, %s, %s)
+    RETURNING id;
+    """
+    generated_id = None
+
+    try:
+        # Establish the database connection
+        with psycopg2.connect(conn_string) as conn:
+            with conn.cursor() as cur:
+                # Execute the INSERT statement with parameterized values
+                cur.execute(query, (
+                    user_id, 
+                    candidate_name, 
+                    interviewer_name, 
+                    interview_recording_link, 
+                    job_description_document_link,
+                    status
+                ))
+                # Fetch the returned ID
+                row = cur.fetchone()
+                if row:
+                    generated_id = row[0]
+                # Commit the transaction
+                conn.commit()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(f"Database error: {error}")
+    finally:
+        return generated_id
+    
+def update_interview_analysis(conn_string, record_id, transcript, questions_answers, 
+                              parsed_job_description, analysis_result, conversation, status):
+    """
+    Update an existing record in the interview_analysis table.
+    """
+    query = """
+    UPDATE interview_analysis
+    SET 
+        transcript = %s,
+        questions_answers = %s,
+        parsed_job_description = %s,
+        analysis_result = %s,
+        conversation = %s,
+        status = %s
+    WHERE id = %s;
+    """
+    
+    is_updated = False
+
+    try:
+        # Establish the database connection
+        with psycopg2.connect(conn_string) as conn:
+            with conn.cursor() as cur:
+                # Execute the UPDATE statement with parameterized values
+                cur.execute(query, (
+                    transcript, 
+                    questions_answers, 
+                    parsed_job_description, 
+                    analysis_result, 
+                    conversation, 
+                    status, 
+                    record_id
+                ))
+                # Check if any row was updated
+                is_updated = cur.rowcount > 0
+                # Commit the transaction
+                conn.commit()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(f"Database error: {error}")
+    finally:
+        return is_updated

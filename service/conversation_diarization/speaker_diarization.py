@@ -164,6 +164,7 @@ def transcription_with_speaker_diarization(request: InterviewAnalysisRequest):
         response_text_json = None
     
     return {
-        "transcript": processed_transcript,
+        "transcript": full_transcript,
+        "communication": processed_transcript,
         "qna": response_text_json
     }

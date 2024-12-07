@@ -5,57 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1726070335198,
-      "tag": "0000_rainy_brother_voodoo",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1726155692962,
-      "tag": "0001_vengeful_black_tarantula",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1726167459613,
-      "tag": "0002_youthful_justice",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1727517788789,
-      "tag": "0003_round_wasp",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1729509556889,
-      "tag": "0004_chunky_amazoness",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1732692329007,
-      "tag": "0005_blue_prowler",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1732709159106,
-      "tag": "0006_stormy_rocket_racer",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1732764591170,
-      "tag": "0007_flashy_naoko",
+      "when": 1733478178193,
+      "tag": "0000_yielding_silverclaw",
       "breakpoints": true
     }
   ]

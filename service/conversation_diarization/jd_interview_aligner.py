@@ -64,26 +64,29 @@ def align_interview_with_job_description(job_description_link, interview_qna):
     overall_rating = round((core_skills_rating + secondary_skills_rating + domain_expertise_rating) / 3)
 
     result = {
-        "rating_scale": [1, 10],
-        "overall_rating": overall_rating,
-        "result": {
-            "skills": {
-                "core": {
-                    "overall_rating": core_skills_rating,
-                    "questions": core_skills_qna
+        "parsed_job_description": jd_result,
+        "analysis": {
+            "rating_scale": [1, 10],
+            "overall_rating": overall_rating,
+            "result": {
+                "skills": {
+                    "core": {
+                        "overall_rating": core_skills_rating,
+                        "questions": core_skills_qna
+                    },
+                    "secondary": {
+                        "overall_rating": secondary_skills_rating,
+                        "questions": secondary_skills_qna
+                    }
                 },
-                "secondary": {
-                    "overall_rating": secondary_skills_rating,
-                    "questions": secondary_skills_qna
-                }
-            },
-            "domain_expertise": {
-                "overall_rating": domain_expertise_rating,
-                "questions": domain_expertise_qna
-            },
-            "strengths": strengths,
-            "weaknesses": weaknesses,
-        }
+                "domain_expertise": {
+                    "overall_rating": domain_expertise_rating,
+                    "questions": domain_expertise_qna
+                },
+                "strengths": strengths,
+                "weaknesses": weaknesses,
+            }
+        },
     }
 
     return result
