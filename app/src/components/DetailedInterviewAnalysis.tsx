@@ -1,18 +1,15 @@
 "use client";
 import { Card } from "./ui/card";
-import './DetailedErrorAnalysis.css';
+import './DetailedInterviewAnalysis.css';
 import { CircleAlert, CircleCheck, CircleHelp, ListTodo, SquareTerminal, SquareX } from "lucide-react";
 
-interface DetailedErrorAnalysisProps {
+interface DetailedInterviewAnalysisProps {
   analysis: any
 }
 
-const DetailedErrorAnalysis = ({
+const DetailedInterviewAnalysis = ({
   analysis,
-}: DetailedErrorAnalysisProps) => {
-  const formattedConversation = Object.entries(analysis.conversation.data).map(
-    ([key, value]) => `${key === "candidate" ? "Candidate" : "Interviewer"}: ${value}`
-  );
+}: DetailedInterviewAnalysisProps) => {
   return (
     <div className="flex flex-col gap-8 w-full">
       <div className="flex flex-1 flex-row max-sm:flex-col w-full gap-4 justify-center items-stretch mb-8">
@@ -23,15 +20,7 @@ const DetailedErrorAnalysis = ({
           </div>
           <p className="analysis-section-subtitle analysis-section-cause text-gray-500 mb-2">between interviewer and candidate</p>
           <Card className="analysis-section-card bg-[#fafbff] flex-1 w-full max-w-xs md:max-w-full p-4 rounded-lg break-words">
-            {formattedConversation.length > 0 ? (
-              <ul className="list-disc pl-4">
-                {formattedConversation.map((item, index) => (
-                  <li key={index}>{item}</li>
-                ))}
-              </ul>
-            ) : (
-              "No Cause"
-            )}
+            {analysis.conversation}
          </Card>
 
         </div>
@@ -100,9 +89,9 @@ const DetailedErrorAnalysis = ({
                   <div className="pl-4">
                     {/* Skills Must Have */}
                     <h5 className="text-sm font-semibold mt-2">Skills Must Have:</h5>
-                    <p>Overall Rating: {analysis.analysisResult.result.skills.skills_must_have.overall_rating}</p>
+                    <p>Overall Rating: {analysis.analysisResult.result.skills.core.overall_rating}</p>
                     <ul className="list-disc pl-6">
-                      {analysis.analysisResult.result.skills.skills_must_have.matched_questions.map((question: any, idx: number) => (
+                      {analysis.analysisResult.result.skills.core.questions.map((question: any, idx: number) => (
                         <li key={idx}>
                           <strong>Q:</strong> {question.question}<br />
                           <strong>A:</strong> {question.answer}<br />
@@ -115,9 +104,9 @@ const DetailedErrorAnalysis = ({
 
                     {/* Skills Good to Have */}
                     <h5 className="text-sm font-semibold mt-2">Skills Good to Have:</h5>
-                    <p>Overall Rating: {analysis.analysisResult.result.skills.skills_good_to_have.overall_rating}</p>
+                    <p>Overall Rating: {analysis.analysisResult.result.skills.secondary.overall_rating}</p>
                     <ul className="list-disc pl-6">
-                      {analysis.analysisResult.result.skills.skills_good_to_have.matched_questions.map((question: any, idx: number) => (
+                      {analysis.analysisResult.result.skills.secondary.questions.map((question: any, idx: number) => (
                         <li key={idx}>
                           <strong>Q:</strong> {question.question}<br />
                           <strong>A:</strong> {question.answer}<br />
@@ -133,7 +122,7 @@ const DetailedErrorAnalysis = ({
                   <h4 className="text-md font-semibold mt-2">Domain Expertise:</h4>
                   <p>Overall Rating: {analysis.analysisResult.result.domain_expertise.overall_rating}</p>
                   <ul className="list-disc pl-6">
-                    {analysis.analysisResult.result.domain_expertise.matched_questions.map((question: any, idx: number) => (
+                    {analysis.analysisResult.result.domain_expertise.questions.map((question: any, idx: number) => (
                       <li key={idx}>
                         <strong>Q:</strong> {question.question}<br />
                         <strong>A:</strong> {question.answer}<br />
@@ -175,4 +164,4 @@ const DetailedErrorAnalysis = ({
   );
 };
 
-export default DetailedErrorAnalysis;
+export default DetailedInterviewAnalysis;

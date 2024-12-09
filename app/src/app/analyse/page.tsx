@@ -1,6 +1,6 @@
 import { validateRequest } from "@/auth";
 import NavigateBack from "@/components/NavigateBack";
-import ErrorAnalysisItem from "@/components/ErrorAnalysisItem";
+import InterviewAnalysisItem from "@/components/InterviewAnalysisItem";
 import { db } from "@/db";
 import { interviewAnalysis } from "@/db/schema";
 import { desc } from "drizzle-orm";
@@ -40,7 +40,7 @@ const page = async () => {
       </div>
       <div className="flex flex-col flex-1 items-center gap-4 overflow-y-auto mb-8">
         {interviewAnalysisList.map((interviewAnalysis, idx) => (
-          <ErrorAnalysisItem key={idx} index={idx} interviewAnalysis={interviewAnalysis} />
+          <InterviewAnalysisItem key={idx} index={idx} interviewAnalysis={interviewAnalysis} />
         ))}
       </div>
     </div>

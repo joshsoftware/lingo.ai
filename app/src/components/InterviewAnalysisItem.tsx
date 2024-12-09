@@ -1,8 +1,7 @@
 "use client";
-import "./ErrorAnalysisItem.css";
+import "./InterviewAnalysisItem.css";
 import { interviewAnalysisType } from "@/db/schema";
 import { format } from "date-fns";
-import Link from "next/link";
 import { Button } from "./ui/button";
 import { useRouter } from "next/navigation";
 import { ChevronRight } from "lucide-react";

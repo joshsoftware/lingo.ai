@@ -1,14 +1,9 @@
 'use client';
 
 import './page.css';
-import DetailedErrorAnalysis from "@/components/DetailedErrorAnalysis";
+import DetailedInterviewAnalysis from "@/components/DetailedInterviewAnalysis";
 import Feedback from "@/components/Feedback";
 import NavigateBack from "@/components/NavigateBack";
-import { db } from "@/db";
-import { interviewAnalysis } from "@/db/schema";
-import { eq } from "drizzle-orm";
-import path from "path";
-import fs from 'fs';
 import ReadMore from "../../../components/ReadMore";
 import axios from "axios";
 import { useSearchParams } from 'next/navigation'
@@ -42,15 +37,6 @@ const Page = (props: PageProps) => {
   const [ loading, setLoading ] = useState(true);
   const [ error, setError ] = useState("");
 
-  const readErrorLogFile = async (URL: string) => {
-    try {
-      const data = await axios.get(URL);
-      setError(data.data);
-    } catch (error) {
-      console.error('Error reading file:', error);
-    }
-  }
-
   useEffect(() => {
     GetAnalysis({id: analysis_id});
   }, [analysis_id]);  
@@ -70,7 +56,7 @@ const Page = (props: PageProps) => {
             jobDescriptionDocumentLink: analysisData.jobDescriptionDocumentLink,
             parsedJobDescription: analysisData.parsedJobDescription,
             questionsAnswers: JSON.parse(analysisData.questions_answers),
-            conversation: JSON.parse(analysisData.conversation),
+            conversation: analysisData.conversation,
             transcript: analysisData.transcript,
           }
           setAnalysisData(data);
@@ -150,7 +136,7 @@ const Page = (props: PageProps) => {
         Summary / Overview -
         <ReadMore summary={"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."}></ReadMore>
         {(analysisData &&
-          <DetailedErrorAnalysis analysis={analysisData} />
+          <DetailedInterviewAnalysis analysis={analysisData} />
         )}
       </div>
       <Feedback analysisId={analysis_id}></Feedback>
