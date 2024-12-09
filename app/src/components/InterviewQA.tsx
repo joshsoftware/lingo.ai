@@ -1,6 +1,6 @@
 "use client";
 import { Card } from "./ui/card";
-import './DetailedErrorAnalysis.css';
+import './DetailedInterviewAnalysis.css';
 import { SquareX } from "lucide-react";
 
 interface InterviewQAs {
@@ -10,9 +10,6 @@ interface InterviewQAs {
 const InterviewQA = ({
   analysis,
 }: InterviewQAs) => {
-  const formattedConversation = Object.entries(analysis.conversation.data).map(
-    ([key, value]) => `${key === "candidate" ? "Candidate" : "Interviewer"}: ${value}`
-  );
   return (
     <div className="flex flex-col w-full">
       <div className="flex flex-1 flex-row max-sm:flex-col w-full gap-4 justify-center items-stretch mb-8">        

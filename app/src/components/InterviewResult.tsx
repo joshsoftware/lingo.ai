@@ -3,7 +3,7 @@ import { Card } from "./ui/card";
 import { ListTodo } from "lucide-react";
 import { Button } from "./ui/button";
 import { jsPDF } from "jspdf";
-import './DetailedErrorAnalysis.css';
+import './DetailedInterviewAnalysis.css';
 
 interface InterviewResultProps {
   analysis: any;
@@ -60,10 +60,10 @@ const InterviewResult = ({ analysis }: InterviewResultProps) => {
                     </h5>
                     <p>
                       Overall Rating:{" "}
-                      {analysis.analysisResult.result.skills.skills_must_have.overall_rating}
+                      {analysis.analysisResult.result.skills.core.overall_rating}
                     </p>
                     <ul className="list-disc pl-6">
-                      {analysis.analysisResult.result.skills.skills_must_have.matched_questions.map(
+                      {analysis.analysisResult.result.skills.core.questions.map(
                         (question: any, idx: number) => (
                           <li key={idx}>
                             <strong>Q:</strong> {question.question}
@@ -85,10 +85,10 @@ const InterviewResult = ({ analysis }: InterviewResultProps) => {
                     </h5>
                     <p>
                       Overall Rating:{" "}
-                      {analysis.analysisResult.result.skills.skills_good_to_have.overall_rating}
+                      {analysis.analysisResult.result.skills.secondary.overall_rating}
                     </p>
                     <ul className="list-disc pl-6">
-                      {analysis.analysisResult.result.skills.skills_good_to_have.matched_questions.map(
+                      {analysis.analysisResult.result.skills.secondary.questions.map(
                         (question: any, idx: number) => (
                           <li key={idx}>
                             <strong>Q:</strong> {question.question}
@@ -114,7 +114,7 @@ const InterviewResult = ({ analysis }: InterviewResultProps) => {
                     {analysis.analysisResult.result.domain_expertise.overall_rating}
                   </p>
                   <ul className="list-disc pl-6">
-                    {analysis.analysisResult.result.domain_expertise.matched_questions.map(
+                    {analysis.analysisResult.result.domain_expertise.questions.map(
                       (question: any, idx: number) => (
                         <li key={idx}>
                           <strong>Q:</strong> {question.question}
