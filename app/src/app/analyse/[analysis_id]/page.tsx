@@ -1,16 +1,17 @@
-'use client';
+"use client";
 
-import './page.css';
-import DetailedInterviewAnalysis from "@/components/DetailedInterviewAnalysis";
+import "./page.css";
 import Feedback from "@/components/Feedback";
 import NavigateBack from "@/components/NavigateBack";
 import ReadMore from "../../../components/ReadMore";
 import axios from "axios";
-import { useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react';
-import { Loader2, Logs } from 'lucide-react';
-import { useMutation } from '@tanstack/react-query';
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Loader2, Logs } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
 import { Card } from "../../../components/ui/card";
+import InterviewResult from "@/components/InterviewResult";
+import InterviewQA from "@/components/InterviewQA";
 
 interface PageProps {
   params: {
@@ -29,17 +30,16 @@ interface AnalysisData {
 }
 
 const Page = (props: PageProps) => {
-
   const { analysis_id } = props.params;
   const searchParams = useSearchParams();
-  const from = searchParams.get('f')
+  const from = searchParams.get("f");
   const [analysisData, setAnalysisData] = useState<Partial<AnalysisData>>({});
-  const [ loading, setLoading ] = useState(true);
-  const [ error, setError ] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    GetAnalysis({id: analysis_id});
-  }, [analysis_id]);  
+    GetAnalysis({ id: analysis_id });
+  }, [analysis_id]);
 
   const { mutate: GetAnalysis } = useMutation({
     mutationKey: ["GetAnalysis"],
@@ -63,13 +63,13 @@ const Page = (props: PageProps) => {
         }
     },
     onSuccess: async (res: any) => {
-        setLoading(false);
+      setLoading(false);
     },
     onError: (error) => {
-        setError("Something went wrong, please try again");
-        setLoading(false);
+      setError("Something went wrong, please try again");
+      setLoading(false);
     },
-});
+  });
 
   if (loading) {
     return (
@@ -80,8 +80,8 @@ const Page = (props: PageProps) => {
     );
   }
 
-  console.log("2 Analysis data : ",analysisData)
-  
+  console.log("2 Analysis data : ", analysisData);
+
   if (Object.keys(analysisData).length === 0) {
     return (
       <div className="flex flex-col items-center justify-center w-full h-full pt-8">
@@ -89,56 +89,68 @@ const Page = (props: PageProps) => {
       </div>
     );
   }
-  
+
   return (
     <div className="flex flex-col w-full h-full pt-8">
-      <h3 className="text-2xl text-center dark:text-white mb-1">Interview Analysis Report</h3>
+      <h3 className="text-2xl text-center dark:text-white mb-1">
+        Interview Analysis Report
+      </h3>
       <div className="flex justify-start w-full mb-8">
         <NavigateBack href={from == "l" ? "/analyse" : "/new"} />
       </div>
       <div className="flex flex-col justify-start w-full mb-12">
         <div className="flex flex-row items-center mb-4">
-          <Logs className='w-6 h-6' />
-          <h1 className="text-xl ml-2">Candidate Name : {analysisData.candidateName}</h1>
-        </div>
-        <div className="flex flex-row gap-4 m-3">
-          {analysisData && (
-            <Card className="bg-[#fafbff] w-full flex-1 max-w-xs md:max-w-full p-4 rounded-lg break-words">
-              <p>Interview</p>
-              <a
-                href={analysisData.interviewRecordingLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-500 cursor-pointer hover:underline"
-              >
-                {analysisData.interviewRecordingLink}
-              </a>
-            </Card>
-          )}
-          {analysisData && (
-            <Card className="bg-[#fafbff] w-full flex-1 max-w-xs md:max-w-full p-4 rounded-lg break-words">
-              <p>Job Description</p>
-              <a
-                href={analysisData.jobDescriptionDocumentLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-500 cursor-pointer hover:underline"
-              >
-                {analysisData.jobDescriptionDocumentLink}
-              </a>
-            </Card>
-          )}
+          <Logs className="w-6 h-6" />
+          <h1 className="text-xl ml-2">
+            Candidate Name : {analysisData.candidateName}
+          </h1>
         </div>
 
+        <div className="flex flex-row gap-4 m-3">
+          {/* Analysis Container on the Left */}
+          <div className="flex-1 analysis-container">
+            <h1 className="text-xl">Analysis</h1>
+            <p>Overview -</p>
+            <ReadMore
+              summary={
+                "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
+              }
+            />
+          </div>
+
+          {/* Cards on the Right */}
+          <div className="flex flex-col items-end gap-4 m-3">
+            {analysisData && (
+              <Card className="bg-[#fafbff] w-[300px] h-[80px] p-4 rounded-lg break-words flex items-center">
+                <p>Interview</p>
+                <a
+                  href={analysisData.interviewRecordingLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 cursor-pointer hover:underline ml-2 truncate"
+                >
+                  {analysisData.interviewRecordingLink}
+                </a>
+              </Card>
+            )}
+            {analysisData && (
+              <Card className="bg-[#fafbff] w-[300px] h-[80px] p-4 rounded-lg break-words flex items-center">
+                <p>Job Description</p>
+                <a
+                  href={analysisData.jobDescriptionDocumentLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 cursor-pointer hover:underline ml-2 truncate"
+                >
+                  {analysisData.jobDescriptionDocumentLink}
+                </a>
+              </Card>
+            )}
+          </div>
+        </div>
       </div>
-      <div className="flex flex-col analysis-container">
-        <h1 className="text-xl">Analysis</h1>
-        Summary / Overview -
-        <ReadMore summary={"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."}></ReadMore>
-        {(analysisData &&
-          <DetailedInterviewAnalysis analysis={analysisData} />
-        )}
-      </div>
+      {analysisData && <InterviewResult analysis={analysisData} />}
+      {analysisData && <InterviewQA analysis={analysisData} />}
       <Feedback analysisId={analysis_id}></Feedback>
     </div>
   );

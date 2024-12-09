@@ -19,3 +19,29 @@
 .analysis-section-card  {
     word-break: break-word;
 }
+.analysis-container {
+    margin-bottom: 0;
+}
+
+.analysis-section {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.analysis-section-card {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+@media print {
+    body {
+      -webkit-print-color-adjust: exact;
+    }
+    .analysis-section-card {
+      width: 100%;
+      margin: 0;
+      padding: 20px;
+    }
+  }  
