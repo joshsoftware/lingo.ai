@@ -17,7 +17,7 @@ const InterviewResult = ({ analysis }: InterviewResultProps) => {
       const componentWidth = componentRef.current.offsetWidth;
       const componentHeight = componentRef.current.scrollHeight;
   
-      const pdfWidth = componentWidth + 100;
+      const pdfWidth = componentWidth + 200;
       const pdfHeight = componentHeight + 50;
   
       const doc = new jsPDF({
@@ -33,14 +33,17 @@ const InterviewResult = ({ analysis }: InterviewResultProps) => {
         doc.save("interview-result.pdf");
         return;
       }
-  
-      let yPosition = 10;
+      let yPosition = 20;
       const lineSpacing = 20;
   
       const addText = (text: string) => {
         const lines = doc.splitTextToSize(text, pdfWidth - 20);
         lines.forEach((line:any) => {
-          doc.text(line, 10, yPosition);
+          doc.text(line, 10, yPosition, {maxWidth: 1200});
+          const lineWidth = doc.getTextWidth(line);
+          if(lineWidth > 1200){
+            addText("");
+          }
           yPosition += lineSpacing;
         });
       };
