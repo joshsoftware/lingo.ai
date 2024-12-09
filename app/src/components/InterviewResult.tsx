@@ -3,7 +3,8 @@ import { Card } from "./ui/card";
 import { ListTodo } from "lucide-react";
 import { Button } from "./ui/button";
 import { jsPDF } from "jspdf";
-import './DetailedErrorAnalysis.css';
+// import "jspdf-autotable"; // Optional for handling tables
+import "./DetailedErrorAnalysis.css";
 
 interface InterviewResultProps {
   analysis: any;
@@ -11,25 +12,114 @@ interface InterviewResultProps {
 
 const InterviewResult = ({ analysis }: InterviewResultProps) => {
   const componentRef = useRef<HTMLDivElement | null>(null);
-
   const handlePrint = () => {
     if (componentRef.current) {
-      const doc = new jsPDF();
-      doc.html(componentRef.current, {
-        callback: (doc:any) => {
-          doc.save("interview-result.pdf");
-        },
-        margin: [10, 10, 10, 10], // Customize margins
-        autoPaging: true,
+      const componentWidth = componentRef.current.offsetWidth;
+      const componentHeight = componentRef.current.scrollHeight;
+  
+      const pdfWidth = componentWidth + 100;
+      const pdfHeight = componentHeight + 50;
+  
+      const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "px",
+        format: [pdfWidth, pdfHeight],
       });
+  
+      const { analysisResult } = analysis;
+  
+      if (!analysisResult) {
+        doc.text("No Results Present!", 10, 10);
+        doc.save("interview-result.pdf");
+        return;
+      }
+  
+      let yPosition = 10;
+      const lineSpacing = 20;
+  
+      const addText = (text: string) => {
+        const lines = doc.splitTextToSize(text, pdfWidth - 20);
+        lines.forEach((line:any) => {
+          doc.text(line, 10, yPosition);
+          yPosition += lineSpacing;
+        });
+      };
+      
+      addText(`Candidate Name: ${analysis.candidateName}`);
+      
+      addText(`Interviewer Name: ${analysis.interviewerName}`);
+
+      addText(`Interview Recording Link: ${analysis.interviewRecordingLink}`);
+
+      addText(`Job Description Document Link: ${analysis.jobDescriptionDocumentLink}`);
+      
+      addText(`Overall Rating: ${analysisResult.overall_rating}`);
+      addText("");
+  
+      addText("Analysis - ");
+      addText("Core Skills:");
+      addText(`Overall Rating: ${analysisResult.result.skills.skills_must_have.overall_rating}`);
+      analysisResult.result.skills.skills_must_have.matched_questions.forEach((question: any) => {
+        addText(`Q: ${question.question}`);
+        addText(`A: ${question.answer}`);
+        addText(`Correctness: ${question.correctness}`);
+        addText(`Remark: ${question.remark}`);
+        addText(`Rating: ${question.rating}`);
+        yPosition += lineSpacing;
+      });
+  
+      addText("Secondary Skills:");
+      addText(`Overall Rating: ${analysisResult.result.skills.skills_good_to_have.overall_rating}`);
+      analysisResult.result.skills.skills_good_to_have.matched_questions.forEach((question: any) => {
+        addText(`Q: ${question.question}`);
+        addText(`A: ${question.answer}`);
+        addText(`Correctness: ${question.correctness}`);
+        addText(`Remark: ${question.remark}`);
+        addText(`Rating: ${question.rating}`);
+        yPosition += lineSpacing;
+      });
+
+      addText("Domain Expertise:");
+      addText(`Overall Rating: ${analysisResult.result.domain_expertise.overall_rating}`);
+      analysisResult.result.domain_expertise.matched_questions.forEach((question: any) => {
+        addText(`Q: ${question.question}`);
+        addText(`A: ${question.answer}`);
+        addText(`Correctness: ${question.correctness}`);
+        addText(`Remark: ${question.remark}`);
+        addText(`Rating: ${question.rating}`);
+        yPosition += lineSpacing;
+      });
+      
+      addText("");
+      if (analysisResult.result.strengths.length > 0) {
+        addText("Strengths:");
+        analysisResult.result.strengths.forEach((strength: string) => {
+          addText(strength);
+        });
+      } else {
+        addText("Strengths : None");
+      }  
+      
+      addText("");
+      if (analysisResult.result.weaknesses.length > 0) {
+        addText("Weaknesses:");
+        analysisResult.result.weaknesses.forEach((weakness: string) => {
+          addText(weakness);
+          yPosition += lineSpacing;
+        });
+      } else {
+        addText("Weaknesses: None");
+      }
+      doc.save("interview-result.pdf");
     }
   };
+   
 
   return (
-    <div className="flex flex-col gap-8 w-full">
-      <div className="flex flex-1 flex-col max-h-full w-full gap-2 justify-start items-start xl:overflow-y-auto mt-8">
-        <div className="analysis-section flex flex-1 flex-col max-h-full w-full gap-2 justify-start items-start xl:overflow-y-auto mt-8">
-          <div className="flex w-full  flex-row items-center justify-between">
+    <div className="flex flex-col w-full">
+      <div className="flex flex-1 flex-row max-sm:flex-col w-full gap-4 justify-center items-stretch mb-8">
+        <div className="analysis-section flex flex-1 flex-col max-h-full w-full gap-2 justify-start items-start mt-8">
+          <div className="flex w-full flex-row items-center justify-between">
             <div className="flex gap-2">
               <ListTodo className="w-6 h-6 text-teal-500" />
               <h1 className="text-xl ml-2">Result</h1>
@@ -46,7 +136,7 @@ const InterviewResult = ({ analysis }: InterviewResultProps) => {
             Compared JD and Interview QAs
           </p>
           <Card className="analysis-section-card bg-[#fafbff] flex-1 w-full max-w-xs md:max-w-full xl:overflow-y-auto p-4 rounded-lg break-words">
-            {analysis.analysisResult ? (
+          {analysis.analysisResult ? (
               <div ref={componentRef}>
                 <h3 className="text-lg font-semibold mt-4">Overall Rating:</h3>
                 <p>{analysis.analysisResult.overall_rating}</p>

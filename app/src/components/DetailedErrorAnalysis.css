@@ -45,3 +45,10 @@
       padding: 20px;
     }
   }  
+
+.analysis-section-card {
+word-wrap: break-word; /* Forces wrapping of long text */
+overflow-wrap: break-word;
+white-space: pre-wrap; /* Preserves line breaks but allows wrapping */
+}
+  

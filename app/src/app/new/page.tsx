@@ -11,10 +11,7 @@ export const metadata: Metadata = {
 
 const page = async () => {
   const { user } = await validateRequest();
-  console.log("User that we are getting on land page : ", user);
-  debugger;
   if (!user) return redirect("/signin");
-  console.log("User that we are getting on land page : ", user);
   return (
     <div className="flex flex-col w-full pt-8">
       <div className="flex justify-start w-full mb-8">

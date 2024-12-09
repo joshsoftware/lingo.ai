@@ -4,6 +4,8 @@ import { PAGINATION_LIMIT } from "@/constants/pagination";
 import { db } from "@/db";
 import { transcriptions } from "@/db/schema";
 import { desc } from "drizzle-orm";
+import { validateRequest } from "@/auth";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -16,7 +18,9 @@ export const metadata: Metadata = {
 };
 
 const page = async () => {
-
+  const { user } = await validateRequest();
+  console.log("User that we are getting on land page : ", user);
+  if (!user) return redirect("/signin");
   const userTranscriptions = await db
     .select({
       id: transcriptions.id,
@@ -29,17 +33,20 @@ const page = async () => {
     .from(transcriptions)
     .orderBy(desc(transcriptions.createdAt))
     .limit(PAGINATION_LIMIT);
-
-  return (
-    <div className="flex flex-col w-full h-full pt-8">
-      <div className="flex justify-start w-full mb-8">
-        <NavigateBack subHeading="Transcriptions" />
+  if ( user.role == 'hr'){
+    return redirect("/analyse");
+  } else {
+    return (
+      <div className="flex flex-col w-full h-full pt-8">
+        <div className="flex justify-start w-full mb-8">
+          <NavigateBack subHeading="Transcriptions" />
+        </div>
+        <div className="flex flex-col items-center overflow-y-auto h-fit w-full">
+            <TranscriptionItem initialTranscriptionsData={userTranscriptions} />
+        </div>
       </div>
-      <div className="flex flex-col items-center overflow-y-auto h-fit w-full">
-          <TranscriptionItem initialTranscriptionsData={userTranscriptions} />
-      </div>
-    </div>
-  );
+    );
+  }
 };
 
 export default page;
