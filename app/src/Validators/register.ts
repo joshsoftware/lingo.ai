@@ -48,3 +48,4 @@ export const signinUserSchema = z.object({
 export type AiCruitRequest = z.infer<typeof aiCruitRequestSchema>;
 export type SignupUserRequest = z.infer<typeof signupUserSchema>;
 export type SigninUserRequest = z.infer<typeof signinUserSchema>;
+export type AiCruitRequest = z.infer<typeof aiCruitRequestSchema>;

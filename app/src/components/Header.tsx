@@ -5,8 +5,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { buttonVariants } from "./ui/button";
+import { User } from "lucia";
 
-const Header = () => {
+const Header = (attr: {user: User | null}) => {
   const pathName = usePathname();
   return (
     <header
@@ -43,9 +44,9 @@ const Header = () => {
             Demo
           </Link>
         )}
-        {pathName !== "/" && pathName !== "/transcriptions" && (
+        {pathName !== "/" && pathName !== "/analyse" && pathName !== "/transcriptions" && (
           <Link
-            href={"/transcriptions"}
+            href={attr?.user?.role == "hr" ? "/analyse" : "/transcriptions"}
             className={cn(
               buttonVariants({
                 className: "!bg-[#668D7E] !hover:bg-[#668D7E] text-white text-xs px-3",

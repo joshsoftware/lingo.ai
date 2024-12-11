@@ -44,14 +44,14 @@ const InterviewAnalysis = (props: InterviewAnalysisProps) => {
       </h1>
       {interviewAnalysis.status == "pending" ? (
         <Button
-          className="flex-1 w-full gap-2 bg-[#3b3c41] hover:bg-[#4b4d5c] text-white whitespace-nowrap"
+          className="flex-1 w-full gap-2 bg-[#668D7E] hover:bg-[#668D7E] text-white whitespace-nowrap"
         >
           Processing
         </Button>
       ) : (
         <Button
           onClick={showAnalysis}
-          className="flex-1 w-full gap-2 bg-[#3f51b5] hover:bg-[#303f9f] text-white whitespace-nowrap"
+          className="flex-1 w-full gap-2 bg-[#668D7E] hover:bg-[#668D7E] text-white whitespace-nowrap"
         >
           Show Analysis
           <ChevronRight className="w-5 h-5" />

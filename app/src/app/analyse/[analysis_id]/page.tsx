@@ -12,6 +12,7 @@ import { useMutation } from "@tanstack/react-query";
 import { Card } from "../../../components/ui/card";
 import InterviewResult from "@/components/InterviewResult";
 import InterviewQA from "@/components/InterviewQA";
+import InterviewConversation from "@/components/InterviewConversation";
 
 interface PageProps {
   params: {
@@ -22,6 +23,7 @@ interface PageProps {
 interface AnalysisData {
   analysisResult: any;
   candidateName: string;
+  interviewerName: string;
   interviewRecordingLink: string;
   jobDescriptionDocumentLink: string;
   parsedJobDescription: string;
@@ -80,8 +82,6 @@ const Page = (props: PageProps) => {
     );
   }
 
-  console.log("2 Analysis data : ", analysisData);
-
   if (Object.keys(analysisData).length === 0) {
     return (
       <div className="flex flex-col items-center justify-center w-full h-full pt-8">
@@ -103,6 +103,11 @@ const Page = (props: PageProps) => {
           <Logs className="w-6 h-6" />
           <h1 className="text-xl ml-2">
             Candidate Name : {analysisData.candidateName}
+          </h1>
+        </div>
+        <div className="flex flex-row items-center mb-4">
+          <h1 className="text-xl ml-2">
+            Interviewer Name : {analysisData.interviewerName}
           </h1>
         </div>
 
@@ -151,6 +156,7 @@ const Page = (props: PageProps) => {
       </div>
       {analysisData && <InterviewResult analysis={analysisData} />}
       {analysisData && <InterviewQA analysis={analysisData} />}
+      {analysisData && <InterviewConversation analysis={analysisData} />}
       <Feedback analysisId={analysis_id}></Feedback>
     </div>
   );
