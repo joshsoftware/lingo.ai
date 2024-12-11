@@ -8,6 +8,13 @@
       "when": 1733478178193,
       "tag": "0000_yielding_silverclaw",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1732817602505,
+      "tag": "0007_chilly_arachne",
+      "breakpoints": true
     }
   ]
 }

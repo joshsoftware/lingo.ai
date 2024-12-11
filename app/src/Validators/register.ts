@@ -33,7 +33,6 @@ export const aiCruitRequestSchema = z.object({
   }),
 });
 
-
 export const signinUserSchema = z.object({
   userEmail: z.string().email({
     message: "Invalid email",
@@ -44,6 +43,7 @@ export const signinUserSchema = z.object({
     message: "Password must be at most 16 characters long",
   }),
 });
+
 
 export type AiCruitRequest = z.infer<typeof aiCruitRequestSchema>;
 export type SignupUserRequest = z.infer<typeof signupUserSchema>;
