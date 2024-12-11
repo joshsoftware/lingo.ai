@@ -44,7 +44,7 @@ const AiCruitFrom = () => {
     },
     onSuccess: async (res) => {
       toast.success("Your Details Received successfully!, Once Completed, You can visit listing page");
-      router.push("/analyse");
+      router.push("/analysis");
     },
     onError: (error) => {
       if (error instanceof AxiosError) {

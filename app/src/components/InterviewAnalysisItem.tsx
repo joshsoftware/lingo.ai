@@ -19,7 +19,7 @@ const InterviewAnalysis = (props: InterviewAnalysisProps) => {
   const { interviewAnalysis, index } = props;
 
   const showAnalysis = () => {
-    router.push(`/analyse/${interviewAnalysis.id}?f=l`);
+    router.push(`/analysis/${interviewAnalysis.id}?f=l`);
   };
 
   return (

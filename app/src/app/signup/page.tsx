@@ -11,7 +11,7 @@ export const revalidate = 0;
 export default async function Page() {
 
     const { user } = await validateRequest();
-    if (user) return redirect("/new");
+    if (user) return redirect("/");
 
 	return (
         <div className="flex flex-col w-full pt-8">

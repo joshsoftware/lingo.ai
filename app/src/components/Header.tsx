@@ -7,7 +7,11 @@ import { usePathname } from "next/navigation";
 import { buttonVariants } from "./ui/button";
 import { User } from "lucia";
 
-const Header = (attr: {user: User | null}) => {
+interface HeaderProps {
+  user: User | null;
+}
+
+const Header = ({ user }: HeaderProps) => {
   const pathName = usePathname();
   return (
     <header
@@ -30,9 +34,9 @@ const Header = (attr: {user: User | null}) => {
         />
       </div>
       <div className="flex gap-2 min-w-fit justify-end">
-        {pathName !== "/" && pathName !== "/new" && (
+        {pathName !== "/" && pathName !== "/analyse" && pathName !== "/record" && (
           <Link
-            href={"/new"}
+            href={user?.role == "hr" ? "/analyse" : "/record"}
             className={cn(
               buttonVariants({
                 className: "!bg-[#668D7E] !hover:bg-[#668D7E] text-white text-xs px-3",
@@ -41,12 +45,12 @@ const Header = (attr: {user: User | null}) => {
             tertiaryFont.className
             )}
           >
-            Demo
+            + New
           </Link>
         )}
-        {pathName !== "/" && pathName !== "/analyse" && pathName !== "/transcriptions" && (
+        {pathName !== "/" && pathName !== "/analysis" && pathName !== "/transcriptions" && (
           <Link
-            href={attr?.user?.role == "hr" ? "/analyse" : "/transcriptions"}
+            href={user?.role == "hr" ? "/analysis" : "/transcriptions"}
             className={cn(
               buttonVariants({
                 className: "!bg-[#668D7E] !hover:bg-[#668D7E] text-white text-xs px-3",

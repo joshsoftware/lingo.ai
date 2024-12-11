@@ -6,7 +6,7 @@ import NavigateBack from "@/components/NavigateBack";
 import ReadMore from "../../../components/ReadMore";
 import axios from "axios";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { Loader2, Logs } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { Card } from "../../../components/ui/card";
@@ -14,10 +14,8 @@ import InterviewResult from "@/components/InterviewResult";
 import InterviewQA from "@/components/InterviewQA";
 import InterviewConversation from "@/components/InterviewConversation";
 
-interface PageProps {
-  params: {
-    analysis_id: string;
-  };
+type PageProps = {
+  params: Promise<{ analysis_id: string }>;
 }
 
 interface AnalysisData {
@@ -32,7 +30,7 @@ interface AnalysisData {
 }
 
 const Page = (props: PageProps) => {
-  const { analysis_id } = props.params;
+  const { analysis_id } = use(props.params);
   const searchParams = useSearchParams();
   const from = searchParams.get("f");
   const [analysisData, setAnalysisData] = useState<Partial<AnalysisData>>({});
@@ -96,7 +94,7 @@ const Page = (props: PageProps) => {
         Interview Analysis Report
       </h3>
       <div className="flex justify-start w-full mb-8">
-        <NavigateBack href={from == "l" ? "/analyse" : "/new"} />
+        <NavigateBack href={from == "l" ? "/analysis" : "/analyse"} />
       </div>
       <div className="flex flex-col justify-start w-full mb-12">
         <div className="flex flex-row items-center mb-4">

@@ -20,7 +20,7 @@ export const useUser = () => {
         },
         onSuccess: async (res) => {
           toast.success("User Registered Successfully");
-          router.push("/new")
+          router.push("/record")
         },
         onError: (error) => {
           if (error instanceof AxiosError) {
@@ -55,7 +55,8 @@ export const useUser = () => {
       },
       onSuccess: async (res) => {
         toast.success("User sign in Successfull");
-        router.push("/new")
+        debugger
+        router.push(res?.role == "hr" ? "/analyse" : "/record")
       },
       onError: (error) => {
         if (error instanceof AxiosError) {

@@ -1,5 +1,4 @@
 import { validateRequest } from "@/auth";
-import AiCruitFrom from "@/components/AiCruitForm";
 import NavigateBack from "@/components/NavigateBack";
 import RecorderCard from "@/components/RecorderCard";
 import { Metadata } from "next";
@@ -17,15 +16,9 @@ const page = async () => {
       <div className="flex justify-start w-full mb-8">
         <NavigateBack href="/" />
       </div>
-      {user.role == "hr" ? (
-        <div className="flex flex-1 justify-center items-start">
-          <AiCruitFrom />
-        </div>
-      ) : (
-        <div className="flex flex-1 justify-center items-start">
-          <RecorderCard userId={user} />
-        </div>
-      )}
+      <div className="flex flex-1 justify-center items-start">
+        <RecorderCard userId={user} />
+      </div>
     </div>
   );
 };

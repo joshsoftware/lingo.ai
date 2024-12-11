@@ -22,7 +22,7 @@ const Landing = (attr: {user: User | null}) => {
         </p>
          <div className="w-full flex gap-3">
         <Link
-          href={"/new"}
+          href={attr?.user?.role == "hr" ? "/analyse" : "/record"}
           className={buttonVariants({
             className: "!bg-[#668D7E] !hover:bg-[#668D7E] text-white",
           })}
@@ -31,7 +31,7 @@ const Landing = (attr: {user: User | null}) => {
         </Link>
 
         <Link
-          href={attr?.user?.role == "hr" ? "/analyse" : "/transcriptions"}
+          href={attr?.user?.role == "hr" ? "/analysis" : "/transcriptions"}
           className={buttonVariants({
             className: "!bg-[#668D7E] !hover:bg-[#668D7E] text-white",
           })}
