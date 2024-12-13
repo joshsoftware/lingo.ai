@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import { tertiaryFont } from "@/fonts";
 import { cn } from "@/lib/utils";

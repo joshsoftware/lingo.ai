@@ -1,4 +1,3 @@
-import { validateRequest } from "@/auth";
 import DetailedTranscription from "@/components/DetailedTranscription";
 import NavigateBack from "@/components/NavigateBack";
 import { db } from "@/db";

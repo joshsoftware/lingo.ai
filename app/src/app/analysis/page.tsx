@@ -1,4 +1,3 @@
-import { validateRequest } from "@/auth";
 import NavigateBack from "@/components/NavigateBack";
 import InterviewAnalysisItem from "@/components/InterviewAnalysisItem";
 import { db } from "@/db";
@@ -10,16 +9,12 @@ export const fetchCache = "force-no-store";
 export const revalidate = 0;
 
 import { Metadata } from "next";
-import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "AiCruit",
 };
 
 const page = async () => {
-
-  // skip user signin validation for now
-
   const interviewAnalysisList = await db
     .select({
       id: interviewAnalysis.id,

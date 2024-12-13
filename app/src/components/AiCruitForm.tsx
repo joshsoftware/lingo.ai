@@ -1,4 +1,5 @@
-"use client";
+'use client'
+
 import { cn } from "@/lib/utils";
 import { Input } from "./ui/input";
 import { Button, buttonVariants } from "./ui/button";
@@ -26,12 +27,6 @@ const AiCruitFrom = () => {
 
   const form = useForm<AiCruitRequest>({
     resolver: zodResolver(aiCruitRequestSchema),
-    defaultValues: {
-      interview_link: "",
-      job_description_link: "",
-      candidate_name: "",
-      interviewer_name: "",
-    },
     mode: "all",
   });
 

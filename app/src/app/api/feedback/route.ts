@@ -7,7 +7,9 @@ export async function POST(req: Request) {
     try {
         const { user } = await validateRequest()
         if(!user) {
-            return new Response(JSON.stringify("UnAuthorized"), { status: 400 });
+            return new Response(JSON.stringify({
+                "message": "unauthorized"
+            }), { status: 400 });
         }
         const body = await req.json();
         const {
@@ -31,6 +33,8 @@ export async function POST(req: Request) {
         if (error instanceof z.ZodError) {
             return new Response(error.message, { status: 422 });
         }
-        return new Response("Failed to save error analysis", { status: 500 });
+        return new Response(JSON.stringify({
+            "message": FEEDBACK_REQUEST_FAILED_MESSAGE
+        }), { status: 500 });
     }
 }

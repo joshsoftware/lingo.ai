@@ -18,14 +18,16 @@ export async function POST(req: Request) {
             .from(userTable)
             .where(eq(userTable.username, userEmail))
 
-        if (!existingUser[0]) {
+        if (existingUser.length === 0) {
             return new Response("User not found", {
                 status: 404,
             })
         }
+        
+        const user = existingUser[0]
 
         // login user
-        const validPassword = await verify(existingUser[0].password_hash, password, {
+        const validPassword = await verify(user.password_hash, password, {
             memoryCost: 19456,
             timeCost: 2,
             outputLen: 32,
@@ -35,11 +37,11 @@ export async function POST(req: Request) {
             return new Response("Incorrect username or password", { status: 401 })
         }
 
-        const session = await lucia.createSession(existingUser[0].id, {});
+        const session = await lucia.createSession(user.id, {});
         const sessionCookie = lucia.createSessionCookie(session.id);
         (await cookies()).set(sessionCookie.name, sessionCookie.value, sessionCookie.attributes);
 
-        return new Response(JSON.stringify(existingUser[0]), { status: 200 });
+        return new Response(JSON.stringify(user), { status: 200 });
 
     } catch (error) {
         console.log(error);

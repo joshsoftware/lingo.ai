@@ -1,4 +1,5 @@
-"use client";
+'use client'
+
 import { Card } from "./ui/card";
 import './DetailedInterviewAnalysis.css';
 import { SquareX } from "lucide-react";

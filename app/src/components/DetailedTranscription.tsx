@@ -1,4 +1,5 @@
-"use client";
+'use client'
+
 import { format } from "date-fns";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";

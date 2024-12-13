@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import "./page.css";
 import Feedback from "@/components/Feedback";
@@ -15,7 +15,7 @@ import InterviewQA from "@/components/InterviewQA";
 import InterviewConversation from "@/components/InterviewConversation";
 
 type PageProps = {
-  params: Promise<{ analysis_id: string }>;
+  params: { analysis_id: string };
 }
 
 interface AnalysisData {
@@ -30,7 +30,7 @@ interface AnalysisData {
 }
 
 const Page = (props: PageProps) => {
-  const { analysis_id } = use(props.params);
+  const analysis_id = props.params.analysis_id;
   const searchParams = useSearchParams();
   const from = searchParams.get("f");
   const [analysisData, setAnalysisData] = useState<Partial<AnalysisData>>({});

@@ -1,4 +1,5 @@
-"use client";
+'use client'
+
 import { primaryFont, tertiaryFont } from "@/fonts";
 import { cn } from "@/lib/utils";
 import Image from "next/image";

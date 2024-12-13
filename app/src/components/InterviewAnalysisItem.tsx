@@ -1,10 +1,12 @@
-"use client";
+'use client'
+
 import "./InterviewAnalysisItem.css";
 import { interviewAnalysisType } from "@/db/schema";
 import { format } from "date-fns";
-import { Button } from "./ui/button";
+import { Button, buttonVariants } from "./ui/button";
 import { useRouter } from "next/navigation";
 import { ChevronRight } from "lucide-react";
+import Link from "next/link";
 
 interface InterviewAnalysisProps {
   interviewAnalysis: Pick<
@@ -43,19 +45,20 @@ const InterviewAnalysis = (props: InterviewAnalysisProps) => {
           : "N/A"}
       </h1>
       {interviewAnalysis.status == "pending" ? (
-        <Button
-          className="flex-1 w-full gap-2 bg-[#668D7E] hover:bg-[#668D7E] text-white whitespace-nowrap"
+        <p
+          className="flex-1 w-full gap-2 bg-[#E2EBE7FF] text-[#668D7E] whitespace-nowrap px-4 py-2 rounded-md"
         >
           Processing
-        </Button>
+        </p>
       ) : (
-        <Button
-          onClick={showAnalysis}
-          className="flex-1 w-full gap-2 bg-[#668D7E] hover:bg-[#668D7E] text-white whitespace-nowrap"
+        <Link
+          href={`/analysis/${interviewAnalysis.id}?f=l`}
+          className={buttonVariants({
+            className: "!bg-[#668D7E] !hover:bg-[#668D7E] text-white whitespace-nowrap",
+          })}
         >
           Show Analysis
-          <ChevronRight className="w-5 h-5" />
-        </Button>
+        </Link>
       )}
     </div>
   );

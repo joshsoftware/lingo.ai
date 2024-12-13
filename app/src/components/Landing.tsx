@@ -3,7 +3,6 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { buttonVariants } from "./ui/button";
 import Link from "next/link";
-import { validateRequest } from "@/auth";
 import { User } from "lucia";
 
 const Landing = (attr: {user: User | null}) => {
