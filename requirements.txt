@@ -34,6 +34,7 @@ wget
 nemo_toolkit[asr]==2.0.0rc0
 nltk
 psycopg2
+python-multipart
 git+https://github.com/SYSTRAN/faster-whisper.git #Reaplce with 'faster-whisper==VERSION' once a new version with BatchedInferencePipeline is deployed to PYPI
 git+https://github.com/MahmoudAshraf97/ctc-forced-aligner.git
 

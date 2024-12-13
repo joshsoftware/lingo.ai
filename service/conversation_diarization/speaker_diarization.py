@@ -1,6 +1,7 @@
 import json
 import os
 import re
+from typing import BinaryIO
 import uuid
 import ollama
 import faster_whisper
@@ -31,29 +32,15 @@ from conversation_diarization.request import InterviewAnalysisRequest
 
 LLM = "llama3"
 TEMPERATURE = 0.2
+COMPUTING_DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+WHISPER_MODEL = "medium.en"
+WHISPER_BATCH_SIZE = 8
+mtypes = {"cpu": "int8", "cuda": "float16"}
 
 def create_prompt(transcription: str) -> str:
     return QNA_PROMPT_MESSAGE.replace("<TRANSCRIPTION>", transcription)
 
-def transcription_with_speaker_diarization(request: InterviewAnalysisRequest):
-    """
-    Method to transcribe the audio, with speaker diarization using Faster Whisper, NeMo and ForceAligner.
-    :param audio_link: The conversation text to be transcribed.
-    :return: Transcribed text.
-    """
-    # Configuration
-    COMPUTING_DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-    WHISPER_MODEL = "medium.en"
-    WHISPER_BATCH_SIZE = 8
-    mtypes = {"cpu": "int8", "cuda": "float16"}
-    
-    # Generate unique session directory
-    session_id = str(uuid.uuid4())
-    session_path = os.path.join("service/conversation_diarization/temp_outputs", session_id)
-    os.makedirs(session_path, exist_ok=True)
-
-    AUDIO_FILE_PATH = request.interview_link
-
+def transcribe_audio(audio: str | BinaryIO):
     # Transcribe the audio file
     whisper_model = faster_whisper.WhisperModel(
         WHISPER_MODEL,
@@ -61,7 +48,7 @@ def transcription_with_speaker_diarization(request: InterviewAnalysisRequest):
         compute_type=mtypes[COMPUTING_DEVICE]
     )
     whisper_pipeline = faster_whisper.BatchedInferencePipeline(whisper_model)
-    audio_waveform = faster_whisper.decode_audio(AUDIO_FILE_PATH)
+    audio_waveform = faster_whisper.decode_audio(audio)
     audio_waveform_tensors = torch.from_numpy(audio_waveform)
 
     transcript_segments, transcript_info = whisper_pipeline.transcribe(
@@ -74,6 +61,37 @@ def transcription_with_speaker_diarization(request: InterviewAnalysisRequest):
     # clear gpu vram
     del whisper_model, whisper_pipeline
     # torch.cuda.empty_cache()
+    
+    return {
+        "audio_waveform": audio_waveform,
+        "audio_waveform_tensors": audio_waveform_tensors,
+        "transcript_segments": transcript_segments,
+        "transcript_info": transcript_info,
+        "full_transcript": full_transcript
+    }
+
+def transcription_with_speaker_diarization(request: InterviewAnalysisRequest):
+    """
+    Method to transcribe the audio, with speaker diarization using Faster Whisper, NeMo and ForceAligner.
+    :param audio_link: The conversation text to be transcribed.
+    :return: Transcribed text.
+    """
+    
+    # Generate unique session directory
+    session_id = str(uuid.uuid4())
+    session_path = os.path.join("service/conversation_diarization/temp_outputs", session_id)
+    os.makedirs(session_path, exist_ok=True)
+
+    AUDIO_FILE_PATH = request.interview_link
+
+    # Transcribe the audio file
+    transcription_result = transcribe_audio(request.interview_link)
+    audio_waveform = transcription_result["audio_waveform"]
+    audio_waveform_tensors = transcription_result["audio_waveform_tensors"]
+    transcript_segments = transcription_result["transcript_segments"]
+    transcript_info = transcription_result["transcript_info"]
+    full_transcript = transcription_result["full_transcript"]
+    
 
     # Forced Alignment
     alignment_model, alignment_tokenizer = load_alignment_model(

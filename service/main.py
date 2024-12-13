@@ -1,15 +1,16 @@
 import json
 import os
-from fastapi import FastAPI, BackgroundTasks
+from fastapi import FastAPI, BackgroundTasks, UploadFile
 from fastapi.responses import JSONResponse
 import psycopg2
 from logger import logger
-from conversation_diarization.speaker_diarization import transcription_with_speaker_diarization
+from conversation_diarization.speaker_diarization import transcribe_audio, transcription_with_speaker_diarization
 from starlette.middleware.cors import CORSMiddleware
 from audio_service import translate_with_whisper
 from conversation_diarization.dbcon import initDbConnection
 from conversation_diarization.jd_interview_aligner import align_interview_with_job_description
 from conversation_diarization.request import InterviewAnalysisRequest
+from conversation_diarization.audio_transcription_request import AudioTranscriptionRequest
 from summarizer import summarize_using_openai
 from pydantic import BaseModel
 
@@ -58,6 +59,24 @@ async def upload_audio(body: Body):
     except Exception as e:
         return JSONResponse(content={"message": str(e)}, status_code=500)
 
+
+@app.post("/audio-transcription/network")
+async def audio_transcription(request: AudioTranscriptionRequest):
+    try:
+        transcription = transcribe_audio(request.audio)
+        return JSONResponse(content={"transcription": transcription["full_transcript"]}, status_code=200)
+    
+    except Exception as e:
+        return JSONResponse(content={"result": str(e)}, status_code=500)
+    
+@app.post("/audio-transcription/file")
+async def audio_transcription(file: UploadFile):
+    try:
+        transcription = transcribe_audio(file.file)
+        return JSONResponse(content={"transcription": transcription["full_transcript"]}, status_code=200)
+    
+    except Exception as e:
+        return JSONResponse(content={"result": str(e)}, status_code=500)
 
 @app.post("/analyse-interview")
 async def analyse_interview(request: InterviewAnalysisRequest, background_tasks: BackgroundTasks):
