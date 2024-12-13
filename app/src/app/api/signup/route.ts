@@ -54,7 +54,7 @@ export async function POST(req: Request) {
     if (response) {
       const session = await lucia.createSession(userId, {});
       const sessionCookie = lucia.createSessionCookie(session.id);
-      cookies().set(sessionCookie.name, sessionCookie.value, sessionCookie.attributes);
+      (await cookies()).set(sessionCookie.name, sessionCookie.value, sessionCookie.attributes);
 
       return new Response(JSON.stringify({ userId: response[0].id }), {
         status: 201,
