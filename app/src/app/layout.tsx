@@ -69,7 +69,9 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head />
-      <body className={`h-screen flex flex-col overflow-y-auto ${secondaryFont.className}`}>
+      <body
+        className={`flex flex-col overflow-y-auto ${secondaryFont.className}`}
+      >
         <TanstackQueryProvider>
           <Header user={user} />
           <section className="flex-1 overflow-y-auto">

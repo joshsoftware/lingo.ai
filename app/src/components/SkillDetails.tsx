@@ -1,24 +1,15 @@
 import React from "react";
-import {
-  FaCheckCircle,
-  FaTimesCircle,
-  FaQuestionCircle,
-  FaExclamationTriangle,
-} from "react-icons/fa";
-import { FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa"; // For star rating
-import "./SkillDetails.css";
-
-interface Skill {
-  question: string;
-  answer: string;
-  correctness: "unknown" | "wrong" | "partially right" | "right";
-  rating: number; // Out of 10
-  remark: string;
-}
+import { FaCheck, FaTimes } from "react-icons/fa";
 
 interface SkillDetailsProps {
   title: string;
-  skills: Skill[];
+  skills: {
+    question: string;
+    answer: string;
+    correctness: "unknown" | "wrong" | "partially right" | "right";
+    rating: number;
+    remark: string;
+  }[];
   ratingScaleMax: number;
 }
 
@@ -27,68 +18,56 @@ const SkillDetails: React.FC<SkillDetailsProps> = ({
   skills,
   ratingScaleMax,
 }) => {
-  const getCorrectnessIcon = (correctness: Skill["correctness"]) => {
-    switch (correctness) {
-      case "right":
-        return <FaCheckCircle className="icon-success" title="Right" />;
-      case "wrong":
-        return <FaTimesCircle className="icon-error" title="Wrong" />;
-      case "partially right":
-        return (
-          <FaExclamationTriangle
-            className="icon-warning"
-            title="Partially Right"
-          />
-        );
-      case "unknown":
-        return <FaQuestionCircle className="icon-neutral" title="Unknown" />;
-      default:
-        return null;
-    }
-  };
-
-  const renderStars = (rating: number) => {
-    const stars = [];
-    for (let i = 1; i <= ratingScaleMax; i++) {
-      if (rating >= i) {
-        stars.push(<FaStar key={i} className="star-icon full" />);
-      } else if (rating > i - 1 && rating < i) {
-        stars.push(<FaStarHalfAlt key={i} className="star-icon half" />);
-      } else {
-        stars.push(<FaRegStar key={i} className="star-icon empty" />);
-      }
-    }
-    return stars;
-  };
-
   return (
-    <div className="skill-details">
-      <h2>{title}</h2>
-      <div className="skills-grid">
-        {skills.map((skill, index) => (
-          <div key={index} className="skill-card">
-            <div className="skill-section">
-              <h4>Question</h4>
-              <p>{skill.question}</p>
+    <div className="mb-8 mt-6">
+      <h3 className="text-xl text-gray-900 mb-6">{title}</h3>
+      <div className="space-y-6">
+        {skills.map((skill, idx) => (
+          <div
+            key={idx}
+            className="bg-white rounded-lg border border-gray-200 p-6"
+          >
+            <div>
+              <p className="text-xl font-semibold text-gray-800 mb-2">
+                Question: {skill.question}
+              </p>
+              <p className="text-lg text-gray-700 mb-4">
+                <strong>Answer:</strong> {skill.answer}
+              </p>
             </div>
-            <div className="skill-section">
-              <h4>Answer</h4>
-              <p>{skill.answer}</p>
-            </div>
-            <div className="skill-section correctness">
-              <h4>Correctness</h4>
-              <div className="correctness-icon">
-                {getCorrectnessIcon(skill.correctness)}
-                <span>{skill.correctness.replace(/-/g, " ")}</span>
+
+            <div className="mt-4 flex flex-row items-end justify-between">
+              <p className="text-gray-700 text-lg">
+                <strong>Remark:</strong>{" "}
+                {skill.remark.length > 0 ? skill.remark : "--"}
+              </p>
+              <div className="flex justify-between items-center">
+                <div></div>
+                <div className="flex items-center">
+                  <p className="text-gray-700 text-lg mr-2">
+                    <strong>Rating:</strong> {skill.rating}/{ratingScaleMax}
+                  </p>
+                  <div
+                    className={`${
+                      skill.correctness === "right"
+                        ? "bg-green-100 text-green-600"
+                        : skill.correctness === "wrong"
+                        ? "bg-red-100 text-red-600"
+                        : skill.correctness === "partially right"
+                        ? "bg-yellow-100 text-yellow-600"
+                        : "bg-gray-200 text-gray-600"
+                    } px-3 py-1 rounded-full text-sm font-medium`}
+                  >
+                    {skill.correctness === "right"
+                      ? "Correct"
+                      : skill.correctness === "wrong"
+                      ? "Incorrect"
+                      : skill.correctness === "partially right"
+                      ? "Partially Correct"
+                      : "Unknown"}
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="skill-section">
-              <h4>Rating</h4>
-              <div className="rating-bar">{renderStars(skill.rating)}</div>
-            </div>
-            <div className="skill-section">
-              <h4>Remark</h4>
-              <p>{skill.remark}</p>
             </div>
           </div>
         ))}
