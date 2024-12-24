@@ -1,13 +1,11 @@
-"use client";
-
 import { primaryFont } from "@/fonts";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
-import { Button, buttonVariants } from "./ui/button";
-import { useRouter } from "next/navigation";
+import { buttonVariants } from "./ui/button";
 import Link from "next/link";
+import { User } from "lucia";
 
-const Landing = () => {
+const Landing = (attr: {user: User | null}) => {
 
   return (
     <div className="flex flex-col md:flex-row w-full h-full justify-between gap-4 pt-16">
@@ -23,7 +21,7 @@ const Landing = () => {
         </p>
          <div className="w-full flex gap-3">
         <Link
-          href={"/new"}
+          href={attr?.user?.role == "hr" ? "/analyse" : "/record"}
           className={buttonVariants({
             className: "!bg-[#668D7E] !hover:bg-[#668D7E] text-white",
           })}
@@ -32,7 +30,7 @@ const Landing = () => {
         </Link>
 
         <Link
-          href={"/transcriptions"}
+          href={attr?.user?.role == "hr" ? "/analysis" : "/transcriptions"}
           className={buttonVariants({
             className: "!bg-[#668D7E] !hover:bg-[#668D7E] text-white",
           })}

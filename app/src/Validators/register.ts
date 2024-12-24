@@ -18,6 +18,21 @@ export const signupUserSchema = z.object({
 
 });
 
+export const aiCruitRequestSchema = z.object({
+  interview_link: z.string().url({
+    message: "Invalid URL format for the interview link",
+  }),
+  job_description_link: z.string().url({
+    message: "Invalid URL format for the job description link",
+  }),
+  candidate_name: z.string().min(2, {
+    message: "Candidate Name should be at least 2 characters long",
+  }),
+  interviewer_name: z.string().min(2, {
+    message: "Interviewer Name should be at least 2 characters long",
+  }),
+});
+
 export const signinUserSchema = z.object({
   userEmail: z.string().email({
     message: "Invalid email",
@@ -29,5 +44,8 @@ export const signinUserSchema = z.object({
   }),
 });
 
+
+export type AiCruitRequest = z.infer<typeof aiCruitRequestSchema>;
 export type SignupUserRequest = z.infer<typeof signupUserSchema>;
 export type SigninUserRequest = z.infer<typeof signinUserSchema>;
+export type AiCruitRequest = z.infer<typeof aiCruitRequestSchema>;
