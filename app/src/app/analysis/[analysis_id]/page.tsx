@@ -13,10 +13,11 @@ import { Card } from "../../../components/ui/card";
 import InterviewResult from "@/components/InterviewResult";
 import InterviewQA from "@/components/InterviewQA";
 import InterviewConversation from "@/components/InterviewConversation";
+import InterviewAnalysis from "@/components/InterviewAnalysis";
 
 type PageProps = {
   params: { analysis_id: string };
-}
+};
 
 interface AnalysisData {
   analysisResult: any;
@@ -27,6 +28,8 @@ interface AnalysisData {
   parsedJobDescription: string;
   questionsAnswers: any;
   transcript: string;
+  conversation: string;
+  summary: string;
 }
 
 const Page = (props: PageProps) => {
@@ -44,23 +47,25 @@ const Page = (props: PageProps) => {
   const { mutate: GetAnalysis } = useMutation({
     mutationKey: ["GetAnalysis"],
     mutationFn: async (payload: any) => {
-        setLoading(true);
-        const analysis = await axios.post("/api/analyse/get", payload);
-        const analysisData = analysis.data[0];
-        console.log("Ananlysis Data : ", analysisData)
-        if(analysisData) {
-          const data = {
-            analysisResult: JSON.parse(analysisData.analysisResult),
-            candidateName: analysisData.candidateName,
-            interviewRecordingLink: analysisData.interviewRecordingLink,
-            jobDescriptionDocumentLink: analysisData.jobDescriptionDocumentLink,
-            parsedJobDescription: analysisData.parsedJobDescription,
-            questionsAnswers: JSON.parse(analysisData.questions_answers),
-            conversation: analysisData.conversation,
-            transcript: analysisData.transcript,
-          }
-          setAnalysisData(data);
-        }
+      setLoading(true);
+      const analysis = await axios.post("/api/analyse/get", payload);
+      const analysisData = analysis.data[0];
+      if (analysisData) {
+        const analysisResult = JSON.parse(analysisData.analysisResult);
+        const data = {
+          analysisResult: analysisResult,
+          candidateName: analysisData.candidateName,
+          interviewerName: analysisData.interviewerName,
+          interviewRecordingLink: analysisData.interviewRecordingLink,
+          jobDescriptionDocumentLink: analysisData.jobDescriptionDocumentLink,
+          parsedJobDescription: analysisData.parsedJobDescription,
+          questionsAnswers: JSON.parse(analysisData.questions_answers),
+          conversation: analysisData.conversation,
+          transcript: analysisData.transcript,
+          summary: analysisResult.summary,
+        };
+        setAnalysisData(data);
+      }
     },
     onSuccess: async (res: any) => {
       setLoading(false);
@@ -88,6 +93,31 @@ const Page = (props: PageProps) => {
     );
   }
 
+  console.log(analysisData);
+
+  return (
+    <InterviewAnalysis
+      candidateName={analysisData.candidateName ?? ""}
+      interviewerName={analysisData.interviewerName}
+      overview={analysisData.summary ?? ""}
+      interviewLink={analysisData.interviewRecordingLink ?? ""}
+      jobDescriptionLink={analysisData.jobDescriptionDocumentLink ?? ""}
+      overallRating={analysisData.analysisResult.overall_rating}
+      ratingScale={analysisData.analysisResult.rating_scale}
+      coreSkills={analysisData.analysisResult.result.skills.core.questions}
+      secondarySkills={
+        analysisData.analysisResult.result.skills.secondary.questions
+      }
+      domainSkills={
+        analysisData.analysisResult.result.domain_expertise.questions
+      }
+      strengths={analysisData.analysisResult.result.strengths}
+      weaknesses={analysisData.analysisResult.result.weaknesses}
+      conversation={[analysisData.conversation ?? ""]}
+      transcript={[analysisData.transcript ?? ""]}
+    />
+  );
+
   return (
     <div className="flex flex-col w-full h-full pt-8">
       <h3 className="text-2xl text-center dark:text-white mb-1">
@@ -98,7 +128,6 @@ const Page = (props: PageProps) => {
       </div>
       <div className="flex flex-col justify-start w-full mb-12">
         <div className="flex flex-row items-center mb-4">
-          <Logs className="w-6 h-6" />
           <h1 className="text-xl ml-2">
             Candidate Name : {analysisData.candidateName}
           </h1>
@@ -114,11 +143,7 @@ const Page = (props: PageProps) => {
           <div className="flex-1 analysis-container">
             <h1 className="text-xl">Analysis</h1>
             <p>Overview -</p>
-            <ReadMore
-              summary={
-                "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
-              }
-            />
+            <ReadMore summary={analysisData.summary ?? ""} />
           </div>
 
           {/* Cards on the Right */}
