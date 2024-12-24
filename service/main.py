@@ -11,6 +11,7 @@ from conversation_diarization.dbcon import initDbConnection
 from conversation_diarization.jd_interview_aligner import align_interview_with_job_description
 from conversation_diarization.request import InterviewAnalysisRequest
 from conversation_diarization.audio_transcription_request import AudioTranscriptionRequest
+from conversation_diarization.action_extrator import extract_action_from_transcription
 from summarizer import summarize_using_openai
 from pydantic import BaseModel
 
@@ -61,7 +62,7 @@ async def upload_audio(body: Body):
 
 
 @app.post("/audio-transcription/network")
-async def audio_transcription(request: AudioTranscriptionRequest):
+async def audio_transcription_from_network(request: AudioTranscriptionRequest):
     try:
         transcription = transcribe_audio(request.audio)
         return JSONResponse(content={"transcription": transcription["full_transcript"]}, status_code=200)
@@ -70,12 +71,30 @@ async def audio_transcription(request: AudioTranscriptionRequest):
         return JSONResponse(content={"result": str(e)}, status_code=500)
     
 @app.post("/audio-transcription/file")
-async def audio_transcription(file: UploadFile):
+async def audio_transcription_from_file(file: UploadFile):
     try:
         transcription = transcribe_audio(file.file)
         return JSONResponse(content={"transcription": transcription["full_transcript"]}, status_code=200)
     
     except Exception as e:
+        return JSONResponse(content={"result": str(e)}, status_code=500)
+    
+@app.post("/get-action-from-audio")
+async def get_action_from_transcription(file: UploadFile):
+    try:
+        # Transcribe
+        # transcription = transcribe_audio(audio=file.file, translate=True)
+        translation = translate_with_whisper(file.file)
+        
+        # Get action
+        # action = extract_action_from_transcription(transcription["full_transcript"])
+        action = extract_action_from_transcription(translation)
+        
+        # Return response
+        return JSONResponse(content={"result": action}, status_code=200)
+    
+    except Exception as e:
+        print(e)
         return JSONResponse(content={"result": str(e)}, status_code=500)
 
 @app.post("/analyse-interview")

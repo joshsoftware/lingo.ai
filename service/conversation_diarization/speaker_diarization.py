@@ -40,7 +40,7 @@ mtypes = {"cpu": "int8", "cuda": "float16"}
 def create_prompt(transcription: str) -> str:
     return QNA_PROMPT_MESSAGE.replace("<TRANSCRIPTION>", transcription)
 
-def transcribe_audio(audio: str | BinaryIO):
+def transcribe_audio(audio: str | BinaryIO, translate: bool = False):
     # Transcribe the audio file
     whisper_model = faster_whisper.WhisperModel(
         WHISPER_MODEL,
@@ -53,7 +53,8 @@ def transcribe_audio(audio: str | BinaryIO):
 
     transcript_segments, transcript_info = whisper_pipeline.transcribe(
         audio_waveform,
-        batch_size=WHISPER_BATCH_SIZE
+        batch_size=WHISPER_BATCH_SIZE,
+        task="translate" if translate else "transcribe"
     )
 
     full_transcript = "".join(segment.text for segment in transcript_segments)

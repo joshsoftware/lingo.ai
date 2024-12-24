@@ -45,6 +45,7 @@ def align_interview_with_job_description(job_description_link, interview_qna):
     domain_expertise = response_text_json["domain_expertise"]
     strengths = response_text_json["strengths"]
     weaknesses = response_text_json["weaknesses"]
+    summary = response_text_json["summary"]
     
     def get_matched_questions(question_ids):
         matched_questions = []
@@ -68,6 +69,7 @@ def align_interview_with_job_description(job_description_link, interview_qna):
         "analysis": {
             "rating_scale": [1, 10],
             "overall_rating": overall_rating,
+            "summary": summary,
             "result": {
                 "skills": {
                     "core": {

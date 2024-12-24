@@ -72,7 +72,7 @@ and also Read the below Questions of the Interview:
 
 Now do this:
 1. Analyze the above Questions with JD, and evaluate if these Question's are relevant to the JD
-2. Based on whole evaluation you've done, add the strengths and weaknesses of the candidate.
+2. Based on whole evaluation you've done, add the strengths, weaknesses and overall summary of the candidate.
 3. I want your response as a **pure JSON string**, in the following format:
 
 ```json
@@ -81,9 +81,50 @@ Now do this:
     "secondary_skills": ["Question Numbers which are aligned for (Good to have)"],
     "domain_expertise": ["Question Numbers which are aligned for Responsibilities"],
     "strengths":["These are candidate's qualities"],
-    "weaknesses":["These are candidate's weaknesses"]
+    "weaknesses":["These are candidate's weaknesses"],
+    "summary": "Overall Summary of the candidate"
 }
 
 Important: You must return only the JSON object. Do not add any explanations, headers, or other text outside the JSON object. If you include anything outside of the JSON, the response will be considered invalid.
 Do not prefix or suffix the response with anything like "Here is the analysis."
+"""
+
+
+ACTION_EXTRATOR_PROMPT = """
+<USER_COMMAND>
+
+Above is the command given by a banking app user.
+Goal here is to convert this command into an actionable JSON object.
+
+Following is the list of action we support.
+
+[
+    {
+        "action": "money_transfer",
+        "data": {
+            "amount": "",
+            "recipient": ""
+        }
+    },
+    {
+        "action": "account_balance_check",
+        "data": {
+            
+        }
+    },
+    {
+        "action": "loan_emi_check",
+        "data": {
+            
+        }
+    }
+]
+
+Check if the given command aligns to one of the actions listed above, if yes then give the JSON object with relevant data added in the 'data' param, if no then response back with 'unsupported' as action and put the actual user command as data.
+
+Please note, not all commands need any information in data, only put data when it's supporting the action (like in case of money_transfer the amount and recipient are necessary details, but nothing is needed in case of account_balance_check)
+
+Important: You must return only the JSON object. Do not add any explanations, headers, or other text outside the JSON object. If you include anything outside of the JSON, the response will be considered invalid.
+Do not prefix or suffix the response with anything like "Here is the result."
+
 """
