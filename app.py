@@ -1,10 +1,12 @@
 from dotenv import load_dotenv
 import whisper
-import gradio as gr
 import ollama
 import logging
 from logger import logger
 import openai
+import whisper_timestamped as whisper_ts
+import json
+import datetime
 
 # Load environment variables
 load_dotenv()
@@ -16,7 +18,7 @@ from load_model import load_model
 
 openai.api_key = openai_api_key
 #Load whisher model
-model = load_model(model_id, model_path)
+model = load_model(model_id, model_path, True)
 
 
 #transcripe the audio to its original language
@@ -35,6 +37,19 @@ def transcribe(audio):
     transcription = result["text"]
     return transcription
 
+def transcribe_with_whisper_ts(audio_file):
+    audio = whisper_ts.load_audio(audio_file)
+    logger.info("Started transciption through whishper")
+    #as suggested in the document
+    options = dict(beam_size=5, best_of=5, temperature=(0.0, 0.2, 0.4, 0.6, 0.8, 1.0))
+    translate_options = dict(task="translate", **options)
+    print(datetime.datetime.now())
+    result = whisper_ts.transcribe_timestamped(model,audio,condition_on_previous_text=False,vad=True,trust_whisper_timestamps=False,**translate_options)
+    print(datetime.datetime.now())
+    #result = whisper_ts.transcribe(model, audio)
+    return result
+
+
 #translate the audio file to English language using whisper model
 def translate_with_whisper(audio): 
     logger.info("Started transciption through whishper")
@@ -46,13 +61,13 @@ def translate_with_whisper(audio):
 #translate the text from transciption to English language
 def translate_with_ollama(text):
     logger.info("Started transciption through llama")
-    response = ollama.generate(model= "llama3.1", prompt = "Translate the following text to English:"+text+"\n SUMMARY:\n")
+    response = ollama.generate(model= "llama3.2", prompt = "Translate the following text to English:"+text+"\n SUMMARY:\n")
     translation = response["response"]
     return translation
 
 #Using Ollama and llama3.1 modle, summarize the English translation
 def summarize_using_llama(text):
-    response = ollama.generate(model= "llama3.1", prompt = "Provide the summary wiht bullet points:"+text+"\n SUMMARY:\n")
+    response = ollama.generate(model= "llama3.2", prompt = "Provide highlights of conversion inbullet points:"+text+"\n \n")
     summary = response["response"]
     return summary
 
@@ -75,54 +90,18 @@ def summarize_using_openai(text):
         logger.error(e)
         summary = "Unable to  exract summary"
     return summary
-
-
-#UI with tabs, 
-theme = gr.themes.Glass(spacing_size="lg", radius_size="lg",primary_hue="blue", font=["Optima","Candara"])
-with gr.Blocks(theme, title="Voice Summarization") as block:
-    #Tab for recording the audio and upload it for transription, translation and summarization
-    with gr.Tab("Record"):
-        with gr.Row():
-               
-            inp_audio = gr.Audio(
-                label="Input Video",
-                type="filepath",
-                sources = ["microphone"],
-                elem_classes=["primary"]
-            )
-        with gr.Row():
-            #out_transcribe = gr.TextArea(label="Transcipt")
-            out_translate = gr.TextArea(label="Translate")
-        with gr.Row():
-            out_summary = gr.TextArea(label="Call Summary")
-        with gr.Row():   
-            submit_btn = gr.Button("Submit")
-
-        #submit_btn.click(transcribe, inputs=[inp_audio], outputs=[out_transcribe,out_translate, out_summary])
-        submit_btn.click(process_all_steps, inputs=[inp_audio], outputs=[out_translate, out_summary])
-
-    #Tab for uploading the audio file for transription, translation and summarization
-    with gr.Tab("Upload"):
-        with gr.Row():
-               
-            inp_audio_file = gr.File(
-                label="Upload Audio File",
-                type="filepath",
-                file_types=["m4a","mp3","webm","mp4","mpga","wav","mpeg"],
-            )
-        with gr.Row():
-            out_transcribe = gr.TextArea(label="Transcipt")
-            out_translate = gr.TextArea(label="Translate")
-        with gr.Row():
-            out_summary = gr.TextArea(label="Call Summary")
-        with gr.Row():    
-            submit_btn = gr.Button("Submit")
-
-        
-
-        submit_btn.click(transcribe, inputs=[inp_audio_file], outputs=[out_transcribe,out_translate, out_summary])
-    
- 
-
-
-block.launch(debug = True)
+'''
+text="It's like a dialogue in a movie. They don't believe if you say you are going to win. They believe only if you say you have won. It's very difficult to get a name in India. If you win in sports, everyone will be able to say the name you have won. How is this situation for you? We have been training for 4 years. In 4 years, I have been to many national meet like this. But at that time, I have only won bronze, silver and gold. In this meet, I have won my first gold. For this, We worked very hard for a year and achieved this success. Superb! How did your journey start? Tell us about your family. I don't have a father in my family. I have only my mother. My mother is a farmer. I have two sisters. When I was in 8th or 9th grade, I ran a school sports relay. At that time, my school PD sir took me to the district division. I won medals in that. But I didn't win medals even at the state level. At that time, I was not doing any training. I went to Koko training after coming to college. I was in Koko training for 3 years. After that, I came to Athletics school. My coach's name is Manikandan Arumugam. I trained with her for 4 years and now I am fully involved in Athletics. Superb! Superb! They say one important thing. No matter what sport you play, if you get angry, you can't win. You were talking about your coach, Manikandan Arumugam, correct? You tell about him. He is also an Athlete Sir. He is working in Southern Railway. He has been medalist for 10 years in National level. He has kept his rank for 10 years."
+'''
+#Marathi audio
+trasnslation = transcribe_with_whisper_ts("https://utfs.io/f/9ed82ee5-4dd9-4eeb-8f77-9a1dfbf35bc2-gfje9d.mp3")
+#Tamil audio
+#trasnslation = transcribe_with_whisper_ts("https://utfs.io/f/3c714bc6-f728-48b6-813c-a77a8d281a7e-gfje9d.mp3")
+#trasnslation = transcribe_with_whisper_ts("https://utfs.io/f/d3c3c169-02b7-4b70-a3e2-8f62514f5433-gfje9d.mp3")
+print(trasnslation["text"])
+segments = trasnslation["segments"]
+for segment in segments:
+    txt = "{0} - {1} : {2}".format(segment["start"],segment["end"],segment["text"])
+    print(txt)
+out = summarize_using_llama(trasnslation["text"])
+print(out)
