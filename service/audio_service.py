@@ -21,7 +21,7 @@ from scipy import misc
 #   journal={arXiv preprint arXiv:2212.04356},
 #   year={2022}
 # }
-# @article{JSSv031i07,
+# @article{JSSv031i07,\
 #   title={Computing and Visualizing Dynamic Time Warping Alignments in R: The dtw Package},
 #   author={Giorgino, Toni},
 #   journal={Journal of Statistical Software},

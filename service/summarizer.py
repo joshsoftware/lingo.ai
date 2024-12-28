@@ -40,7 +40,7 @@ def summarize_using_openai(text):
         return "An error occurred while summarizing the text."
 
 #Using Ollama and llama3.2 model, summarize the English translation
-def summarize_using_llama(text):
-    response = ollama.generate(model= "llama3.2", prompt = "Provide highlights of conversion inbullet points:"+text+"\n \n")
+def summarize_using_ollama(text):
+    response = ollama.generate(model= "llama3.2", prompt = "Provide highlights of conversion inbullet points  without pretext:"+text+"\n \n")
     summary = response["response"]
     return summary    
