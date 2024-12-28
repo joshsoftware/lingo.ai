@@ -3,8 +3,10 @@ from fastapi.responses import JSONResponse
 from logger import logger
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
-from audio_service import translate_with_whisper
-from summarizer import summarize_using_openai
+#from audio_service import translate_with_whisper
+from audio_service import translate_with_whisper_timestamped
+#from summarizer import summarize_using_openai
+from summarizer import summarize_using_ollama
 from pydantic import BaseModel
 
 app = FastAPI()
@@ -36,11 +38,11 @@ async def upload_audio(body: Body):
             logger.error("invalid file type")
             return JSONResponse(status_code=400, content={"message":"Invalid file type"})
         #translation = translate_with_whisper(transcription)
-        translation = translate_with_whisper(body.audio_file_link)
+        translation = translate_with_whisper_timestamped(body.audio_file_link)
 
         logger.info("translation done")
         #summary = summarize_using_openai(translation)
-        summary = summarize_using_openai(translation)
+        summary = summarize_using_ollama(translation)
 
         logger.info("summary done")
 

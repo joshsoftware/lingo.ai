@@ -99,9 +99,14 @@ trasnslation = transcribe_with_whisper_ts("https://utfs.io/f/9ed82ee5-4dd9-4eeb-
 #trasnslation = transcribe_with_whisper_ts("https://utfs.io/f/3c714bc6-f728-48b6-813c-a77a8d281a7e-gfje9d.mp3")
 #trasnslation = transcribe_with_whisper_ts("https://utfs.io/f/d3c3c169-02b7-4b70-a3e2-8f62514f5433-gfje9d.mp3")
 print(trasnslation["text"])
+x = '{"tex":'+trasnslation["text"]+',"segments":['
 segments = trasnslation["segments"]
 for segment in segments:
+    x = x+'{"segement":{"start":'+segment["start"]+',"end":'+segment["end"]+',"text":'+segment["text"]+'},'
     txt = "{0} - {1} : {2}".format(segment["start"],segment["end"],segment["text"])
     print(txt)
+x = x+'],'
 out = summarize_using_llama(trasnslation["text"])
+x = x+'"summary":'+out+'}'
+print(x)
 print(out)
