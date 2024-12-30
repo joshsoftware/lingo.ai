@@ -26,12 +26,11 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 from google.oauth2 import service_account
+from utils.constants import LLM, SCOPES, TEMPERATURE
 
 dbCursor = initDbConnection()
 
 app = FastAPI()
-LLM = "llama3"
-TEMPERATURE = 0.2
 
 # Load environment variables
 load_dotenv()
@@ -39,15 +38,6 @@ load_dotenv()
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Define Google Drive API scopes
-SCOPES = [
-    "https://www.googleapis.com/auth/drive.metadata.readonly",
-    "https://www.googleapis.com/auth/drive.readonly",
-    "https://www.googleapis.com/auth/drive.file",
-    "https://www.googleapis.com/auth/drive",
-    "https://www.googleapis.com/auth/documents.readonly"
-]
 
 # Add CORS middleware to the application
 app.add_middleware(
@@ -360,7 +350,6 @@ def get_question_answers_from_transcript(file_contents):
         response_text_json = None
     
     return {
-        "transcript": transcription,
         "qna": response_text_json
     }
 
