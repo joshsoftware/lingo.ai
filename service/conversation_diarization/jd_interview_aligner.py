@@ -2,6 +2,8 @@ import json
 import ollama
 import conversation_diarization.jd_parser as jd_parser
 import re
+from utils.constants import QNA_DIFFCULTY_LEVEL_RATING_FIND_PROMPT
+import pandas as pd
 
 from conversation_diarization.prompt import JD_INTERVIEW_ALIGNMENT_PROMPT
 
@@ -25,6 +27,7 @@ def align_interview_with_job_description(job_description_link, interview_qna):
     response_text_json = re.search(r"\{.*\}", response_text, re.DOTALL)
     
     response_text_grouped = response_text_json.group()
+    difficulty_level_ratings = get_question_level_ratings(Asked_Questions=questions_string)
     
     if response_text_json:
         try:
@@ -47,16 +50,35 @@ def align_interview_with_job_description(job_description_link, interview_qna):
     weaknesses = response_text_json["weaknesses"]
     summary = response_text_json["summary"]
     
-    def get_matched_questions(question_ids):
+    # def get_matched_questions(question_ids):
+    #     matched_questions = []
+    #     for qa in interview_qna["result"]:
+    #         if str(qa["id"]) in question_ids:
+    #             matched_questions.append(qa)
+    #     return matched_questions
+
+    def get_matched_questions_with_difficulty(question_ids):
         matched_questions = []
         for qa in interview_qna["result"]:
             if str(qa["id"]) in question_ids:
-                matched_questions.append(qa)
+                difficulty = next(
+                    (dlr["difficulty_level"] for dlr in difficulty_level_ratings["result"] if dlr["id"] == qa["id"]),
+                    "Unknown"
+                )
+                qa_with_difficulty = {
+                    **qa,
+                    "difficulty_level": difficulty
+                }
+                matched_questions.append(qa_with_difficulty)
         return matched_questions
+
+    core_skills = response_text_json["core_skills"]
+    secondary_skills = response_text_json["secondary_skills"]
+    domain_expertise = response_text_json["domain_expertise"]
     
-    core_skills_qna = get_matched_questions(core_skills)
-    secondary_skills_qna = get_matched_questions(secondary_skills)
-    domain_expertise_qna = get_matched_questions(domain_expertise)
+    core_skills_qna = get_matched_questions_with_difficulty(core_skills)
+    secondary_skills_qna = get_matched_questions_with_difficulty(secondary_skills)
+    domain_expertise_qna = get_matched_questions_with_difficulty(domain_expertise)
     
     core_skills_rating = 0 if not core_skills_qna else round(sum(q["rating"] for q in core_skills_qna) / len(core_skills_qna))
     secondary_skills_rating = 0 if not secondary_skills_qna else round(sum(q["rating"] for q in secondary_skills_qna) / len(secondary_skills_qna))
@@ -92,3 +114,63 @@ def align_interview_with_job_description(job_description_link, interview_qna):
     }
 
     return result
+
+async def get_question_level_ratings(Asked_Questions):
+  try:
+    file_path = "/home/josh/Downloads/Scorecard Template.xlsx"
+    sheet_name = "Java"
+    columns_to_fetch = ["Question", "Level"]
+
+    questions_from_bank = fetch_columns_from_excel(file_path, sheet_name, columns_to_fetch)
+    print("fetched questions from the bank")
+
+    prompt = create_prompt(questionBank=questions_from_bank, asked_questions=Asked_Questions)
+    print("Created Prompt!")
+
+    response = ollama.chat(
+        model=LLM,
+        options={"temperature": TEMPERATURE},
+        messages=[{"role": "user", "content": prompt}],
+    )
+    print("got response from ollama")
+
+    response_text = response.get("message", {}).get("content", "")
+    response_text_json = re.search(r"\{.*\}", response_text, re.DOTALL)
+    
+    if response_text_json:
+        try:
+            response_text_json = json.loads(response_text_json.group())
+        except json.JSONDecodeError as e:
+            response_text_json = None
+    else:
+        response_text_json = None
+    
+    return { response_text_json }
+  except Exception as e:
+    print(f"Error: {e}")
+  
+def fetch_columns_from_excel(file_path, sheet_name, columns_to_fetch):
+  try:
+      # Read the Excel file
+      df = pd.read_excel(file_path, sheet_name=sheet_name)
+
+      # Check if the required columns exist in the sheet
+      if not all(col in df.columns for col in columns_to_fetch):
+          raise ValueError(f"Some columns are missing in the sheet '{sheet_name}'.")
+
+      # Fetch the specified columns
+      result_df = df[columns_to_fetch]
+      result = ""
+      result += "\n".join([f"{row['Question']} - {row['Level']}" for _, row in result_df.iterrows()])
+
+      return result
+
+  except FileNotFoundError:
+      return f"Error: The file at {file_path} does not exist."
+  except ValueError as ve:
+      return str(ve)
+  except Exception as e:
+      return f"An error occurred: {str(e)}"
+  
+def create_prompt(questionBank: str, asked_questions: str) -> str:
+    return QNA_DIFFCULTY_LEVEL_RATING_FIND_PROMPT.replace("<QUESTIONS>", questionBank).replace("<ASKED_QUESTIONS>", asked_questions)
