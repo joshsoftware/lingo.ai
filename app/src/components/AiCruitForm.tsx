@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import axios, { AxiosError } from "axios";
+import { Checkbox } from "@/components/ui/checkbox"
 
 import Link from "next/link";
 
@@ -31,14 +32,20 @@ const AiCruitFrom = () => {
   });
 
   const [disableSubmit, setDisableSubmit] = useState(false);
+  const [checked, setChecked] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { mutate: submitForm, isPending: isSubmitting } = useMutation({
     mutationKey: ["submit-interview-analysis"],
-    mutationFn: async (payload: AiCruitRequest) => {
-      const response = await axios.post("/analyse-interview", payload);
+    mutationFn: async (formData: FormData) => {
+      const response = await axios.post("/analyse-interview", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       return response.data;
     },
     onSuccess: async (res) => {
-      toast.success("Your Details Received successfully!, Once Completed, You can visit listing page");
+      toast.success(
+        "Your Details Received successfully! Once completed, you can visit the listing page"
+      );
       router.push("/analysis");
     },
     onError: (error) => {
@@ -57,7 +64,26 @@ const AiCruitFrom = () => {
 
   const onSubmit = (data: AiCruitRequest) => {
     setDisableSubmit(true);
-    submitForm(data);
+    const formData = new FormData();
+
+    formData.append("candidate_name", data.candidate_name);
+    formData.append("interviewer_name", data.interviewer_name);
+    formData.append("job_description_link", data.job_description_link);
+
+    if (checked) {
+      if (data.interview_transcript) {
+        formData.append("interview_transcript", data.interview_transcript);
+      }
+      if (selectedFile) {
+        formData.append("transcript_file", selectedFile);
+      }
+    } else {
+      if (data.interview_link) {
+        formData.append("interview_link", data.interview_link);
+      }
+    }
+
+    submitForm(formData);
   };
 
   return (
@@ -100,7 +126,14 @@ const AiCruitFrom = () => {
               )}
             />
           </div>
-          <div className="grid w-full max-w-sm items-center gap-1.5">
+          <div className="flex w-full max-w-sm items-center gap-1.5">
+            <Checkbox 
+              checked={checked} 
+              onCheckedChange={() => setChecked(!checked)}
+            />Do you want to add interview transcript?
+          </div>
+          {!checked ? 
+            <div className="grid w-full max-w-sm items-center gap-1.5">
             <FormField
               control={form.control}
               name="interview_link"
@@ -114,7 +147,41 @@ const AiCruitFrom = () => {
                 </FormItem>
               )}
             />
+          </div> :
+          <div className="grid w-full max-w-sm items-center gap-1.5">
+            <FormField
+              control={form.control}
+              name="interview_transcript"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Interview Transcript</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="text" placeholder="Enter Interview Transcript Link" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <span style={{color:"red"}}>Or</span>
+            <FormField
+              control={form.control}
+              name="transcript_file"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Transcript File</FormLabel>
+                  <FormControl>
+                  <Input
+                    type="file"
+                    accept=".txt,.docx,.pdf"
+                    onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                  />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
+        }
           <div className="grid w-full max-w-sm items-center gap-1.5">
             <FormField
               control={form.control}

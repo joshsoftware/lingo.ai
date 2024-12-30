@@ -38,5 +38,8 @@ python-multipart
 git+https://github.com/SYSTRAN/faster-whisper.git #Reaplce with 'faster-whisper==VERSION' once a new version with BatchedInferencePipeline is deployed to PYPI
 git+https://github.com/MahmoudAshraf97/ctc-forced-aligner.git
 
-
-
+docx==0.2.4
+google-auth 
+google-auth-oauthlib 
+google-auth-httplib2 
+google-api-python-client
