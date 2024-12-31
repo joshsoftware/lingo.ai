@@ -3,6 +3,7 @@ from langchain_openai import ChatOpenAI
 from langchain.schema.runnable.base import RunnableSequence
 from template_config import get_summarization_template
 import logging
+import ollama
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -37,4 +38,9 @@ def summarize_using_openai(text):
     except Exception as e:
         logger.error(f"Error occurred during summarization: {str(e)}")
         return "An error occurred while summarizing the text."
-    
+
+#Using Ollama and llama3.2 model, summarize the English translation
+def summarize_using_ollama(text):
+    response = ollama.generate(model= "llama3.2", prompt = "Provide highlights of conversion inbullet points  without pretext:"+text+"\n \n")
+    summary = response["response"]
+    return summary    
