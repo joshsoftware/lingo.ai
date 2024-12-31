@@ -1,6 +1,6 @@
 import json
 import os
-from fastapi import FastAPI, BackgroundTasks, UploadFile
+from fastapi import FastAPI, BackgroundTasks, UploadFile, Form, File
 from fastapi.responses import JSONResponse
 import psycopg2
 from logger import logger
@@ -27,6 +27,8 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 from google.oauth2 import service_account
 from utils.constants import LLM, SCOPES, TEMPERATURE
+from typing import Optional, Dict
+import io
 
 dbCursor = initDbConnection()
 
@@ -118,29 +120,49 @@ async def get_action_from_transcription(file: UploadFile):
         return JSONResponse(content={"result": str(e)}, status_code=500)
 
 @app.post("/analyse-interview")
-async def analyse_interview(request: InterviewAnalysisRequest, background_tasks: BackgroundTasks):
+async def analyse_interview(
+    candidate_name: str = Form(...),
+    interviewer_name: str = Form(...),
+    interview_link: Optional[str] = Form(...),
+    job_description_link: str = Form(...),
+    interview_transcript: Optional[str] = Form(...),
+    transcript_file: UploadFile = File(...),
+    background_tasks: BackgroundTasks = None,
+):
     ANALYSIS_STATUS = "pending"
     
     try:
         db_connection_string = os.getenv('DATABASE_URL')
     
         # Request payload validation
-        if not all([request.interviewer_name, request.candidate_name, request.job_description_link]):
+        if not all([interviewer_name, candidate_name, job_description_link]):
             return JSONResponse(status_code=400, content={"message": "Invalid request, missing params"})
+
+        transcript_file_contents = read_contents_of_file(transcript_file)
         
         # Create record
         analysis_id = insert_interview_analysis(
             conn_string=db_connection_string,
             user_id='x7w6qksaibnh2usz', #TODO: replace with actual user's id
-            candidate_name=request.candidate_name,
-            interview_recording_link=request.interview_link if request.interview_link else None,
-            interview_transcript_link=request.interview_transcript if request.interview_transcript else None,
-            job_description_document_link=request.job_description_link,
+            candidate_name=candidate_name,
+            interviewer_name=interviewer_name,
+            interview_recording_link=interview_link if interview_link else None,
+            interview_transcript_link=interview_transcript if interview_transcript else None,
+            job_description_document_link=job_description_link,
             status=ANALYSIS_STATUS
         )
-        
+
         if not analysis_id:
             return JSONResponse(content={"message": "Failed to process the request, please try again."}, status_code=500)
+        
+        request = {
+            "candidate_name": candidate_name,
+            "interviewer_name": interviewer_name,
+            "interview_link": interview_link,
+            "job_description_link": job_description_link,
+            "interview_transcript": interview_transcript,
+            "transcript_file_contents": transcript_file_contents,
+        }
         
         # Schedule background task for analysis
         background_tasks.add_task(
@@ -161,20 +183,21 @@ def process_interview_analysis(conn_string, analysis_id, request):
     Background task to handle transcription, speaker diarization, and job description alignment.
     """
     ANALYSIS_STATUS = "completed"
-    
+
     try:
-        if request.transcript_file:
+        if request['transcript_file_contents']:
             # Use the provided transcript file
-            transcript_file = request.transcript_file
-            transcription_result = get_question_answers_from_file(transcript_file)
+            transcription_result = get_question_answers_from_file(request['transcript_file_contents'])
             questions_answers = transcription_result["qna"]
-            conversation = extract_conversation_from_file(transcript_file)
-        elif request.interview_transcript:
+            conversation = extract_conversation_from_file(request['transcript_file_contents'])
+            transcript = transcription_result
+        elif request['interview_transcript']:
             # Use the provided transcript file url
             transcription_text = process_transcript_from_google_doc(request.interview_transcript)
             transcription_result = get_question_answers_from_transcript(transcription_text)
             questions_answers = transcription_result["qna"]
             conversation = extract_conversation_from_transcript(transcription_text)
+            transcript = transcription_result
         else:
             # Perform transcription and speaker diarization
             transcription_result = transcription_with_speaker_diarization(request)
@@ -183,7 +206,7 @@ def process_interview_analysis(conn_string, analysis_id, request):
             conversation = transcription_result["conversation"]
 
         # Perform job description alignment
-        analysis_result = align_interview_with_job_description(request.job_description_link, questions_answers)
+        analysis_result = align_interview_with_job_description(request['job_description_link'], questions_answers)
 
         # Update record in the database
         analysis_updated = update_interview_analysis(
@@ -297,37 +320,56 @@ def update_interview_analysis(conn_string, record_id, transcript, questions_answ
     finally:
         return is_updated
 
-def get_question_answers_from_file(file):
-    # Extract transcription from file
+def read_contents_of_file(transcript_file: UploadFile) -> str:
+    """
+    Save the uploaded file to disk temporarily, reopen it, and extract text.
+    """
     try:
-        doc = Document(file)
-        transcription = str(doc)
+        file_object = io.BytesIO(transcript_file.file.read())
+        doc = Document(file_object)
+        
+        full_text = []
+        for para in doc.paragraphs:
+            full_text.append(para.text)
+        
+        file_contents =  '\n'.join(full_text)
+        return file_contents
     except Exception as e:
-        raise ValueError("Error processing the file: " + str(e))
-    
-    prompt = create_prompt(transcription)
-            
-    response = ollama.chat(
-        model=LLM,
-        options={"temperature": TEMPERATURE},
-        messages=[{"role": "user", "content": prompt}],
-    )
+        print(f"Error reading file: {e}")
+        return f"Error: {str(e)}"
 
-    response_text = response.get("message", {}).get("content", "")
-    response_text_json = re.search(r"\{.*\}", response_text, re.DOTALL)
-    
-    if response_text_json:
-        try:
-            response_text_json = json.loads(response_text_json.group())
-        except json.JSONDecodeError as e:
+def get_question_answers_from_file(file_content: str) -> Dict:
+    """
+    Process the uploaded file and extract Q&A data.
+    Supports DOCX and TXT files (extendable to other formats).
+    """
+    try:
+        prompt = create_prompt(file_content)
+            
+        response = ollama.chat(
+            model=LLM,
+            options={"temperature": TEMPERATURE},
+            messages=[{"role": "user", "content": prompt}],
+        )
+
+        response_text = response.get("message", {}).get("content", "")
+        response_text_json = re.search(r"\{.*\}", response_text, re.DOTALL)
+
+        if response_text_json:
+            try:
+                response_text_json = json.loads(response_text_json.group())
+            except json.JSONDecodeError as e:
+                response_text_json = None
+        else:
             response_text_json = None
-    else:
-        response_text_json = None
-    
-    return {
-        "transcript": transcription,
-        "qna": response_text_json
-    }
+
+        return {
+            "transcript": file_content,
+            "qna": response_text_json
+        }
+    except Exception as e:
+        print(f"Error processing the file: {e}")
+        return {"error": f"Error processing the file: {e}"}
 
 def get_question_answers_from_transcript(file_contents):
     prompt = create_prompt(file_contents)
@@ -353,29 +395,24 @@ def get_question_answers_from_transcript(file_contents):
         "qna": response_text_json
     }
 
-def extract_conversation_from_file(transcript_file):
+def extract_conversation_from_file(transcript_file_contents: str):
     """
-    Extract conversation between all speakers from a transcript stored in a .docx file.
+    Extract conversation between all speakers from a transcript text.
 
     Args:
-        transcript_file_url (str): URL or file path of the transcript .docx file.
+        transcript_file_contents (str): The transcript content as text.
 
     Returns:
         dict: A dictionary where each key is a speaker's name and the value is a list of their statements.
     """
     try:
-        # Load the transcript .docx file
-        doc = Document(transcript_file)
-        
-        # Extract all paragraphs
-        paragraphs = [p.text.strip() for p in doc.paragraphs if p.text.strip()]
+        paragraphs = transcript_file_contents.split('\n')
         
         # Initialize storage for conversations
         conversation = {}
         current_speaker = None
         
         for paragraph in paragraphs:
-            # Check if the paragraph starts with a speaker's name pattern
             if ":" in paragraph:
                 # Split speaker name and their statement
                 parts = paragraph.split(":", 1)
@@ -392,8 +429,7 @@ def extract_conversation_from_file(transcript_file):
             else:
                 # Paragraph belongs to the last identified speaker
                 if current_speaker is not None:
-                    conversation[current_speaker].append(paragraph)
-
+                    conversation[current_speaker].append(paragraph.strip())
         return conversation
 
     except Exception as e:

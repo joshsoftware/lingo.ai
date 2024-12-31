@@ -115,7 +115,7 @@ def align_interview_with_job_description(job_description_link, interview_qna):
 
     return result
 
-async def get_question_level_ratings(Asked_Questions):
+def get_question_level_ratings(Asked_Questions):
   try:
     file_path = "/home/josh/Downloads/Scorecard Template.xlsx"
     sheet_name = "Java"
@@ -132,7 +132,6 @@ async def get_question_level_ratings(Asked_Questions):
         options={"temperature": TEMPERATURE},
         messages=[{"role": "user", "content": prompt}],
     )
-    print("got response from ollama")
 
     response_text = response.get("message", {}).get("content", "")
     response_text_json = re.search(r"\{.*\}", response_text, re.DOTALL)
@@ -145,9 +144,10 @@ async def get_question_level_ratings(Asked_Questions):
     else:
         response_text_json = None
     
-    return { response_text_json }
+    return response_text_json
   except Exception as e:
     print(f"Error: {e}")
+    return None
   
 def fetch_columns_from_excel(file_path, sheet_name, columns_to_fetch):
   try:
