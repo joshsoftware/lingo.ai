@@ -123,10 +123,10 @@ async def get_action_from_transcription(file: UploadFile):
 async def analyse_interview(
     candidate_name: str = Form(...),
     interviewer_name: str = Form(...),
-    interview_link: Optional[str] = Form(...),
+    interview_link: Optional[str] = Form(None),
     job_description_link: str = Form(...),
-    interview_transcript: Optional[str] = Form(...),
-    transcript_file: UploadFile = File(...),
+    interview_transcript: Optional[str] = Form(None),
+    transcript_file: UploadFile = File(None),
     background_tasks: BackgroundTasks = None,
 ):
     ANALYSIS_STATUS = "pending"
@@ -336,7 +336,7 @@ def read_contents_of_file(transcript_file: UploadFile) -> str:
         return file_contents
     except Exception as e:
         print(f"Error reading file: {e}")
-        return f"Error: {str(e)}"
+        return None
 
 def get_question_answers_from_file(file_content: str) -> Dict:
     """
@@ -369,7 +369,7 @@ def get_question_answers_from_file(file_content: str) -> Dict:
         }
     except Exception as e:
         print(f"Error processing the file: {e}")
-        return {"error": f"Error processing the file: {e}"}
+        return None
 
 def get_question_answers_from_transcript(file_contents):
     prompt = create_prompt(file_contents)

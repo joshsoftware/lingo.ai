@@ -117,15 +117,13 @@ def align_interview_with_job_description(job_description_link, interview_qna):
 
 def get_question_level_ratings(Asked_Questions):
   try:
-    file_path = "/home/josh/Downloads/Scorecard Template.xlsx"
+    file_path = "/Users/sethupathiasokan/Documents/AiCruit/lingo.ai/Scorecard Template.xlsx"
     sheet_name = "Java"
     columns_to_fetch = ["Question", "Level"]
 
     questions_from_bank = fetch_columns_from_excel(file_path, sheet_name, columns_to_fetch)
-    print("fetched questions from the bank")
 
     prompt = create_prompt(questionBank=questions_from_bank, asked_questions=Asked_Questions)
-    print("Created Prompt!")
 
     response = ollama.chat(
         model=LLM,

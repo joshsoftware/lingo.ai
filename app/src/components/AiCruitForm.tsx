@@ -37,7 +37,14 @@ const AiCruitFrom = () => {
   const { mutate: submitForm, isPending: isSubmitting } = useMutation({
     mutationKey: ["submit-interview-analysis"],
     mutationFn: async (formData: FormData) => {
-      const response = await axios.post("/analyse-interview", formData, {
+      // get microservice url from env
+      const BASE_URL = process.env.NEXT_PUBLIC_MICROSERVICE_URL;
+
+      if (!BASE_URL) {
+        return new Response("Microservice URL not found", { status: 500 });
+      }
+
+      const response = await axios.post(BASE_URL+"/analyse-interview", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       return response.data;
