@@ -21,7 +21,16 @@ export const signupUserSchema = z.object({
 export const aiCruitRequestSchema = z.object({
   interview_link: z.string().url({
     message: "Invalid URL format for the interview link",
-  }),
+  }).optional(),
+  interview_transcript: z.string().url({
+    message: "Invalid URL format for the interview transcript",
+  }).optional(),
+  transcript_file: z
+    .instanceof(File)
+    .optional()
+    .refine((file) => !file || file.size > 0, {
+      message: "File is required when not providing a transcript URL",
+    }),
   job_description_link: z.string().url({
     message: "Invalid URL format for the job description link",
   }),
@@ -48,4 +57,3 @@ export const signinUserSchema = z.object({
 export type AiCruitRequest = z.infer<typeof aiCruitRequestSchema>;
 export type SignupUserRequest = z.infer<typeof signupUserSchema>;
 export type SigninUserRequest = z.infer<typeof signinUserSchema>;
-export type AiCruitRequest = z.infer<typeof aiCruitRequestSchema>;
