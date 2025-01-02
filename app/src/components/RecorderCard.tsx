@@ -126,6 +126,7 @@ const RecorderCard = (props: RecorderCardProps) => {
           documentName: data.documentName,
           userID: userId,
           summary: res.summary,
+          segments: res.segments,
           translation: res.translation,
         });
 
