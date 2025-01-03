@@ -15,7 +15,7 @@ export async function POST(req: Request) {
       return new Response("Microservice URL not found", { status: 500 });
     }
 
-    const {data,status:transcriptionStatus} = await axios.post(BASE_URL+'/upload-audio',{
+    const {data,status:transcriptionStatus} = await axios.post(BASE_URL+ '/upload-audio',{
         audio_file_link: documentUrl,
     })
 

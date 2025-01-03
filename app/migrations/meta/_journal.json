@@ -57,6 +57,13 @@
       "when": 1732817602505,
       "tag": "0007_chilly_arachne",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1735832922972,
+      "tag": "0008_happy_warlock",
+      "breakpoints": true
     }
   ]
 }

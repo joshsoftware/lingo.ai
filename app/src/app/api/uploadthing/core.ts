@@ -12,11 +12,11 @@ export const ourFileRouter = {
     {
       audio: {
         maxFileCount: 1,
-        maxFileSize: "16MB"
+        maxFileSize: "1024GB"
       },
       video: {
         maxFileCount: 1,
-        maxFileSize: "16MB"
+        maxFileSize: "1024GB"
       }
     })
     // Set permissions and file types for this FileRoute
