@@ -303,11 +303,11 @@ def update_interview_analysis(conn_string, record_id, transcript, questions_answ
             with conn.cursor() as cur:
                 # Execute the UPDATE statement with parameterized values
                 cur.execute(query, (
-                    transcript, 
+                    json.dumps(transcript), 
                     json.dumps(questions_answers),
                     json.dumps(parsed_job_description),
                     json.dumps(analysis_result),
-                    conversation,
+                    json.dumps(conversation),
                     status,
                     record_id
                 ))
