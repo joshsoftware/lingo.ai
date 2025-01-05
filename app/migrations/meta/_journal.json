@@ -15,6 +15,13 @@
       "when": 1732817602505,
       "tag": "0007_chilly_arachne",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1735904408609,
+      "tag": "0008_sudden_switch",
+      "breakpoints": true
     }
   ]
 }
