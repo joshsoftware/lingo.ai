@@ -1,0 +1,1 @@
+ALTER TABLE "transcriptions" ADD COLUMN "segments" jsonb DEFAULT '[]'::jsonb NOT NULL;

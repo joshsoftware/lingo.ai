@@ -6,4 +6,9 @@ export type userTranscriptions = {
     audioDuration: number | null;
     isDefault: boolean;
   };
-  
+
+export type segment = {
+  start: number;
+  end: number;
+  text: string;
+}

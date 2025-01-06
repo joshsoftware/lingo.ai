@@ -1,12 +1,14 @@
-import { timestamp, pgTable, text, uuid, boolean, integer } from "drizzle-orm/pg-core";
+import { segment } from "@/types/transcriptions";
+import { timestamp, pgTable, text, uuid, boolean, integer, jsonb } from "drizzle-orm/pg-core";
 
 export const transcriptions = pgTable("transcriptions", {
   id: uuid("id").primaryKey().defaultRandom(),
   userID: text("user_id")
-  .notNull()
-  .references(() => userTable.id),
+    .notNull()
+    .references(() => userTable.id),
   translation: text("translation").notNull(),
   summary: text("summary").notNull(),
+  segments: jsonb("segments").notNull().$type<segment[]>().default([]),
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
   documentUrl: text("documentUrl").notNull(),
   documentName: text("documentName").notNull(),

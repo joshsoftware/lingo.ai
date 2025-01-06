@@ -75,7 +75,6 @@ const RecorderCard = (props: RecorderCardProps) => {
 
   const { getRootProps, getInputProps } = useDropzone({
     maxFiles: 1,
-    maxSize: 5 * 1024 * 1024, // 5MB
     onDrop: (acceptedFiles, rejectedFiles) => {
       if (rejectedFiles.length > 0) {
         rejectedFiles.forEach(handleFileError);
@@ -126,6 +125,7 @@ const RecorderCard = (props: RecorderCardProps) => {
           documentName: data.documentName,
           userID: userId,
           summary: res.summary,
+          segments: res.segments,
           translation: res.translation,
         });
 
