@@ -41,6 +41,6 @@ def summarize_using_openai(text):
 
 #Using Ollama and llama3.2 model, summarize the English translation
 def summarize_using_ollama(text):
-    response = ollama.generate(model= "llama3.2", prompt = "Provide highlights of conversion inbullet points  without pretext:"+text+"\n \n")
+    response = ollama.generate(model= "llama3.2", prompt = text+"\n \n""Provide highlights above conversation in Markdown bullet points, ready for direct inclusion in a file, with no pretext, and formatted as a multiline string.")
     summary = response["response"]
     return summary    
