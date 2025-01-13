@@ -19,15 +19,8 @@
     {
       "idx": 8,
       "version": "7",
-      "when": 1735904408609,
-      "tag": "0008_sudden_switch",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "7",
-      "when": 1736747804488,
-      "tag": "0009_goofy_vargas",
+      "when": 1735832922972,
+      "tag": "0008_happy_warlock",
       "breakpoints": true
     }
   ]
