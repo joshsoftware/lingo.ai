@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { AiCruitRequest, aiCruitRequestSchema } from "@/Validators/register";
+import { AiCruitRequest, aiCruitRequestSchemaValidator } from "@/Validators/register";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
@@ -27,13 +27,13 @@ const AiCruitFrom = () => {
   const router = useRouter();
 
   const form = useForm<AiCruitRequest>({
-    resolver: zodResolver(aiCruitRequestSchema),
+    resolver: zodResolver(aiCruitRequestSchemaValidator),
     mode: "all",
   });
 
   const [disableSubmit, setDisableSubmit] = useState(false);
-  const [checked, setChecked] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isAddInterviewTranscriptChecked, setIsAddInterviewTrancriptChecked] = useState(false);
+  const [interviewTrancriptFile, setInterviewTrancriptFile] = useState<File | null>(null);
   const { mutate: submitForm, isPending: isSubmitting } = useMutation({
     mutationKey: ["submit-interview-analysis"],
     mutationFn: async (formData: FormData) => {
@@ -51,7 +51,7 @@ const AiCruitFrom = () => {
     },
     onSuccess: async (res) => {
       toast.success(
-        "Your Details Received successfully! Once completed, you can visit the listing page"
+        "Your details received successfully! once completed, you can visit the listing page."
       );
       router.push("/analysis");
     },
@@ -77,12 +77,12 @@ const AiCruitFrom = () => {
     formData.append("interviewer_name", data.interviewer_name);
     formData.append("job_description_link", data.job_description_link);
 
-    if (checked) {
+    if (isAddInterviewTranscriptChecked) {
       if (data.interview_transcript) {
         formData.append("interview_transcript", data.interview_transcript);
       }
-      if (selectedFile) {
-        formData.append("transcript_file", selectedFile);
+      if (interviewTrancriptFile) {
+        formData.append("transcript_file", interviewTrancriptFile);
       }
     } else {
       if (data.interview_link) {
@@ -135,11 +135,11 @@ const AiCruitFrom = () => {
           </div>
           <div className="flex w-full max-w-sm items-center gap-1.5">
             <Checkbox 
-              checked={checked} 
-              onCheckedChange={() => setChecked(!checked)}
+              checked={isAddInterviewTranscriptChecked} 
+              onCheckedChange={() => setIsAddInterviewTrancriptChecked(!isAddInterviewTranscriptChecked)}
             />Do you want to add interview transcript?
           </div>
-          {!checked ? 
+          {!isAddInterviewTranscriptChecked ? 
             <div className="grid w-full max-w-sm items-center gap-1.5">
             <FormField
               control={form.control}
@@ -180,7 +180,7 @@ const AiCruitFrom = () => {
                   <Input
                     type="file"
                     accept=".txt,.docx,.pdf"
-                    onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                    onChange={(e) => setInterviewTrancriptFile(e.target.files?.[0] || null)}
                   />
                   </FormControl>
                   <FormMessage />

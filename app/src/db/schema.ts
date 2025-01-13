@@ -1,4 +1,5 @@
-import { timestamp, pgTable, text, uuid, boolean, integer } from "drizzle-orm/pg-core";
+import { timestamp, pgTable, text, uuid, boolean, integer, pgEnum } from "drizzle-orm/pg-core";
+export const statusEnum = pgEnum('status', ['pending', 'completed']);
 
 export const transcriptions = pgTable("transcriptions", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -21,7 +22,8 @@ export const registrations = pgTable("registrations", {
     .$defaultFn(() => crypto.randomUUID()),
   userName: text("userName").notNull(),
   userEmail: text("userEmail").notNull(),
-  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
 });
 
 export const userTable = pgTable("user", {
@@ -31,7 +33,8 @@ export const userTable = pgTable("user", {
   name: text("name"),
   contactNumber: text("contactNumber"),
   role: text("role"),
-  createdAt: timestamp("createdAt",{mode:"date"}).defaultNow()
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
 });
 
 export const sessionTable = pgTable("session", {
@@ -43,7 +46,8 @@ export const sessionTable = pgTable("session", {
     withTimezone: true,
     mode: "date"
   }).notNull(),
-  createdAt: timestamp("createdAt",{mode:"date"}).defaultNow()
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
 });
 
 export const interviewAnalysis = pgTable("interview_analysis", {
@@ -61,8 +65,9 @@ export const interviewAnalysis = pgTable("interview_analysis", {
   parsedJobDescription: text("parsed_job_description"),
   analysisResult: text("analysis_result"),
   conversation: text("conversation").$defaultFn(() => ""),
-  status: text("status").$default(()=> "pending"),
+  status: statusEnum("status").notNull().default("pending"),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
 });
 
 export const analysisFeedback = pgTable("analysis_feedback", {
@@ -72,8 +77,9 @@ export const analysisFeedback = pgTable("analysis_feedback", {
   .notNull()
   .references(() => interviewAnalysis.id),
   isFoundUseful: boolean("is_found_useful").notNull(),
-  comment: text("impact"),
-  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
+  comment: text("feedback_message"),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
 });
 
 export type TranscriptionsPayload = typeof transcriptions.$inferInsert;

@@ -22,6 +22,13 @@
       "when": 1735904408609,
       "tag": "0008_sudden_switch",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1736747804488,
+      "tag": "0009_goofy_vargas",
+      "breakpoints": true
     }
   ]
 }
