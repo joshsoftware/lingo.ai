@@ -1,7 +1,6 @@
-import { timestamp, pgTable, text, uuid, boolean, integer, pgEnum } from "drizzle-orm/pg-core";
+import { timestamp, pgTable, text, uuid, boolean, integer, jsonb, pgEnum } from "drizzle-orm/pg-core";
 export const statusEnum = pgEnum('status', ['pending', 'completed']);
 import { segment } from "@/types/transcriptions";
-import { timestamp, pgTable, text, uuid, boolean, integer, jsonb } from "drizzle-orm/pg-core";
 
 export const transcriptions = pgTable("transcriptions", {
   id: uuid("id").primaryKey().defaultRandom(),
