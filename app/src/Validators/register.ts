@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const signupUserSchema = z.object({
+export const signupUserSchemaValidator = z.object({
   userEmail: z.string().email({
     message: "Invalid email",
   }),
@@ -18,7 +18,7 @@ export const signupUserSchema = z.object({
 
 });
 
-export const aiCruitRequestSchema = z.object({
+export const aiCruitRequestSchemaValidator = z.object({
   interview_link: z.string().url({
     message: "Invalid URL format for the interview link",
   }).optional(),
@@ -42,7 +42,7 @@ export const aiCruitRequestSchema = z.object({
   }),
 });
 
-export const signinUserSchema = z.object({
+export const signinUserSchemaValidator = z.object({
   userEmail: z.string().email({
     message: "Invalid email",
   }),
@@ -54,6 +54,6 @@ export const signinUserSchema = z.object({
 });
 
 
-export type AiCruitRequest = z.infer<typeof aiCruitRequestSchema>;
-export type SignupUserRequest = z.infer<typeof signupUserSchema>;
-export type SigninUserRequest = z.infer<typeof signinUserSchema>;
+export type AiCruitRequest = z.infer<typeof aiCruitRequestSchemaValidator>;
+export type SignupUserRequest = z.infer<typeof signupUserSchemaValidator>;
+export type SigninUserRequest = z.infer<typeof signinUserSchemaValidator>;
