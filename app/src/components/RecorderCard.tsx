@@ -75,7 +75,6 @@ const RecorderCard = (props: RecorderCardProps) => {
 
   const { getRootProps, getInputProps } = useDropzone({
     maxFiles: 1,
-    maxSize: 5 * 1024 * 1024, // 5MB
     onDrop: (acceptedFiles, rejectedFiles) => {
       if (rejectedFiles.length > 0) {
         rejectedFiles.forEach(handleFileError);
@@ -126,6 +125,7 @@ const RecorderCard = (props: RecorderCardProps) => {
           documentName: data.documentName,
           userID: userId,
           summary: res.summary,
+          segments: res.segments,
           translation: res.translation,
         });
 
@@ -331,9 +331,10 @@ const RecorderCard = (props: RecorderCardProps) => {
                       <p>
                         Enable mic access, record yourself, or upload an audio or video file
                       </p>
-                      <p className="text-gray-400 text-sm">
+                      {/* leaving this comment if we need to enable max file size later on */}
+                      {/* <p className="text-gray-400 text-sm">
                         Max file size: 5MB
-                      </p>
+                      </p> */}
                     </>
                   )}
                 </Fragment>

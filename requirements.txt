@@ -21,6 +21,9 @@ google-auth-oauthlib
 google-auth-httplib2
 google-api-python-client
 python-dotenv
+whisper-timestamped
+silero-vad
+fastapi_versionizer
 
 # For Conversation Analysis
 pypdf2==3.0.1    
