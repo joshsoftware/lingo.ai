@@ -6,7 +6,11 @@ from utils.constants import QNA_DIFFCULTY_LEVEL_RATING_FIND_PROMPT
 import pandas as pd
 
 from conversation_diarization.prompt import JD_INTERVIEW_ALIGNMENT_PROMPT
+from dotenv import load_dotenv
+import os
 
+
+load_dotenv()
 LLM = "llama3"
 TEMPERATURE = 0.0
 
@@ -117,7 +121,7 @@ def align_interview_with_job_description(job_description_link, interview_qna):
 
 def get_question_level_ratings(Asked_Questions):
   try:
-    file_path = "/Users/sethupathiasokan/Documents/AiCruit/lingo.ai/Scorecard Template.xlsx"
+    file_path = os.getenv('EXCEL_QUESTION_BANK_PATH')
     sheet_name = "Java"
     columns_to_fetch = ["Question", "Level"]
 
