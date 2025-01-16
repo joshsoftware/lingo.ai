@@ -55,8 +55,7 @@ export const useUser = () => {
       },
       onSuccess: async (res) => {
         toast.success("User sign in Successfull");
-        debugger
-        router.push(res?.role == "hr" ? "/analyse" : "/record")
+        router.push(res?.role === "hr" ? "/analyse" : "/record")
       },
       onError: (error) => {
         if (error instanceof AxiosError) {

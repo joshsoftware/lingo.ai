@@ -39,7 +39,7 @@ const Header = ({ user }: HeaderProps) => {
             pathName !== "/analyse" &&
             pathName !== "/record" && (
               <Link
-                href={user?.role == "hr" ? "/analyse" : "/record"}
+                href={user?.role === "hr" ? "/analyse" : "/record"}
                 className={cn(
                   buttonVariants({
                     className:
@@ -56,7 +56,7 @@ const Header = ({ user }: HeaderProps) => {
             pathName !== "/analysis" &&
             pathName !== "/transcriptions" && (
               <Link
-                href={user?.role == "hr" ? "/analysis" : "/transcriptions"}
+                href={user?.role === "hr" ? "/analysis" : "/transcriptions"}
                 className={cn(
                   buttonVariants({
                     className:
