@@ -67,7 +67,7 @@ def translate_with_ollama(text):
 
 #Using Ollama and llama3.1 modle, summarize the English translation
 def summarize_using_llama(text):
-    response = ollama.generate(model= "llama3.2", prompt = "Provide highlights of conversion inbullet points without pretext:"+text+"\n \n")
+    response = ollama.generate(model= "llama3.2", prompt = text+"\n \n""Action items from the above conversation in Markdown format, without pretext, and formatted as a multiline string.")
     summary = response["response"]
     return summary
 

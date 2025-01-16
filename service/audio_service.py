@@ -61,6 +61,6 @@ def translate_with_whisper_timestamped(audioPath):
     logger.info("translation started")
     options = dict(beam_size=5, best_of=5, temperature=(0.0, 0.2, 0.4, 0.6, 0.8, 1.0))
     translate_options = dict(task="translate", **options)
-    result = whisper_ts.transcribe_timestamped(model,audioPath,condition_on_previous_text=False,vad=True,trust_whisper_timestamps=False,**translate_options)
+    result = whisper_ts.transcribe_timestamped(model,audioPath,condition_on_previous_text=False,trust_whisper_timestamps=False,**translate_options)
     return result
 

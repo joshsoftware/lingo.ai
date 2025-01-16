@@ -19,5 +19,6 @@ google-auth-httplib2
 google-api-python-client
 python-dotenv
 whisper-timestamped
-silero-vad
+#silero-vad==5.1.2
+#auditok
 fastapi_versionizer
