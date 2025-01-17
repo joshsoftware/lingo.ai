@@ -14,16 +14,25 @@ import TranscriptionSkeleton from "./TranscriptionSkeleton";
 
 interface TranscriptionItemProps {
   initialTranscriptionsData: userTranscriptions[];
+  userId: string | null;
 }
 
 const TranscriptionItem = (props: TranscriptionItemProps) => {
-  const { initialTranscriptionsData } = props;
+  const { initialTranscriptionsData, userId } = props;
 
-  const [defaultTranscriptionFilter, setDefaultTranscriptionFilter] = useState<string>("false");
-  const [currentPlayingIndex, setCurrentPlayingIndex] = useState<number | null>(null);
+  const [defaultTranscriptionFilter, setDefaultTranscriptionFilter] =
+    useState<string>("true");
+  const [currentPlayingIndex, setCurrentPlayingIndex] = useState<number | null>(
+    null
+  );
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useTranscriptions(initialTranscriptionsData, defaultTranscriptionFilter);
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useTranscriptions(
+      initialTranscriptionsData,
+      defaultTranscriptionFilter,
+      userId
+    );
 
   const observer = useRef<IntersectionObserver | null>(null);
   const lastItemRef = useCallback(
@@ -59,12 +68,13 @@ const TranscriptionItem = (props: TranscriptionItemProps) => {
 
   const handleFilterChange = (value: string) => {
     setDefaultTranscriptionFilter(value);
-    setCurrentPlayingIndex(null); // Reset currentPlayingIndex when filter changes
+    setCurrentPlayingIndex(null);
   };
 
-  const filteredTranscriptions = data?.pages?.flatMap((page: { transcriptions: userTranscriptions[] }) =>
-    page.transcriptions
-  ) || [];
+  const filteredTranscriptions =
+    data?.pages?.flatMap(
+      (page: { transcriptions: userTranscriptions[] }) => page.transcriptions
+    ) || [];
 
   return (
     <div className="flex flex-col w-full h-full gap-4">
@@ -74,34 +84,46 @@ const TranscriptionItem = (props: TranscriptionItemProps) => {
             <SelectValue placeholder="Filter transcriptions" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="true">Demo Transcriptions</SelectItem>
-            <SelectItem value="false">Recent Transcriptions</SelectItem>
+            <SelectItem value="user">My Transcriptions</SelectItem>
           </SelectContent>
         </Select>
       </div>
       <div className="flex flex-col gap-2 overflow-y-auto max-h-54">
         {isLoading ? (
           Array.from({ length: 2 }).map((_, idx) => (
-            <TranscriptionSkeleton key={idx}/>
+            <TranscriptionSkeleton key={idx} />
           ))
+        ) : filteredTranscriptions.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-gray-500 gap-6 mt-8">
+            <p className="text-2xl">No transcriptions found</p>
+            <button
+              className="mt-4 px-4 py-2 bg-[#668D7E] text-black rounded text-base"
+              onClick={() => (window.location.href = "/new")}
+            >
+              Click here to try new one
+            </button>
+          </div>
         ) : (
-          filteredTranscriptions.map((transcription: userTranscriptions, idx: number) => (
-            <TranscriptionCard
-              key={idx}
-              transcription={transcription}
-              index={idx}
-              isPlaying={currentPlayingIndex === idx}
-              onPlayPause={() => handlePlayPause(idx)}
-              onAudioEnd={handleAudioEnd}
-              ref={idx === filteredTranscriptions.length - 1 ? lastItemRef : null}
-            />
-          ))
+          filteredTranscriptions.map(
+            (transcription: userTranscriptions, idx: number) => (
+              <TranscriptionCard
+                key={idx}
+                transcription={transcription}
+                index={idx}
+                isPlaying={currentPlayingIndex === idx}
+                onPlayPause={() => handlePlayPause(idx)}
+                onAudioEnd={handleAudioEnd}
+                ref={
+                  idx === filteredTranscriptions.length - 1 ? lastItemRef : null
+                }
+              />
+            )
+          )
         )}
-        {isFetchingNextPage && (
+        {isFetchingNextPage &&
           Array.from({ length: 2 }).map((_, idx) => (
-            <TranscriptionSkeleton key={idx}/>
-          ))
-        )}
+            <TranscriptionSkeleton key={idx} />
+          ))}
       </div>
     </div>
   );
