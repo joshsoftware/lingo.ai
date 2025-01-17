@@ -1,4 +1,3 @@
-// src/auth.ts
 import { Lucia } from "lucia";
 import { db } from "./db";
 import { DrizzlePostgreSQLAdapter } from "@lucia-auth/adapter-drizzle";

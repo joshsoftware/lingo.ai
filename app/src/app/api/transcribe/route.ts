@@ -1,4 +1,4 @@
-import { transcribeDocumentSchema } from "@/Validators/document";
+import { transcribeDocumentSchema } from "@/validators/document";
 import axios from "axios";
 import { z } from "zod";
 
@@ -15,11 +15,14 @@ export async function POST(req: Request) {
       return new Response("Microservice URL not found", { status: 500 });
     }
 
-    const {data,status:transcriptionStatus} = await axios.post(BASE_URL+ '/upload-audio',{
+    const { data, status: transcriptionStatus } = await axios.post(
+      BASE_URL + "/upload-audio",
+      {
         audio_file_link: documentUrl,
-    })
+      }
+    );
 
-    if(transcriptionStatus !== 200){
+    if (transcriptionStatus !== 200) {
       return new Response("Internal server error", { status: 500 });
     }
 

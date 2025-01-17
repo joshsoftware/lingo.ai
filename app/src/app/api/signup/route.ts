@@ -1,7 +1,7 @@
 import { lucia } from "@/auth";
 import { db } from "@/db";
-import { registrations, userTable } from "@/db/schema";
-import { signupUserSchema } from "@/Validators/register";
+import { userTable } from "@/db/schema";
+import { signupUserSchema } from "@/validators/register";
 import { hash } from "@node-rs/argon2";
 import { eq } from "drizzle-orm";
 import { generateIdFromEntropySize } from "lucia";
@@ -12,7 +12,8 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const { password, userEmail, userName, contact } = signupUserSchema.parse(body);
+    const { password, userEmail, userName, contact } =
+      signupUserSchema.parse(body);
 
     // check if user already exists
     const user = await db
@@ -35,7 +36,7 @@ export async function POST(req: Request) {
       memoryCost: 19456,
       timeCost: 2,
       outputLen: 32,
-      parallelism: 1
+      parallelism: 1,
     });
 
     const userId = generateIdFromEntropySize(10); // 16 characters long
@@ -44,7 +45,7 @@ export async function POST(req: Request) {
       .insert(userTable)
       .values({
         id: userId,
-        username:userEmail,
+        username: userEmail,
         password_hash: passwordHash,
         name: userName || "",
         contactNumber: contact || "",
@@ -54,7 +55,11 @@ export async function POST(req: Request) {
     if (response) {
       const session = await lucia.createSession(userId, {});
       const sessionCookie = lucia.createSessionCookie(session.id);
-      cookies().set(sessionCookie.name, sessionCookie.value, sessionCookie.attributes);
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes
+      );
 
       return new Response(JSON.stringify({ userId: response[0].id }), {
         status: 201,
