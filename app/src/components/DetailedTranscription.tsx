@@ -161,7 +161,7 @@ const DetailedTranscription = ({
                             </span>
                             <div className="flex w-full justify-between">
                               <p className=" text-sm text-gray-700 leading-relaxed group-hover:text-gray-900">
-                                <Markdown>{segment.text}</Markdown>
+                                <Markdown className={cn("!text-sm", !primaryFont.className)}>{"```" + segment.text + "```"}</Markdown>
                               </p>
                               <div className=" opacity-0 group-hover:opacity-100 transition-opacity">
                                 <PlayCircleIcon className="w-4 h-4 text-green-600" />
@@ -179,7 +179,7 @@ const DetailedTranscription = ({
         <div className="flex flex-1 flex-col max-h-full w-full gap-2 justify-start items-start xl:overflow-y-auto">
           <h1 className="text-xl font-bold">Summary</h1>
           <Card className="w-full flex-1 max-w-xs md:max-w-full xl:overflow-y-auto p-4 rounded-lg">
-            <Markdown className={cn("text-sm", primaryFont.className)}>
+            <Markdown className={cn("!text-sm", !primaryFont.className)}>
               {"```" + transcription.summary + "```" || "No summary available"}
             </Markdown>
           </Card>
