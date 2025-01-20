@@ -18,7 +18,7 @@ export const useUser = () => {
       const response = await axios.post("/api/signup", payload);
       return response.data;
     },
-    onSuccess: async (res) => {
+    onSuccess: async () => {
       toast.success(ValidationMessage.SIGNUP_SUCCESS);
       router.push("/new");
     },
@@ -50,9 +50,13 @@ export const useUser = () => {
       const response = await axios.post("/api/signin", payload);
       return response.data;
     },
-    onSuccess: async (res) => {
+    onSuccess: async () => {
       toast.success(ValidationMessage.SIGNIN_SUCCESS);
       router.push("/new");
+      /* Next.js router wasn't detecting the authentication state change immediately after signin.
+         Added router.refresh() to force Next.js to revalidate the route and update client-side data.
+      */
+      router.refresh();
     },
     onError: (error) => {
       if (error instanceof AxiosError) {
