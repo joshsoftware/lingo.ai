@@ -4,12 +4,12 @@ import { useMutation } from "@tanstack/react-query";
 import axios, { AxiosError } from "axios";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { SigninUserRequest, SignupUserRequest } from "@/Validators/register";
+import { SigninUserRequest, SignupUserRequest } from "@/validators/register";
 import { useState } from "react";
+import { ValidationMessage } from "@/constants/messages";
 
 export const useUser = () => {
-
-    const router = useRouter();
+  const router = useRouter();
 
     const [disableSubmit,setDisableSubmit] = useState(false);
     const { mutate:signup, isPending:isSigningUp } = useMutation({
@@ -94,22 +94,20 @@ export const useUser = () => {
       }
   });
 
-    const signupUser = (data: SignupUserRequest) => {
-        setDisableSubmit(true);
-        signup(data);
-    }
+  const signupUser = (data: SignupUserRequest) => {
+    setDisableSubmit(true);
+    signup(data);
+  };
 
-    const signinUser = (data: SigninUserRequest) => {
-      setDisableSubmit(true);
-      signin(data);
-    }
+  const signinUser = (data: SigninUserRequest) => {
+    setDisableSubmit(true);
+    signin(data);
+  };
 
-    return {
-        signupUser,
-        signinUser,
-        isPending: isSigningUp || isSigningIn,
-        disableSubmit
-    }
-
-}
-
+  return {
+    signupUser,
+    signinUser,
+    isPending: isSigningUp || isSigningIn,
+    disableSubmit,
+  };
+};

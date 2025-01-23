@@ -18,7 +18,7 @@ import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { toast } from "sonner";
 import { useUploadThing } from "@/utils/uploadthing";
-import { TranscribeDocumentRequest } from "@/Validators/document";
+import { TranscribeDocumentRequest } from "@/validators/document";
 import { TranscriptionResponse } from "@/types/TranscriptionResponse";
 import { TranscriptionsPayload, TranscriptionsType } from "@/db/schema";
 import { Fragment } from "react";
@@ -99,9 +99,12 @@ const RecorderCard = (props: RecorderCardProps) => {
       });
     },
     onUploadError: () => {
-      toast.error(`Failed to upload ${file?.type}, please try again in some time`, {
-        description: "If the issue persists, please contact support",
-      });
+      toast.error(
+        `Failed to upload ${file?.type}, please try again in some time`,
+        {
+          description: "If the issue persists, please contact support",
+        }
+      );
       setFile(null);
       setAudioURL("");
       setAudioBlob(null);
@@ -135,7 +138,6 @@ const RecorderCard = (props: RecorderCardProps) => {
         setUploadProgress(0);
         setRecordingTime(0);
 
-
         toast.success(`${file?.type} transcribed successfully`);
       },
       onError: (error) => {
@@ -150,7 +152,7 @@ const RecorderCard = (props: RecorderCardProps) => {
           `Failed to transcribe ${file?.type}, please try again in some time`,
           {
             description: error.message,
-          },
+          }
         );
       },
     });
@@ -159,12 +161,10 @@ const RecorderCard = (props: RecorderCardProps) => {
     {
       mutationKey: ["saveTranscribe"],
       mutationFn: async (data: TranscriptionsPayload) => {
-
-        if(recordingTime > 0) {
+        if (recordingTime > 0) {
           // recorded
           data.audioDuration = recordingTime;
-        }
-        else{
+        } else {
           // uploaded
           const audio = new Audio(data.documentUrl);
           await new Promise<void>((resolve) => {
@@ -188,10 +188,10 @@ const RecorderCard = (props: RecorderCardProps) => {
           "Failed to save transcription, please try again in some time",
           {
             description: error.message,
-          },
+          }
         );
       },
-    },
+    }
   );
 
   const handleUploadClick = () => {
@@ -329,7 +329,8 @@ const RecorderCard = (props: RecorderCardProps) => {
                   ) : (
                     <>
                       <p>
-                        Enable mic access, record yourself, or upload an audio or video file
+                        Enable mic access, record yourself, or upload an audio
+                        or video file
                       </p>
                       {/* leaving this comment if we need to enable max file size later on */}
                       {/* <p className="text-gray-400 text-sm">

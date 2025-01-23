@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { AiCruitRequest, aiCruitRequestSchemaValidator } from "@/Validators/register";
+import { AiCruitRequest, aiCruitRequestSchemaValidator } from "@/validators/register";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";

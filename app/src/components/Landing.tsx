@@ -4,6 +4,7 @@ import Image from "next/image";
 import { buttonVariants } from "./ui/button";
 import Link from "next/link";
 import { User } from "lucia";
+import { ValidationMessage } from "@/constants/messages";
 
 const Landing = (attr: {user: User | null}) => {
 
@@ -14,7 +15,7 @@ const Landing = (attr: {user: User | null}) => {
           Welcome
         </h1>
         <h1 className={cn(primaryFont.className, "text-5xl")}>
-          Transform Speech into Action: Translate, Transcribe, and Summarize Effortlessly
+          {ValidationMessage.LANDING_PAGE_TITLE}
         </h1>
         <p>  
           Unleash the power of seamless communication with a tool that does it all—accurate transcription, real-time translation, and intelligent summaries in one go.

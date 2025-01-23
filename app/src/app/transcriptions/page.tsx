@@ -4,6 +4,7 @@ import { PAGINATION_LIMIT } from "@/constants/pagination";
 import { db } from "@/db";
 import { transcriptions } from "@/db/schema";
 import { desc } from "drizzle-orm";
+import { validateRequest } from "@/auth";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -16,6 +17,7 @@ export const metadata: Metadata = {
 };
 
 const page = async () => {
+  const { user } = await validateRequest();
 
   const userTranscriptions = await db
     .select({
@@ -36,7 +38,10 @@ const page = async () => {
         <NavigateBack subHeading="Transcriptions" />
       </div>
       <div className="flex flex-col items-center overflow-y-auto h-fit w-full">
-          <TranscriptionItem initialTranscriptionsData={userTranscriptions} />
+        <TranscriptionItem
+          initialTranscriptionsData={userTranscriptions}
+          userId={user?.id || null}
+        />
       </div>
     </div>
   );

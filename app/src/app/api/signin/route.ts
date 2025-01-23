@@ -1,7 +1,7 @@
 import { lucia } from "@/auth";
 import { db } from "@/db";
 import { userTable } from "@/db/schema";
-import { signinUserSchemaValidator } from "@/Validators/register";
+import { signinUserSchemaValidator } from "@/validators/register";
 import { verify } from "@node-rs/argon2";
 import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
@@ -12,11 +12,11 @@ export async function POST(req: Request) {
         const body = await req.json();
         const { password, userEmail } = signinUserSchemaValidator.parse(body);
 
-        // check if user exists
-        const existingUser = await db
-            .select()
-            .from(userTable)
-            .where(eq(userTable.username, userEmail))
+    // check if user exists
+    const existingUser = await db
+      .select()
+      .from(userTable)
+      .where(eq(userTable.username, userEmail));
 
         if (existingUser.length === 0) {
             return new Response("User not found", {
@@ -46,9 +46,9 @@ export async function POST(req: Request) {
     } catch (error) {
         console.log(error);
 
-        if (error instanceof z.ZodError) {
-            return new Response(error.message, { status: 422 });
-        }
-        return new Response("Failed to Register User", { status: 500 });
+    if (error instanceof z.ZodError) {
+      return new Response(error.message, { status: 422 });
     }
+    return new Response("Failed to Register User", { status: 500 });
+  }
 }

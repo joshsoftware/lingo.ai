@@ -1,7 +1,7 @@
 import { lucia } from "@/auth";
 import { db } from "@/db";
 import { registrations, userTable } from "@/db/schema";
-import { signupUserSchemaValidator } from "@/Validators/register";
+import { signupUserSchemaValidator } from "@/validators/register";
 import { hash } from "@node-rs/argon2";
 import { eq } from "drizzle-orm";
 import { generateIdFromEntropySize } from "lucia";
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
       memoryCost: 19456,
       timeCost: 2,
       outputLen: 32,
-      parallelism: 1
+      parallelism: 1,
     });
 
     const userId = generateIdFromEntropySize(10); // 16 characters long
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
       .insert(userTable)
       .values({
         id: userId,
-        username:userEmail,
+        username: userEmail,
         password_hash: passwordHash,
         name: userName || "",
         contactNumber: contact || "",
