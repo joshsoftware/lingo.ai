@@ -1,6 +1,6 @@
 {
-  "id": "c729a77e-d878-4ed1-b693-7282745c583d",
-  "prevId": "1b89f5e6-7610-4b18-9af0-cb69c39c67c2",
+  "id": "2ad32fb7-c2f6-4e9d-a858-c262aea7edc8",
+  "prevId": "21fe80ad-e01f-4679-8f45-d9b61904fb42",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -60,13 +60,6 @@
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true
-        },
-        "createdAt": {
-          "name": "createdAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
         }
       },
       "indexes": {},
@@ -117,13 +110,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "segments": {
-          "name": "segments",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        },
         "createdAt": {
           "name": "createdAt",
           "type": "timestamp",
@@ -142,25 +128,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
-        },
-        "isDefault": {
-          "name": "isDefault",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "audioDuration": {
-          "name": "audioDuration",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "user_name": {
-          "name": "user_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {},
@@ -203,31 +170,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "contactNumber": {
-          "name": "contactNumber",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "role": {
-          "name": "role",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "createdAt": {
-          "name": "createdAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
         }
       },
       "indexes": {},

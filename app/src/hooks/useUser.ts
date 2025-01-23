@@ -20,7 +20,7 @@ export const useUser = () => {
         },
         onSuccess: async (res) => {
           toast.success("User Registered Successfully");
-          router.push("/record")
+          router.push(res?.role === "hr" ? "/analyse" : "/record");
         },
         onError: (error) => {
           if (error instanceof AxiosError) {
@@ -55,7 +55,16 @@ export const useUser = () => {
       },
       onSuccess: async (res) => {
         toast.success("User sign in Successfull");
-        router.push(res?.role === "hr" ? "/analyse" : "/record")
+        console.log("User Role : ", res?.role);
+        if (res?.role === "hr") {
+          router.push("/analyse");
+        } else if (!res?.role) {
+          router.push("/");
+        } else {
+          router.push("/");
+        }
+      
+        router.refresh();
       },
       onError: (error) => {
         if (error instanceof AxiosError) {

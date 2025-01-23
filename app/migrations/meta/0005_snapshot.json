@@ -1,180 +1,9 @@
 {
-  "id": "1119a2d1-e63b-4066-bcee-c2e18c50126e",
-  "prevId": "da5e1ba2-42b5-4c56-9a01-83ef8cd77a95",
+  "id": "45a3db15-c8bf-4c72-96e1-ee4ecc6115a7",
+  "prevId": "fe7a5b17-1b66-42ba-83f0-3e7da16e8a1e",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.analysis_feedback": {
-      "name": "analysis_feedback",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "analysis_id": {
-          "name": "analysis_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "is_found_useful": {
-          "name": "is_found_useful",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "impact": {
-          "name": "impact",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "createdAt": {
-          "name": "createdAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "analysis_feedback_analysis_id_interview_analysis_id_fk": {
-          "name": "analysis_feedback_analysis_id_interview_analysis_id_fk",
-          "tableFrom": "analysis_feedback",
-          "tableTo": "interview_analysis",
-          "columnsFrom": [
-            "analysis_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
-    },
-    "public.interview_analysis": {
-      "name": "interview_analysis",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "candidate_name": {
-          "name": "candidate_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "interviewer_name": {
-          "name": "interviewer_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "interview_recording_link": {
-          "name": "interview_recording_link",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "interview_transcript_link": {
-          "name": "interview_transcript_link",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "job_description_document_link": {
-          "name": "job_description_document_link",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "transcript": {
-          "name": "transcript",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "questions_answers": {
-          "name": "questions_answers",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "parsed_job_description": {
-          "name": "parsed_job_description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "analysis_result": {
-          "name": "analysis_result",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "conversation": {
-          "name": "conversation",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "interview_analysis_user_id_user_id_fk": {
-          "name": "interview_analysis_user_id_user_id_fk",
-          "tableFrom": "interview_analysis",
-          "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
-    },
     "public.registrations": {
       "name": "registrations",
       "schema": "",
@@ -288,13 +117,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "segments": {
-          "name": "segments",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        },
         "createdAt": {
           "name": "createdAt",
           "type": "timestamp",
@@ -324,12 +146,6 @@
         "audioDuration": {
           "name": "audioDuration",
           "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "user_name": {
-          "name": "user_name",
-          "type": "text",
           "primaryKey": false,
           "notNull": false
         }
@@ -374,18 +190,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "contactNumber": {
-          "name": "contactNumber",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         },
         "role": {
           "name": "role",

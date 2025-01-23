@@ -1,0 +1,1 @@
+ALTER TABLE "transcriptions" ADD COLUMN "isDefault" boolean DEFAULT false NOT NULL;

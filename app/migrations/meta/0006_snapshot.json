@@ -1,6 +1,6 @@
 {
-  "id": "c729a77e-d878-4ed1-b693-7282745c583d",
-  "prevId": "1b89f5e6-7610-4b18-9af0-cb69c39c67c2",
+  "id": "da5e1ba2-42b5-4c56-9a01-83ef8cd77a95",
+  "prevId": "45a3db15-c8bf-4c72-96e1-ee4ecc6115a7",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -117,13 +117,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "segments": {
-          "name": "segments",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        },
         "createdAt": {
           "name": "createdAt",
           "type": "timestamp",
@@ -153,12 +146,6 @@
         "audioDuration": {
           "name": "audioDuration",
           "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "user_name": {
-          "name": "user_name",
-          "type": "text",
           "primaryKey": false,
           "notNull": false
         }
