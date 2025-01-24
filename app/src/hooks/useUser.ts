@@ -4,7 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import axios, { AxiosError } from "axios";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { SignupUserRequest } from "@/validators/regoster";
+import { SignupUserRequest } from "@/validators/register";
 import { useState } from "react";
 import { Messages } from "@/constants/messages";
 import { SigninUserRequest } from "@/validators/signin";

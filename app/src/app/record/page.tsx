@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 const page = async () => {
   const { user } = await validateRequest();
-  const userID = user?.id ? user.id : "";
+  const userID = user?.id || "";
   
   return (
     <div className="flex flex-col w-full pt-8">

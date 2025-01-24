@@ -101,71 +101,71 @@ const Page = (props: PageProps) => {
   );
 
   // ASD : Not used but keeping it for reference
-  return (
-    <div className="flex flex-col w-full h-full pt-8">
-      <h3 className="text-2xl text-center dark:text-white mb-1">
-        Interview Analysis Report
-      </h3>
-      <div className="flex justify-start w-full mb-8">
-        <NavigateBack href={from == "l" ? "/analysis" : "/analyse"} />
-      </div>
-      <div className="flex flex-col justify-start w-full mb-12">
-        <div className="flex flex-row items-center mb-4">
-          <h1 className="text-xl ml-2">
-            Candidate Name : {analysisData.candidateName}
-          </h1>
-        </div>
-        <div className="flex flex-row items-center mb-4">
-          <h1 className="text-xl ml-2">
-            Interviewer Name : {analysisData.interviewerName}
-          </h1>
-        </div>
+  // return (
+  //   <div className="flex flex-col w-full h-full pt-8">
+  //     <h3 className="text-2xl text-center dark:text-white mb-1">
+  //       Interview Analysis Report
+  //     </h3>
+  //     <div className="flex justify-start w-full mb-8">
+  //       <NavigateBack href={from == "l" ? "/analysis" : "/analyse"} />
+  //     </div>
+  //     <div className="flex flex-col justify-start w-full mb-12">
+  //       <div className="flex flex-row items-center mb-4">
+  //         <h1 className="text-xl ml-2">
+  //           Candidate Name : {analysisData.candidateName}
+  //         </h1>
+  //       </div>
+  //       <div className="flex flex-row items-center mb-4">
+  //         <h1 className="text-xl ml-2">
+  //           Interviewer Name : {analysisData.interviewerName}
+  //         </h1>
+  //       </div>
 
-        <div className="flex flex-row gap-4 m-3">
-          {/* Analysis Container on the Left */}
-          <div className="flex-1 analysis-container">
-            <h1 className="text-xl">Analysis</h1>
-            <p>Overview -</p>
-            <ReadMore summary={analysisData.summary ?? ""} />
-          </div>
+  //       <div className="flex flex-row gap-4 m-3">
+  //         {/* Analysis Container on the Left */}
+  //         <div className="flex-1 analysis-container">
+  //           <h1 className="text-xl">Analysis</h1>
+  //           <p>Overview -</p>
+  //           <ReadMore summary={analysisData.summary ?? ""} />
+  //         </div>
 
-          {/* Cards on the Right */}
-          <div className="flex flex-col items-end gap-4 m-3">
-            {analysisData && (
-              <Card className="bg-[#fafbff] w-[300px] h-[80px] p-4 rounded-lg break-words flex items-center">
-                <p>Interview</p>
-                <a
-                  href={analysisData.interviewRecordingLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-500 cursor-pointer hover:underline ml-2 truncate"
-                >
-                  {analysisData.interviewRecordingLink}
-                </a>
-              </Card>
-            )}
-            {analysisData && (
-              <Card className="bg-[#fafbff] w-[300px] h-[80px] p-4 rounded-lg break-words flex items-center">
-                <p>Job Description</p>
-                <a
-                  href={analysisData.jobDescriptionDocumentLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-500 cursor-pointer hover:underline ml-2 truncate"
-                >
-                  {analysisData.jobDescriptionDocumentLink}
-                </a>
-              </Card>
-            )}
-          </div>
-        </div>
-      </div>
-      {/* {analysisData && <InterviewResult analysis={analysisData} />}
-      {analysisData && <InterviewQA analysis={analysisData} />}
-      {analysisData && <InterviewConversation analysis={analysisData} />} */}
-      <Feedback analysisId={analysis_id}></Feedback>
-    </div>
-  );
+  //         {/* Cards on the Right */}
+  //         <div className="flex flex-col items-end gap-4 m-3">
+  //           {analysisData && (
+  //             <Card className="bg-[#fafbff] w-[300px] h-[80px] p-4 rounded-lg break-words flex items-center">
+  //               <p>Interview</p>
+  //               <a
+  //                 href={analysisData.interviewRecordingLink}
+  //                 target="_blank"
+  //                 rel="noopener noreferrer"
+  //                 className="text-blue-500 cursor-pointer hover:underline ml-2 truncate"
+  //               >
+  //                 {analysisData.interviewRecordingLink}
+  //               </a>
+  //             </Card>
+  //           )}
+  //           {analysisData && (
+  //             <Card className="bg-[#fafbff] w-[300px] h-[80px] p-4 rounded-lg break-words flex items-center">
+  //               <p>Job Description</p>
+  //               <a
+  //                 href={analysisData.jobDescriptionDocumentLink}
+  //                 target="_blank"
+  //                 rel="noopener noreferrer"
+  //                 className="text-blue-500 cursor-pointer hover:underline ml-2 truncate"
+  //               >
+  //                 {analysisData.jobDescriptionDocumentLink}
+  //               </a>
+  //             </Card>
+  //           )}
+  //         </div>
+  //       </div>
+  //     </div>
+  //     {/* {analysisData && <InterviewResult analysis={analysisData} />}
+  //     {analysisData && <InterviewQA analysis={analysisData} />}
+  //     {analysisData && <InterviewConversation analysis={analysisData} />} */}
+  //     <Feedback analysisId={analysis_id}></Feedback>
+  //   </div>
+  // );
 };
 
 export default Page;

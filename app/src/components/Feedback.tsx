@@ -11,6 +11,12 @@ import { toast } from 'sonner';
 import { feedBackProps } from '@/types/transcriptions';
 import { Messages } from '@/constants/messages';
 
+interface FeedbackPayload {
+    comment: string;
+    isFoundUseful: boolean;
+    analysisId: string;
+}
+
 const Feedback = (props: feedBackProps) => {
     const { analysisId } = props;
     const [feedback, setFeedback] = useState("");
@@ -40,14 +46,14 @@ const Feedback = (props: feedBackProps) => {
 
     const { mutate: SaveAnalysisFeedBack } = useMutation({
         mutationKey: ["SaveAnalysisFeedBack"],
-        mutationFn: async (payload: any) => {
+        mutationFn: async (payload: FeedbackPayload) => {
             setIsLoading(true);
             setIsPositiveFeedbackLoading(payload.isFoundUseful ?? false);
             setIsNegativeFeedbackLoading(!(payload.isFoundUseful ?? true));
             const response = await axios.post("/api/feedback", payload);
             return response;
         },
-        onSuccess: async (res: any) => {
+        onSuccess: async (res) => {
             setIsLoading(false);
             setIsLoading(true);
             setIsPositiveFeedbackLoading(false);

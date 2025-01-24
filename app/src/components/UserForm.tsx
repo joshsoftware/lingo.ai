@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { SignupUserRequest, signupUserSchemaValidator } from "@/validators/regoster";
+import { SignupUserRequest, signupUserSchemaValidator } from "@/validators/register";
 
 import { useUser } from "@/hooks/useUser";
 import Link from "next/link";

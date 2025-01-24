@@ -192,7 +192,7 @@ const InterviewResult = ({ analysis }: InterviewResultProps) => {
                     </p>
                     <ul className="list-disc pl-6">
                       {analysis.analysisResult.result.skills.secondary.questions.map(
-                        (question: any, idx: number) => (
+                        (question: InterviewQuestionAnswers, idx: number) => (
                           <li key={idx}>
                             <strong>Q:</strong> {question.question}
                             <br />
