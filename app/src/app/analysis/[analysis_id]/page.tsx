@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import "./page.css";
 import Feedback from "@/components/Feedback";
@@ -6,31 +6,15 @@ import NavigateBack from "@/components/NavigateBack";
 import ReadMore from "../../../components/ReadMore";
 import axios from "axios";
 import { useSearchParams } from "next/navigation";
-import { use, useEffect, useState } from "react";
-import { Loader2, Logs } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { Card } from "../../../components/ui/card";
 import InterviewResult from "@/components/InterviewResult";
 import InterviewQA from "@/components/InterviewQA";
 import InterviewConversation from "@/components/InterviewConversation";
 import InterviewAnalysis from "@/components/InterviewAnalysis";
-
-type PageProps = {
-  params: { analysis_id: string };
-};
-
-interface AnalysisData {
-  analysisResult: any;
-  candidateName: string;
-  interviewerName: string;
-  interviewRecordingLink: string;
-  jobDescriptionDocumentLink: string;
-  parsedJobDescription: string;
-  questionsAnswers: any;
-  transcript: string;
-  conversation: string;
-  summary: string;
-}
+import { Messages } from "@/constants/messages";
 
 const Page = (props: PageProps) => {
   const analysis_id = props.params.analysis_id;
@@ -71,7 +55,7 @@ const Page = (props: PageProps) => {
       setLoading(false);
     },
     onError: (error) => {
-      setError("Something went wrong, please try again");
+      setError(Messages.CUSTOM_ERROR);
       setLoading(false);
     },
   });
@@ -92,8 +76,6 @@ const Page = (props: PageProps) => {
       </div>
     );
   }
-
-  console.log(analysisData);
 
   return (
     <InterviewAnalysis
@@ -118,6 +100,7 @@ const Page = (props: PageProps) => {
     />
   );
 
+  // ASD : Not used but keeping it for reference
   return (
     <div className="flex flex-col w-full h-full pt-8">
       <h3 className="text-2xl text-center dark:text-white mb-1">
@@ -177,9 +160,9 @@ const Page = (props: PageProps) => {
           </div>
         </div>
       </div>
-      {analysisData && <InterviewResult analysis={analysisData} />}
+      {/* {analysisData && <InterviewResult analysis={analysisData} />}
       {analysisData && <InterviewQA analysis={analysisData} />}
-      {analysisData && <InterviewConversation analysis={analysisData} />}
+      {analysisData && <InterviewConversation analysis={analysisData} />} */}
       <Feedback analysisId={analysis_id}></Feedback>
     </div>
   );

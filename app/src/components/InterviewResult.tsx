@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useRef } from "react";
 import { Card } from "./ui/card";
 import { ListTodo } from "lucide-react";
@@ -6,7 +8,16 @@ import { jsPDF } from "jspdf";
 import './DetailedInterviewAnalysis.css';
 
 interface InterviewResultProps {
-  analysis: any;
+  analysis: AnalysisData;
+}
+
+interface InterviewQuestionAnswers {
+  id: string;
+  question: string;
+  answer: string;
+  correctness: string;
+  remark: string;
+  rating: number;
 }
 
 const InterviewResult = ({ analysis }: InterviewResultProps) => {
@@ -61,7 +72,7 @@ const InterviewResult = ({ analysis }: InterviewResultProps) => {
       addText("Analysis - ");
       addText("Core Skills:");
       addText(`Overall Rating: ${analysisResult.result.skills.core.overall_rating}`);
-      analysisResult.result.skills.core.questions.forEach((question: any) => {
+      analysisResult.result.skills.core.questions.forEach((question: InterviewQuestionAnswers) => {
         addText(`Q: ${question.question}`);
         addText(`A: ${question.answer}`);
         addText(`Correctness: ${question.correctness}`);
@@ -72,7 +83,7 @@ const InterviewResult = ({ analysis }: InterviewResultProps) => {
   
       addText("Secondary Skills:");
       addText(`Overall Rating: ${analysisResult.result.skills.secondary.overall_rating}`);
-      analysisResult.result.skills.secondary.questions.forEach((question: any) => {
+      analysisResult.result.skills.secondary.questions.forEach((question: InterviewQuestionAnswers) => {
         addText(`Q: ${question.question}`);
         addText(`A: ${question.answer}`);
         addText(`Correctness: ${question.correctness}`);
@@ -83,7 +94,7 @@ const InterviewResult = ({ analysis }: InterviewResultProps) => {
 
       addText("Domain Expertise:");
       addText(`Overall Rating: ${analysisResult.result.domain_expertise.overall_rating}`);
-      analysisResult.result.domain_expertise.questions.forEach((question: any) => {
+      analysisResult.result.domain_expertise.questions.forEach((question: InterviewQuestionAnswers) => {
         addText(`Q: ${question.question}`);
         addText(`A: ${question.answer}`);
         addText(`Correctness: ${question.correctness}`);

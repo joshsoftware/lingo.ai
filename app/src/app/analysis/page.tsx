@@ -11,7 +11,7 @@ export const revalidate = 0;
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "AiCruit",
+  title: "AiCruit | Analysis Records",
 };
 
 const page = async () => {

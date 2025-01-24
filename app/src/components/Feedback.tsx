@@ -1,17 +1,15 @@
 'use client'
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import './Feedback.css';
 import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import { Button } from './ui/button';
 import React from 'react';
-import { Loader2, ThumbsDown, ThumbsUp } from 'lucide-react';
+import { ThumbsDown, ThumbsUp } from 'lucide-react';
 import { toast } from 'sonner';
-
-interface feedBackProps {
-    analysisId: string
-}
+import { feedBackProps } from '@/types/transcriptions';
+import { Messages } from '@/constants/messages';
 
 const Feedback = (props: feedBackProps) => {
     const { analysisId } = props;
@@ -59,7 +57,7 @@ const Feedback = (props: feedBackProps) => {
             handleClose(true);
         },
         onError: (error) => {
-            setError("Something went wrong, please try again");
+            setError(Messages.CUSTOM_ERROR);
             setIsLoading(false);
             setIsPositiveFeedbackLoading(false);
             setIsNegativeFeedbackLoading(false);

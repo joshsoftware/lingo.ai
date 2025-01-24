@@ -4,7 +4,7 @@ import Image from "next/image";
 import { buttonVariants } from "./ui/button";
 import Link from "next/link";
 import { User } from "lucia";
-import { ValidationMessage } from "@/constants/messages";
+import { Messages } from "@/constants/messages";
 
 const Landing = (attr: {user: User | null}) => {
 
@@ -15,10 +15,10 @@ const Landing = (attr: {user: User | null}) => {
           Welcome
         </h1>
         <h1 className={cn(primaryFont.className, "text-5xl")}>
-          {ValidationMessage.LANDING_PAGE_TITLE}
+          {Messages.LANDING_PAGE_TITLE}
         </h1>
         <p>  
-          Unleash the power of seamless communication with a tool that does it all—accurate transcription, real-time translation, and intelligent summaries in one go.
+          {Messages.LANDING_PAGE_DESCRIPTION}
         </p>
          <div className="w-full flex gap-3">
         <Link

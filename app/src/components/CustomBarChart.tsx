@@ -10,6 +10,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import { CustomBarChartProps } from "@/types/transcriptions";
 
 // Register necessary chart components
 ChartJS.register(
@@ -21,20 +22,6 @@ ChartJS.register(
   Tooltip,
   Legend
 );
-
-interface CustomBarChartProps {
-  data: {
-    labels: string[];
-    datasets: {
-      label: string;
-      data: number[];
-      borderColor: string[];
-      backgroundColor: string[];
-      fill: boolean;
-    }[];
-  };
-  maxY: number;
-}
 
 const CustomBarChart: React.FC<CustomBarChartProps> = ({ data, maxY }) => {
   const options = {

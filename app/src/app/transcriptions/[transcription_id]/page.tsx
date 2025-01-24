@@ -2,6 +2,7 @@ import DetailedTranscription from "@/components/DetailedTranscription";
 import NavigateBack from "@/components/NavigateBack";
 import { db } from "@/db";
 import { transcriptions } from "@/db/schema";
+import { PageProps } from "@/types/transcriptions";
 import { eq } from "drizzle-orm";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -10,12 +11,6 @@ import { validate as validateUUID } from 'uuid';
 export const metadata: Metadata = {
   title: "Lingo.ai | Transcription",
 };
-
-interface PageProps {
-  params: {
-    transcription_id: string;
-  };
-}
 
 const page = async (props: PageProps) => {
   const { transcription_id } = props.params;

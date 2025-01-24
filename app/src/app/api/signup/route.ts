@@ -1,7 +1,7 @@
 import { lucia } from "@/auth";
 import { db } from "@/db";
 import { registrations, userTable } from "@/db/schema";
-import { signupUserSchemaValidator } from "@/validators/register";
+import { signupUserSchemaValidator } from "@/validators/regoster";
 import { hash } from "@node-rs/argon2";
 import { eq } from "drizzle-orm";
 import { generateIdFromEntropySize } from "lucia";

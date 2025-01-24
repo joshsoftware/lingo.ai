@@ -1,11 +1,9 @@
-'use client'
-
 import { Card } from "./ui/card";
 import "./DetailedInterviewAnalysis.css";
 import { SquareTerminal } from "lucide-react";
 
 interface InterviewConversation {
-  analysis: any;
+  analysis: AnalysisData;
 }
 
 const InterviewConversation = ({ analysis }: InterviewConversation) => {

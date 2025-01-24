@@ -1,11 +1,18 @@
-'use client'
-
 import { Card } from "./ui/card";
 import './DetailedInterviewAnalysis.css';
 import { SquareX } from "lucide-react";
 
 interface InterviewQAs {
-  analysis: any;
+  analysis: AnalysisData;
+}
+
+interface InterviewQAItems {
+  id: string;
+  question: string;
+  answer: string;
+  rightness: string;
+  remark: string;
+  rating: number;
 }
 
 const InterviewQA = ({ analysis }: InterviewQAs) => {
@@ -23,7 +30,7 @@ const InterviewQA = ({ analysis }: InterviewQAs) => {
           <Card className="analysis-section-card bg-[#fafbff] w-full flex-1 max-w-xs md:max-w-full p-4 rounded-lg break-words">
             {analysis.questionsAnswers.result.length > 0 ? (
               <div className="space-y-4">
-                {analysis.questionsAnswers.result.map((item: any) => (
+                {analysis.questionsAnswers.result.map((item: InterviewQAItems) => (
                   <div
                     key={item.id}
                     className="border-b border-gray-200 pb-4 mb-4 last:mb-0 last:border-0"

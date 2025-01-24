@@ -19,12 +19,12 @@ import axios from "axios";
 import { toast } from "sonner";
 import { useUploadThing } from "@/utils/uploadthing";
 import { TranscribeDocumentRequest } from "@/validators/document";
-import { TranscriptionResponse } from "@/types/TranscriptionResponse";
 import { TranscriptionsPayload, TranscriptionsType } from "@/db/schema";
 import { Fragment } from "react";
+import { TranscriptionResponse } from "@/types/TranscriptionResponse";
 
 interface RecorderCardProps {
-  userId: any;
+  userId: string;
 }
 const RecorderCard = (props: RecorderCardProps) => {
   const { userId } = props;

@@ -1,11 +1,7 @@
-'use client'
-
 import "./InterviewAnalysisItem.css";
 import { interviewAnalysisType } from "@/db/schema";
 import { format } from "date-fns";
-import { Button, buttonVariants } from "./ui/button";
-import { useRouter } from "next/navigation";
-import { ChevronRight } from "lucide-react";
+import { buttonVariants } from "./ui/button";
 import Link from "next/link";
 
 interface InterviewAnalysisProps {
@@ -17,12 +13,7 @@ interface InterviewAnalysisProps {
 }
 
 const InterviewAnalysis = (props: InterviewAnalysisProps) => {
-  const router = useRouter();
   const { interviewAnalysis, index } = props;
-
-  const showAnalysis = () => {
-    router.push(`/analysis/${interviewAnalysis.id}?f=l`);
-  };
 
   return (
     <div

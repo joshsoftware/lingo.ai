@@ -1,7 +1,7 @@
 import { lucia } from "@/auth";
 import { db } from "@/db";
 import { userTable } from "@/db/schema";
-import { signinUserSchemaValidator } from "@/validators/register";
+import { signinUserSchemaValidator } from "@/validators/signin";
 import { verify } from "@node-rs/argon2";
 import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";

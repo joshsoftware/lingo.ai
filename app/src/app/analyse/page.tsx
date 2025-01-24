@@ -1,9 +1,9 @@
-import AiCruitFrom from "@/components/AiCruitForm";
+import AiCruitForm from "@/components/AiCruitForm";
 import NavigateBack from "@/components/NavigateBack";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Lingo.ai | New",
+  title: "AiCruit | New",
 };
 
 const page = async () => {
@@ -13,7 +13,7 @@ const page = async () => {
         <NavigateBack href="/" />
       </div>
       <div className="flex flex-1 justify-center items-start">
-        <AiCruitFrom />
+        <AiCruitForm />
       </div>
     </div>
   );

@@ -1,8 +1,8 @@
 import Link from "next/link";
 import React from "react";
-import { FaFileAlt, FaLink, FaStar, FaCheck, FaTimes } from "react-icons/fa";
+import { FaLink, FaStar } from "react-icons/fa";
 import SkillDetails from "./SkillDetails";
-import { Bar, Pie } from "react-chartjs-2";
+import { Pie } from "react-chartjs-2";
 import {
   BarElement,
   CategoryScale,
@@ -12,31 +12,6 @@ import {
   Tooltip,
 } from "chart.js/auto";
 import CustomBarChart from "./CustomBarChart";
-
-interface Skill {
-  question: string;
-  answer: string;
-  correctness: "unknown" | "wrong" | "partially right" | "right";
-  rating: number;
-  remark: string;
-}
-
-interface InterviewAnalysisProps {
-  candidateName: string;
-  interviewerName?: string;
-  overview: string;
-  interviewLink: string;
-  jobDescriptionLink: string;
-  overallRating: number;
-  ratingScale: Array<number>;
-  coreSkills: Array<Skill>;
-  secondarySkills: Array<Skill>;
-  domainSkills: Array<Skill>;
-  strengths: string[];
-  weaknesses: string[];
-  conversation: string[];
-  transcript: string[];
-}
 
 const InterviewAnalysis: React.FC<InterviewAnalysisProps> = ({
   candidateName,

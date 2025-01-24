@@ -1,6 +1,5 @@
 'use client'
 
-import { cn } from "@/lib/utils";
 import { Input } from "./ui/input";
 import { Button, buttonVariants } from "./ui/button";
 import {
@@ -13,17 +12,15 @@ import {
 } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { AiCruitRequest, aiCruitRequestSchemaValidator } from "@/validators/register";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import axios, { AxiosError } from "axios";
 import { Checkbox } from "@/components/ui/checkbox"
+import { AiCruitRequest, aiCruitRequestSchemaValidator } from "@/validators/aicruitform";
 
-import Link from "next/link";
-
-const AiCruitFrom = () => {
+const AiCruitForm = () => {
   const router = useRouter();
 
   const form = useForm<AiCruitRequest>({
@@ -218,4 +215,4 @@ const AiCruitFrom = () => {
   );
 };
 
-export default AiCruitFrom;
+export default AiCruitForm;

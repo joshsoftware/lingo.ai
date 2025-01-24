@@ -6,14 +6,30 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { buttonVariants } from "./ui/button";
-import { User } from "lucia";
-
-interface HeaderProps {
-  user: User | null;
-}
+import { HeaderProps } from "@/types/app";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { LogOut } from "lucide-react";
+import { toast } from "sonner";
 
 const Header = ({ user }: HeaderProps) => {
+  const router = useRouter();
   const pathName = usePathname();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/logout", { method: "GET" });
+      setIsLoggingOut(true);
+      toast.success("Logged out successfully!");
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      console.error("Error logging out:", error);
+      setIsLoggingOut(false);
+    }
+  };
+
   return (
     <header
       className={cn(
@@ -69,6 +85,21 @@ const Header = ({ user }: HeaderProps) => {
                 View Records
               </Link>
             )}
+          {
+            user && <button
+            onClick={handleLogout}
+            className={cn(
+              buttonVariants({
+                className: "!bg-red-600 !hover:bg-red-700 text-white text-xs px-3",
+                size: "xs",
+              }),
+              tertiaryFont.className
+            )}
+          >
+            <LogOut className="inline-block mr-2" />
+            Logout
+          </button>
+          }
         </div>
       </div>
     </header>

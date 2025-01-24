@@ -13,10 +13,11 @@ import {
 } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { SignupUserRequest, signupUserSchemaValidator, SigninUserRequest , signinUserSchemaValidator} from "@/validators/register";
+import { SignupUserRequest, signupUserSchemaValidator } from "@/validators/regoster";
 
 import { useUser } from "@/hooks/useUser";
 import Link from "next/link";
+import { SigninUserRequest, signinUserSchemaValidator } from "@/validators/signin";
 
 interface UserFormProps {
   formType: "signin" | "signup";

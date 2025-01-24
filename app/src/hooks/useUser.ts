@@ -4,9 +4,10 @@ import { useMutation } from "@tanstack/react-query";
 import axios, { AxiosError } from "axios";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { SigninUserRequest, SignupUserRequest } from "@/validators/register";
+import { SignupUserRequest } from "@/validators/regoster";
 import { useState } from "react";
-import { ValidationMessage } from "@/constants/messages";
+import { Messages } from "@/constants/messages";
+import { SigninUserRequest } from "@/validators/signin";
 
 export const useUser = () => {
   const router = useRouter();
@@ -19,18 +20,18 @@ export const useUser = () => {
           return response.data;
         },
         onSuccess: async (res) => {
-          toast.success("User Registered Successfully");
+          toast.success(Messages.SIGNUP_SUCCESS);
           router.push(res?.role === "hr" ? "/analyse" : "/record");
         },
         onError: (error) => {
           if (error instanceof AxiosError) {
             if (error.response?.status === 422) {
-              return toast.error("Failed to Register User", {
+              return toast.error(Messages.SIGNUP_FAILED, {
                 description: error.message,
               });
             }
             else if(error.response?.status === 409){
-              return toast.error("User already exists, please sign in", {
+              return toast.error(Messages.USER_EXISTS, {
                 action: {
                   label: "Signin",
                   onClick: () => router.push("/signin"),
@@ -39,7 +40,7 @@ export const useUser = () => {
             }
           }
           return toast.error(
-            "Failed to Register User, please try again in some time",
+            Messages.SIGNUP_FAILED,
           );
         },
         onSettled: () => {
@@ -54,7 +55,7 @@ export const useUser = () => {
         return response.data;
       },
       onSuccess: async (res) => {
-        toast.success("User sign in Successfull");
+        toast.success(Messages.SIGNIN_SUCCESS);
         console.log("User Role : ", res?.role);
         if (res?.role === "hr") {
           router.push("/analyse");
@@ -69,12 +70,12 @@ export const useUser = () => {
       onError: (error) => {
         if (error instanceof AxiosError) {
           if (error.response?.status === 422) {
-            return toast.error("Failed to sign in User", {
+            return toast.error(Messages.SIGNUP_FAILED, {
               description: error.message,
             });
           }
           else if(error.response?.status === 404){
-            return toast.error("User does not exists", {
+            return toast.error(Messages.USER_DOES_NOT_EXISTS, {
               action: {
                 label: "Signup",
                 onClick: () => router.push("/signup"),
@@ -82,11 +83,11 @@ export const useUser = () => {
             });
           }
           else if(error.response?.status === 401){
-            return toast.error("Incorrect username or password");
+            return toast.error(Messages.INVALID_CREDENTIALS);
           }
         }
         return toast.error(
-          "Failed to sign in User, please try again in some time",
+          Messages.SIGN_IN_FAILED,
         );
       },
       onSettled: () => {

@@ -4,7 +4,7 @@ import RecorderCard from "@/components/RecorderCard";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Lingo.ai | New",
+  title: "Lingo.ai | Record",
 };
 
 const page = async () => {
