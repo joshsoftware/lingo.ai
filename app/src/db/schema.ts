@@ -68,5 +68,23 @@ export const interviewAnalysis = pgTable("interview_analysis", {
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
 
+export const analysisFeedback = pgTable("analysis_feedback", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userID: text("user_id").notNull(),
+  analysisId: uuid("analysis_id")
+  .notNull()
+  .references(() => interviewAnalysis.id),
+  isFoundUseful: boolean("is_found_useful").notNull(),
+  comment: text("feedback_message"),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
+});
+
 export type TranscriptionsPayload = typeof transcriptions.$inferInsert;
 export type TranscriptionsType = typeof transcriptions.$inferSelect;
+
+export type interviewAnalysisPayload = typeof interviewAnalysis.$inferInsert;
+export type interviewAnalysisType = typeof interviewAnalysis.$inferSelect;
+
+export type feedbackPayload = typeof analysisFeedback.$inferInsert;
+export type feedbackType = typeof analysisFeedback.$inferSelect;

@@ -9,6 +9,7 @@ export const metadata: Metadata = {
 
 const page = async () => {
   const { user } = await validateRequest();
+  const userID = user?.id ? user.id : "";
   
   return (
     <div className="flex flex-col w-full pt-8">
@@ -16,7 +17,7 @@ const page = async () => {
         <NavigateBack href="/" />
       </div>
       <div className="flex flex-1 justify-center items-start">
-        <RecorderCard userId={user} />
+        <RecorderCard userId={userID} />
       </div>
     </div>
   );

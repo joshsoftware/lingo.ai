@@ -22,12 +22,14 @@ import { TranscribeDocumentRequest } from "@/validators/document";
 import { TranscriptionsPayload, TranscriptionsType } from "@/db/schema";
 import { Fragment } from "react";
 import { TranscriptionResponse } from "@/types/TranscriptionResponse";
+import { User } from "lucia";
 
 interface RecorderCardProps {
-  userId: string;
+  userId: User['id'] | "";
 }
 const RecorderCard = (props: RecorderCardProps) => {
   const { userId } = props;
+  const safeUserId = userId || "";
 
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
@@ -126,7 +128,7 @@ const RecorderCard = (props: RecorderCardProps) => {
         saveTranscribe({
           documentUrl: data.documentUrl,
           documentName: data.documentName,
-          userID: userId,
+          userID: safeUserId,
           summary: res.summary,
           segments: res.segments,
           translation: res.translation,
