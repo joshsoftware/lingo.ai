@@ -31,6 +31,7 @@ from google.oauth2 import service_account
 from utils.constants import LLM, SCOPES, TEMPERATURE
 from typing import Optional, Dict
 import io
+from conversation_diarization.jd_parser import read_docx 
 
 dbCursor = initDbConnection()
 import traceback
@@ -171,7 +172,7 @@ async def analyse_interview(
     background_tasks: BackgroundTasks = None,
 ):
     ANALYSIS_STATUS = "pending"
-    
+    print("Request received")
     try:
         db_connection_string = os.getenv('DATABASE_URL')
     
@@ -179,7 +180,10 @@ async def analyse_interview(
         if not all([interviewer_name, candidate_name, job_description_link]):
             return JSONResponse(status_code=400, content={"message": "Invalid request, missing params"})
 
-        transcript_file_contents = read_contents_of_file(transcript_file)
+        if transcript_file:
+            transcript_file_contents = read_contents_of_file(transcript_file)
+        else:
+            transcript_file_contents = None
         
         # Create record
         analysis_id = insert_interview_analysis(
@@ -201,7 +205,7 @@ async def analyse_interview(
             "interviewer_name": interviewer_name,
             "interview_link": interview_link,
             "job_description_link": job_description_link,
-            "interview_transcript": interview_transcript,
+            "interview_transcript_url": interview_transcript,
             "transcript_file_contents": transcript_file_contents,
         }
         
@@ -227,18 +231,18 @@ def process_interview_analysis(conn_string, analysis_id, request):
 
     try:
         if request['transcript_file_contents']:
-            # Use the provided transcript file
             transcription_result = get_question_answers_from_file(request['transcript_file_contents'])
             questions_answers = transcription_result["qna"]
-            conversation = extract_conversation_from_file(request['transcript_file_contents'])
-            transcript = transcription_result
-        elif request['interview_transcript']:
+            conversation = extract_conversation_from_file(request['transcript_file_contents'])['conversation']
+            transcript = transcription_result["transcript"]
+        elif request['interview_transcript_url']:
             # Use the provided transcript file url
-            transcription_text = process_transcript_from_google_doc(request.interview_transcript)
-            transcription_result = get_question_answers_from_transcript(transcription_text)
+            print("Using provided transcript file url")
+            transcription_text = read_docx(request['interview_transcript_url'])
+            transcription_result = get_question_answers_from_transcript(transcription_text['result'])
             questions_answers = transcription_result["qna"]
-            conversation = extract_conversation_from_transcript(transcription_text)
-            transcript = transcription_result
+            conversation = extract_conversation_from_file(transcription_text['result'])['conversation']
+            transcript = transcription_text['result']
         else:
             # Perform transcription and speaker diarization
             transcription_result = transcription_with_speaker_diarization(request)
@@ -385,7 +389,8 @@ def get_question_answers_from_file(file_content: str) -> Dict:
     Supports DOCX and TXT files (extendable to other formats).
     """
     try:
-        prompt = create_prompt(file_content)
+        print("Processing file content in get_question_answers_from_file")
+        prompt = create_prompt(file_content, "qna")
             
         response = ollama.chat(
             model=LLM,
@@ -404,6 +409,7 @@ def get_question_answers_from_file(file_content: str) -> Dict:
         else:
             response_text_json = None
 
+        print("Processed file content in get_question_answers_from_file")
         return {
             "transcript": file_content,
             "qna": response_text_json
@@ -413,7 +419,7 @@ def get_question_answers_from_file(file_content: str) -> Dict:
         return None
 
 def get_question_answers_from_transcript(file_contents):
-    prompt = create_prompt(file_contents)
+    prompt = create_prompt(file_contents, "qna")
             
     response = ollama.chat(
         model=LLM,
@@ -447,125 +453,65 @@ def extract_conversation_from_file(transcript_file_contents: str):
         dict: A dictionary where each key is a speaker's name and the value is a list of their statements.
     """
     try:
-        paragraphs = transcript_file_contents.split('\n')
-        
-        # Initialize storage for conversations
-        conversation = {}
-        current_speaker = None
-        
-        for paragraph in paragraphs:
-            if ":" in paragraph:
-                # Split speaker name and their statement
-                parts = paragraph.split(":", 1)
-                speaker = parts[0].strip()
-                statement = parts[1].strip() if len(parts) > 1 else ""
-                
-                # Add the statement under the speaker's name
-                if speaker not in conversation:
-                    conversation[speaker] = []
-                conversation[speaker].append(statement)
-                
-                # Update current speaker
-                current_speaker = speaker
-            else:
-                # Paragraph belongs to the last identified speaker
-                if current_speaker is not None:
-                    conversation[current_speaker].append(paragraph.strip())
-        return conversation
+        print("Extracting conversation from file")
+        prompt = create_prompt(transcript_file_contents, "conversation")
+            
+        response = ollama.chat(
+            model=LLM,
+            options={"temperature": TEMPERATURE},
+            messages=[{"role": "user", "content": prompt}],
+        )
 
+        response_text = response.get("message", {}).get("content", "")
+        response_text_json = re.search(r"\{.*\}", response_text, re.DOTALL)
+        
+        if response_text_json:
+            try:
+                response_text_json = json.loads(response_text_json.group())
+            except json.JSONDecodeError as e:
+                response_text_json = None
+        else:
+            response_text_json = None
+        
+        return {
+            "conversation": response_text_json
+        }
     except Exception as e:
         print(f"Error extracting conversation: {e}")
         return {}
 
 def extract_conversation_from_transcript(file_text):
     """
-    Extract conversation between all speakers from a transcript provided as text.
+    Extract and format the conversation between all speakers from a transcript provided as text.
 
     Args:
         file_text (str): The full text content of the transcript file.
 
     Returns:
-        dict: A dictionary where each key is a speaker's name and the value is a list of their statements.
+        str: A formatted string of the conversation between all speakers.
     """
     try:
-        # Split the file content into paragraphs
         paragraphs = [line.strip() for line in file_text.splitlines() if line.strip()]
 
-        # Initialize storage for conversations
-        conversation = {}
+        conversation = []
         current_speaker = None
 
         for paragraph in paragraphs:
-            # Check if the paragraph starts with a speaker's name pattern
             if ":" in paragraph:
-                # Split speaker name and their statement
                 parts = paragraph.split(":", 1)
                 speaker = parts[0].strip()
                 statement = parts[1].strip() if len(parts) > 1 else ""
 
-                # Add the statement under the speaker's name
-                if speaker not in conversation:
-                    conversation[speaker] = []
-                conversation[speaker].append(statement)
-
-                # Update current speaker
+                if current_speaker is not None and current_speaker != speaker:
+                    conversation.append("\n")
+                conversation.append(f"{speaker}: {statement}")
                 current_speaker = speaker
             else:
-                # Paragraph belongs to the last identified speaker
                 if current_speaker is not None:
-                    conversation[current_speaker].append(paragraph)
+                    conversation.append(f"  {paragraph}")
 
-        return conversation
+        return "\n".join(conversation)
 
     except Exception as e:
         print(f"Error extracting conversation: {e}")
-        return {}
-
-# Read file from Google Docs
-def get_credentials():
-    """Get Google Drive API credentials."""
-    try:
-        # Use the service account file from the environment variable
-        credentials = service_account.Credentials.from_service_account_file(
-            os.getenv("SERVICE_ACCOUNT_FILE"), scopes=SCOPES
-        )
-        logger.info("Credentials successfully loaded.")
-        return credentials
-    except Exception as error:
-        logger.error(f"An error occurred while loading credentials: {error}")
-        return None
-    
-def create_docs_service():
-    """Create and return a Google Docs API service object."""
-    creds = get_credentials()
-    if not creds:
-        logger.error("Unable to obtain credentials.")
-        return None
-    return build("docs", "v1", credentials=creds)
-
-def read_google_doc(doc_id):
-    """Read the content of a Google Docs document."""
-    docs_service = create_docs_service()
-    try:
-        # Retrieve the Google Docs document content
-        document = docs_service.documents().get(documentId=doc_id).execute()
-
-        # Extract the document content (text)
-        doc_content = document.get('body').get('content')
-        
-        text = ''
-        for element in doc_content:
-            if 'paragraph' in element:
-                for run in element['paragraph'].get('elements', []):
-                    if 'textRun' in run:
-                        text += run['textRun'].get('content')
-
-        return text
-    except Exception as error:
-        logger.error(f"Error reading Google Docs document: {error}")
-        return None
-
-def process_transcript_from_google_doc(google_doc_url):
-    doc_id = google_doc_url.split('/d/')[1].split('/')[0]
-    transcription = read_google_doc(doc_id)
-    return transcription
+        return ""

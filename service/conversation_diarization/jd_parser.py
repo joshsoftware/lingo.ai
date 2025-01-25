@@ -1,90 +1,19 @@
 import io
 import os
-import ssl
 from urllib.request import Request, urlopen
-from docx import Document
-from PyPDF2 import PdfFileReader, PdfReader
-import re
+from PyPDF2 import PdfFileReader
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseDownload
+from google.oauth2 import service_account
+from utils.constants import SCOPES
+import logging
+from googleapiclient.errors import HttpError
 
-def read_docx(file_path):
-    """Reads and extracts the relevant sections from a .pdf or a .docx file into a dictionary."""
-    
-    return {
-        "result": {
-            "Skills (Must have)": [
-            "3-4 years of experience in developing Web applications",
-            "Proficient with ReactJS, JavaScript, Typescript, HTML, Node JS(Good to have)",
-            "Understanding of web security best practices.",
-            "Expertise with web application architecture, application security and REST APIs.",
-            "Should Understand basic Algorithms and Data Structures.",
-            "Experience writing Unit Tests with Jest, Enzyme or React Testing Library"
-            ],
-            "Skills (Good to have)": [
-            "Expert knowledge of front-end build pipeline and tools (npm, webpack etc)",
-            "Experience in writing REST APIs in Python as a back-end programming language is preferable.",
-            "Sound debugging skills using tools like browser's developer tools, Fiddler, Postman etc.",
-            "Working knowledge of design tools, Unix, docker, CI/CD, SVN/Git etc.",
-            "Experience with NodeJs.",
-            "Familiarity with working in a Scrum Agile delivery environment",
-            "Experience with JavaScript testing frameworks",
-            "Experience with Frontend performance analysis"
-            ],
-            "Responsibilities": [
-            "Develop web applications using JavaScript, React.JS, HTML and CSS.",
-            "Follow the best practices for code development and code hygiene. Write modular and unit tested code.",
-            "Work with other developers on the development team on the implementation of common frameworks and solutions.",
-            "Work with the development team to support and maintain existing production code in the field and develop, deliver new enhancements & products.",
-            "Take end to end responsibility of the assigned tasks/modules/features by interacting with different stakeholders like Product Managers, UX designers, QA, etc.",
-            "Work in SCRUM / Agile environment. Follow the Scrum process, participate in Scrum ceremonies and follow the incremental delivery model.",
-            "Qualification:",
-            "Bachelors/Masters in Computer Science, Software Engineering or equivalent.",
-            "Additional Information:",
-            "We offer a competitive salary and excellent benefits that are above industry standard.",
-            "Do check our impressive growth rate on LinkedIn and ratings on Glassdoor",
-            "Pls submit your resume in this standard 1-page format or 2-page format",
-            "Please hear from our employees on Life at Josh Software"
-            ]
-        }
-    }
-    
-    try:
-        result = {
-            "Skills (Must have)": [],
-            "Skills (Good to have)": [],
-            "Responsibilities": []
-        }
-        ssl._create_default_https_context = ssl._create_unverified_context
-        remote_file = urlopen(Request(file_path)).read()
-        memory_file = io.BytesIO(remote_file)
-        
-        doc = Document(memory_file)
-        
-        current_section = None
-        
-        for paragraph in doc.paragraphs:
-            if "Skills (Must have)" in paragraph.text:
-                current_section = "Skills (Must have)"
-            elif "Skills (Good to have)" in paragraph.text:
-                current_section = "Skills (Good to have)"
-            elif "Responsibilities" in paragraph.text:
-                current_section = "Responsibilities"
-            elif current_section:
-                if paragraph.text.strip():
-                    result[current_section].append(paragraph.text.strip())
-        
-        for table in doc.tables:
-            for row in table.rows:
-                for cell in row.cells:
-                    cell_text = cell.text.strip()
-                    if cell_text:
-                        result[current_section].append(cell_text)
-                        
-        return result
-    except Exception as e:
-        print(f"Error reading file {file_path}: {e}")
-        return f"Error reading file {file_path}: {e}"
-        return None
-
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def read_pdf(file_path):
     """Reads and prints the content of a .pdf file."""
@@ -135,3 +64,70 @@ if __name__ == "__main__":
     directory_path = input("Enter the directory path: ")
     process_directory(directory_path)
 
+def get_credentials():
+    """Get Google Docs API credentials."""
+    try:
+        credentials = service_account.Credentials.from_service_account_file(
+            os.getenv("SERVICE_ACCOUNT_FILE"), scopes=SCOPES
+        )
+        logger.info("Credentials successfully loaded.")
+        return credentials
+    except Exception as error:
+        logger.error(f"An error occurred while loading credentials: {error}")
+        return None
+
+def create_docs_service():
+    """Create and return a Google Docs API service object."""
+    creds = get_credentials()
+    if not creds:
+        logger.error("Unable to obtain credentials.")
+        return None
+    return build("docs", "v1", credentials=creds)
+
+def read_google_doc(doc_id):
+    """Read the content of a Google Docs document."""
+    docs_service = create_docs_service()
+    logger.info(f"Reading Google Docs document with ID: {doc_id}")
+    try:
+        # Retrieve the Google Docs document content
+        document = docs_service.documents().get(documentId=doc_id).execute()
+
+        # Extract the document content (text)
+        doc_content = document.get('body').get('content')
+        
+        text = ''
+        for element in doc_content:
+            if 'paragraph' in element:
+                for run in element['paragraph'].get('elements', []):
+                    if 'textRun' in run:
+                        text += run['textRun'].get('content')
+
+        return text
+    except HttpError as error:
+        logger.error(f"Error reading Google Docs document: {error}")
+        return None
+    except Exception as error:
+        logger.error(f"Unexpected error: {error}")
+        return None
+
+def process_transcript_from_google_doc(google_doc_url):
+    """Process transcript from Google Doc."""
+    try:
+        doc_id = google_doc_url.split('/d/')[1].split('/')[0]
+        transcription = read_google_doc(doc_id)
+        if transcription is None:
+            logger.error("Failed to retrieve transcription from the document.")
+            return None
+        return transcription
+    except Exception as error:
+        logger.error(f"Error processing Google Doc URL: {error}")
+        return None
+
+def read_docx(file_url):
+    """Reads and extracts the relevant sections from a .pdf or a .docx file into a dictionary."""
+    # ASD :TODO Add file handling for .pdf and .docx here if necessary.
+    # For now, assume the file is a Google Docs URL
+    result = process_transcript_from_google_doc(file_url)
+    return {
+        "result": result,
+    }

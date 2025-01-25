@@ -25,20 +25,20 @@ from conversation_diarization.helpers import (
     get_speaker_aware_transcript,
     get_words_speaker_mapping,
     langs_to_iso,
-    write_srt,
 )
-from conversation_diarization.prompt import QNA_PROMPT_MESSAGE
+from utils.prompt import QNA_PROMPT_MESSAGE, CONVERSATION_PROMPT_MESSAGE
 from conversation_diarization.request import InterviewAnalysisRequest
+from utils.constants import LLM, TEMPERATURE, WHISPER_BATCH_SIZE
 
-LLM = "llama3"
-TEMPERATURE = 0.2
 COMPUTING_DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 WHISPER_MODEL = "medium.en"
-WHISPER_BATCH_SIZE = 8
 mtypes = {"cpu": "int8", "cuda": "float16"}
 
-def create_prompt(transcription: str) -> str:
-    return QNA_PROMPT_MESSAGE.replace("<TRANSCRIPTION>", transcription)
+def create_prompt(transcription: str, type: str) -> str:
+    if type == "qna":
+        return QNA_PROMPT_MESSAGE.replace("<TRANSCRIPTION>", transcription)
+    elif type == "conversation":
+        return CONVERSATION_PROMPT_MESSAGE.replace("<TRANSCRIPTION>", transcription)
 
 def transcribe_audio(audio: str | BinaryIO, translate: bool = False):
     # Transcribe the audio file
@@ -163,7 +163,7 @@ def transcription_with_speaker_diarization(request: InterviewAnalysisRequest):
     
     processed_transcript = get_speaker_aware_transcript(ssm)
     
-    prompt = create_prompt(processed_transcript)
+    prompt = create_prompt(processed_transcript, "qna")
             
     response = ollama.chat(
         model=LLM,

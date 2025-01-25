@@ -2,19 +2,15 @@ import json
 import re
 import ollama
 import torch
+from utils.constants import LLM, TEMPERATURE
+from utils.prompt import ACTION_EXTRATOR_PROMPT
 
-from conversation_diarization.prompt import ACTION_EXTRATOR_PROMPT
-
-
-LLM = "llama3"
-TEMPERATURE = 0.2
 COMPUTING_DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 def create_prompt(transcription: str) -> str:
     return ACTION_EXTRATOR_PROMPT.replace("<USER_COMMAND>", transcription)
     
 def extract_action_from_transcription(transcription: str):
-    
     prompt = create_prompt(transcription)
     
     response = ollama.chat(

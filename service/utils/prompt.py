@@ -60,6 +60,37 @@ QNA_PROMPT_MESSAGE = """
     
     I'll be parsing your response directly as a JSON string, so make sure apart from JSON, no other text is present in response.
     """
+
+CONVERSATION_PROMPT_MESSAGE = """
+    <TRANSCRIPTION>
+    
+    1. Above is the transcription of an interview. Analyse the communication and make a conversation between the interviewer and the candidate with their respective names.
+    2. I want full conversation, including questions asked by the interviewer and answers given by the candidate. 
+    3. I want your response as a pure JSON, in following format:
+    
+    {
+        "result": [
+            {
+                "speaker_name": "Interviewer",
+                "text": "Question 1"
+            },
+            {
+                "speaker_name": "Candidate",
+                "text": "Answer 1"
+            },
+            {
+                "speaker_name": "Interviewer",
+                "text": "Question 2"
+            },
+            {
+                "speaker_name": "Candidate",
+                "text": "Answer 2"
+            }
+        ]
+    }
+    
+    I'll be parsing your response directly as a JSON string, so make sure apart from JSON, no other text is present in response.
+    """
     
 JD_INTERVIEW_ALIGNMENT_PROMPT = """
 Read the given Job Description below:
@@ -127,4 +158,39 @@ Please note, not all commands need any information in data, only put data when i
 Important: You must return only the JSON object. Do not add any explanations, headers, or other text outside the JSON object. If you include anything outside of the JSON, the response will be considered invalid.
 Do not prefix or suffix the response with anything like "Here is the result."
 
+"""
+
+QNA_DIFFCULTY_LEVEL_RATING_FIND_PROMPT = """
+    <QUESTIONS>
+
+    1. Above are the questions from question bank. Analyze them.
+    2. Now, analyze the below questions that were asked in the interview and align them with above questions bank. For each question, assign a difficulty level based on the corresponding question in the question bank.
+
+    <ASKED_QUESTIONS>
+
+
+
+    3. Evaluate whether the difficulty level is 'Basic', 'Medium', or 'Advanced'. 
+    4. If you are unsure about the level of a question then provide a difficulty level by your own.
+    5. If it is not present in the question bank, mark it as 'Unknown'.
+    6. Please provide your response as a **pure JSON string** in the following format:
+
+    ```json
+    {
+      "result": [
+          {
+              "id": "<question_id>",
+              "question": "<question>",
+              "difficulty_level": "<level>"
+          },
+          {
+              "id": "<question_id>",
+              "question": "<question>",
+              "difficulty_level": "<level>"
+          },
+      ]
+    }
+    ```
+    Important: You must return only the JSON object. Do not add any explanations, headers, or other text outside the JSON object. If you include anything outside of the JSON, the response will be considered invalid.
+    Do not prefix or suffix the response with any text like "Here is the analysis."
 """
