@@ -7,7 +7,6 @@ import { z } from "zod";
 export async function POST(req: Request) {
       try {
         const body = await req.json();
-        console.log("Body ID : ", body.id);
         const analysis = await db
             .select()
             .from(interviewAnalysis)
@@ -19,7 +18,6 @@ export async function POST(req: Request) {
           if (error instanceof z.ZodError) {
               return new Response(error.message, { status: 422 });
             }
-            console.log("\n\nError : ", error);
           return new Response("Failed to fetch error analysis", { status: 500 });
       }
 }

@@ -158,7 +158,7 @@ const AiCruitForm = () => {
               name="interview_transcript"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Interview Transcript</FormLabel>
+                  <FormLabel>Interview Transcript Link</FormLabel>
                   <FormControl>
                     <Input {...field} type="text" placeholder="Enter Interview Transcript Link" />
                   </FormControl>

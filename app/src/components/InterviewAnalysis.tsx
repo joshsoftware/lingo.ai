@@ -30,6 +30,8 @@ const InterviewAnalysis: React.FC<InterviewAnalysisProps> = ({
   transcript,
 }) => {
   const ratingScaleMax = React.useMemo(() => ratingScale[1], [ratingScale]);
+  const parsedConversation = typeof conversation === 'string' ? JSON.parse(conversation) : conversation;
+  console.log(JSON.parse(parsedConversation[0]).result);
 
   // Register required components
   ChartJS.register(
@@ -211,26 +213,42 @@ const InterviewAnalysis: React.FC<InterviewAnalysisProps> = ({
         </div>
       </section>
 
-      {/* Conversation & Transcript */}
+      {/* Conversation Section */}
       <section className="mb-8">
-        {[
-          { title: "Conversation", items: conversation },
-          { title: "Transcript", items: transcript },
-        ].map((section, i) => (
-          <div key={i} className="mb-6">
-            <h2 className="text-2xl font-medium text-gray-800">
-              {section.title}
-            </h2>
-            <div className="bg-[#F7FAFC] p-4 mt-4 rounded-md shadow-md max-h-60 overflow-auto">
-              {section.items.map((line, index) => (
-                <p key={index} className="text-gray-600">
-                  {line}
-                </p>
-              ))}
-            </div>
-          </div>
-        ))}
+        <h2 className="text-2xl font-medium text-gray-800">Conversation</h2>
+        <div className="bg-[#EDF2F7] p-4 mt-4 rounded-md shadow-md max-h-60 overflow-auto">
+          {Array.isArray(parsedConversation) ? (
+            JSON.parse(parsedConversation[0]).result?.map((line: any, index: number) => (
+              <div
+                key={index}
+                className={`flex ${index % 2 === 0 ? "justify-start" : "justify-end"} mb-2`}
+              >
+                <div
+                  className={`p-2 rounded-lg ${index % 2 === 0 ? "bg-indigo-100 text-indigo-800" : "bg-teal-100 text-teal-800"}`}
+                >
+                  <p className="font-semibold">{line.speaker_name}:</p>
+                  <p>{line.text}</p>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="text-gray-600">No conversation available.</p>
+          )}
+        </div>
       </section>
+
+      {/* Transcript Section */}
+      <section className="mb-8">
+      <div className="mb-6">
+        <h2 className="text-2xl font-medium text-gray-800">Transcript</h2>
+        <div className="bg-[#F7FAFC] p-4 mt-4 rounded-md shadow-md max-h-60 overflow-auto">
+          {/* Displaying only the transcript content */}
+          <p className="text-gray-600">
+            {transcript || "No transcript available."}
+          </p>
+        </div>
+      </div>
+    </section>
     </div>
   );
 };
