@@ -1,7 +1,7 @@
 import { lucia } from "@/auth";
 import { db } from "@/db";
-import { userTable } from "@/db/schema";
-import { signupUserSchema } from "@/validators/register";
+import { registrations, userTable } from "@/db/schema";
+import { signupUserSchemaValidator } from "@/validators/register";
 import { hash } from "@node-rs/argon2";
 import { eq } from "drizzle-orm";
 import { generateIdFromEntropySize } from "lucia";
@@ -12,8 +12,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const { password, userEmail, userName, contact } =
-      signupUserSchema.parse(body);
+    const { password, userEmail, userName, contact } = signupUserSchemaValidator.parse(body);
 
     // check if user already exists
     const user = await db
@@ -55,22 +54,16 @@ export async function POST(req: Request) {
     if (response) {
       const session = await lucia.createSession(userId, {});
       const sessionCookie = lucia.createSessionCookie(session.id);
-      cookies().set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes
-      );
+      (await cookies()).set(sessionCookie.name, sessionCookie.value, sessionCookie.attributes);
 
       return new Response(JSON.stringify({ userId: response[0].id }), {
         status: 201,
       });
     }
   } catch (error) {
-    console.log(error);
-
-    if (error instanceof z.ZodError) {
-      return new Response(error.message, { status: 422 });
+      if (error instanceof z.ZodError) {
+        return new Response(error.message, { status: 422 });
+      }
+      return new Response("Failed to Register User", { status: 500 });
     }
-    return new Response("Failed to Register User", { status: 500 });
-  }
 }

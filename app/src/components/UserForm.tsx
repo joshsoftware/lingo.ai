@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import { cn } from "@/lib/utils";
 import { Input } from "./ui/input";
@@ -13,15 +13,11 @@ import {
 } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import {
-  SignupUserRequest,
-  signupUserSchema,
-  SigninUserRequest,
-  signinUserSchema,
-} from "@/validators/register";
+import { SignupUserRequest, signupUserSchemaValidator } from "@/validators/register";
 
 import { useUser } from "@/hooks/useUser";
 import Link from "next/link";
+import { SigninUserRequest, signinUserSchemaValidator } from "@/validators/signin";
 
 interface UserFormProps {
   formType: "signin" | "signup";
@@ -33,10 +29,8 @@ const UserForm = (props: UserFormProps) => {
   const { disableSubmit, isPending, signupUser, signinUser } = useUser();
   const isSignup = formType === "signup";
   const form = useForm<SignupUserRequest | SigninUserRequest>({
-    resolver: zodResolver(isSignup ? signupUserSchema : signinUserSchema),
-    defaultValues: isSignup
-      ? { password: "", userEmail: "", userName: "", contact: "" }
-      : { password: "", userEmail: "" },
+    resolver: zodResolver(isSignup ? signupUserSchemaValidator : signinUserSchemaValidator),
+    defaultValues: isSignup ? { password: "", userEmail: "", userName: "", contact: "" } : { password: "", userEmail: "" },
     mode: "all",
   });
 

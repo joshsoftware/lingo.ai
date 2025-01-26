@@ -1,4 +1,5 @@
-export enum ValidationMessage {
+export const FEEDBACK_REQUEST_FAILED_MESSAGE = 'Failed to save error analysis'
+export enum Messages {
   // General Errors
   CUSTOM_ERROR = "Something went wrong. Please try again later.",
 
@@ -6,10 +7,10 @@ export enum ValidationMessage {
   SIGNUP_SUCCESS = "Welcome! You’ve been registered successfully!",
   SIGNUP_FAILED = "Failed to Register User",
   SIGNIN_SUCCESS = "Welcome back! You’ve been signed in successfully!",
-  SIGN_IN_FAILED = "Failed to sign in User",
+  SIGN_IN_FAILED = "Failed to sign in user!",
   USER_EXISTS = "This email is already in use. Please log in to access your account.",
-  INVALID_CREDENTIALS = "Incorrect username or password",
-  USER_DOES_NOT_EXISTS = "User does not exists",
+  INVALID_CREDENTIALS = "Incorrect username or password!",
+  USER_DOES_NOT_EXISTS = "User not exists! Please signup to continue.",
 
   // Validation Messages
   INVALID_EMAIL = "Invalid email",
@@ -20,5 +21,5 @@ export enum ValidationMessage {
 
   // Informational
   LANDING_PAGE_TITLE = "Transform Speech into Action: Translate, Transcribe, and Summarize Effortlessly",
-  LANDINF_PAGE_DESCRIPTION = "Unleash the power of seamless communication with a tool that does it all—accurate transcription, real-time translation, and intelligent summaries in one go.",
+  LANDING_PAGE_DESCRIPTION = "Unleash the power of seamless communication with a tool that does it all—accurate transcription, real-time translation, and intelligent summaries in one go.",
 }

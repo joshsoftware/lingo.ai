@@ -1,3 +1,5 @@
+import os
+import tempfile
 from scipy import misc
 
 
@@ -50,10 +52,26 @@ model = load_model(model_id, model_path=model_path,is_ts=True)
 
 #translate the audio file to English language using whisper model
 def translate_with_whisper(audioPath):
-    logger.info("translation started") 
+    logger.info("translation started")
     options = dict(beam_size=5, best_of=5)
     translate_options = dict(task="translate", **options)
-    result = model.transcribe(audioPath,**translate_options)
+    
+    if isinstance(audioPath, str):
+        # If input is a file path, use it directly
+        result = model.transcribe(audioPath, **translate_options)
+    else:
+        # Handle file-like object: Save it to a temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_file:
+            temp_file.write(audioPath.read())
+            temp_file_path = temp_file.name
+
+        try:
+            # Pass the temporary file path to Whisper
+            result = model.transcribe(temp_file_path, **translate_options)
+        finally:
+            # Clean up the temporary file
+            os.remove(temp_file_path)
+
     return result["text"]
 
 #translate the audio file to English language using whisper timestamp model

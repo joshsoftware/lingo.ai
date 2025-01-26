@@ -18,14 +18,15 @@ export const lucia = new Lucia(adapter, {
 	getUserAttributes: (attributes) => {
 		return {
 			// attributes has the type of DatabaseUserAttributes
-			username: attributes.username
+			username: attributes.username,
+			role: attributes.role,
 		};
 	}
 });
 
 export const validateRequest = cache(
 	async (): Promise<{ user: User; session: Session } | { user: null; session: null }> => {
-		const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+		const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
 		if (!sessionId) {
 			return {
 				user: null,
@@ -38,11 +39,11 @@ export const validateRequest = cache(
 		try {
 			if (result.session && result.session.fresh) {
 				const sessionCookie = lucia.createSessionCookie(result.session.id);
-				cookies().set(sessionCookie.name, sessionCookie.value, sessionCookie.attributes);
+				(await cookies()).set(sessionCookie.name, sessionCookie.value, sessionCookie.attributes);
 			}
 			if (!result.session) {
 				const sessionCookie = lucia.createBlankSessionCookie();
-				cookies().set(sessionCookie.name, sessionCookie.value, sessionCookie.attributes);
+				(await cookies()).set(sessionCookie.name, sessionCookie.value, sessionCookie.attributes);
 			}
 		} catch {}
 		return result;
@@ -58,4 +59,5 @@ declare module "lucia" {
 
 interface DatabaseUserAttributes {
 	username: string;
+	role: string;
 }
