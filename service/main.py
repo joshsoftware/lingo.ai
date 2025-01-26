@@ -222,7 +222,50 @@ async def analyse_interview(
 
     except Exception as e:
         return JSONResponse(content={"result": str(e)}, status_code=500)
+    
+def get_job_description_contents(file_url: Optional[str], jd_file: Optional[UploadFile]):
+    if jd_file:
+        return read_contents_of_file(jd_file)
+    elif file_url:
+        return read_docx(file_url)
+    return None
 
+@app.post("/parse-job-description")
+async def parse_job_description(
+    title: str = Form(...),
+    file_url: Optional[str] = Form(None),
+    jd_file: UploadFile = File(None),
+):
+    try:
+        # Validate input params
+        if not title or not (file_url or jd_file):
+            return JSONResponse(status_code=400, content={
+                "status": False,
+                "data": {},
+                "message": "Invalid request, missing params"
+            })
+        
+        jd_file_contents = get_job_description_contents(file_url, jd_file)
+        if not jd_file_contents:
+            return JSONResponse(status_code=400, content={
+                "status": False,
+                "data": {},
+                "message": "Failed to read job description contents"
+            })
+        
+        return JSONResponse(status_code=200, content={
+            "status": True,
+            "data": {"title": title, "parsed_data": jd_file_contents},
+            "message": "Job description parsed successfully!"
+        })
+
+    except Exception as e:
+        return JSONResponse(status_code=500, content={
+            "status": False,
+            "data": {},
+            "message": f"Internal server error: {str(e)}"
+        })
+    
 def process_interview_analysis(conn_string, analysis_id, request):
     """
     Background task to handle transcription, speaker diarization, and job description alignment.
