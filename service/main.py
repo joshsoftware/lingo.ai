@@ -165,6 +165,7 @@ async def get_action_from_transcription(file: UploadFile):
 async def analyse_interview(
     candidate_name: str = Form(...),
     interviewer_name: str = Form(...),
+    core_technology: str = Form(...),
     interview_link: Optional[str] = Form(None),
     job_description_link: str = Form(...),
     interview_transcript: Optional[str] = Form(None),
@@ -207,6 +208,7 @@ async def analyse_interview(
             "job_description_link": job_description_link,
             "interview_transcript_url": interview_transcript,
             "transcript_file_contents": transcript_file_contents,
+            "core_technology": core_technology,
         }
         
         # Schedule background task for analysis
@@ -294,7 +296,7 @@ def process_interview_analysis(conn_string, analysis_id, request):
             conversation = transcription_result["conversation"]
 
         # Perform job description alignment
-        analysis_result = align_interview_with_job_description(request['job_description_link'], questions_answers)
+        analysis_result = align_interview_with_job_description(request['job_description_link'], questions_answers, request['core_technology'])
 
         # Update record in the database
         analysis_updated = update_interview_analysis(

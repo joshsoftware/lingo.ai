@@ -19,6 +19,14 @@ import { toast } from "sonner";
 import axios, { AxiosError } from "axios";
 import { Checkbox } from "@/components/ui/checkbox"
 import { AiCruitRequest, aiCruitRequestSchemaValidator } from "@/validators/aicruitform";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Controller } from "react-hook-form"; // Import Controller from react-hook-form
 
 const AiCruitForm = () => {
   const router = useRouter();
@@ -73,6 +81,9 @@ const AiCruitForm = () => {
     formData.append("candidate_name", data.candidate_name);
     formData.append("interviewer_name", data.interviewer_name);
     formData.append("job_description_link", data.job_description_link);
+    if (data.core_technology) {
+      formData.append("core_technology", data.core_technology);
+    }
 
     if (isAddInterviewTranscriptChecked) {
       if (data.interview_transcript) {
@@ -124,6 +135,41 @@ const AiCruitForm = () => {
                   <FormLabel>Interviewer Name</FormLabel>
                   <FormControl>
                     <Input {...field} type="text" placeholder="Enter Interviewer Name" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid w-full max-w-sm items-center gap-1.5">
+            <FormField
+              control={form.control}
+              name="core_technology"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Core Technology</FormLabel>
+                  <FormControl>
+                    <Controller
+                      control={form.control}
+                      name="core_technology"
+                      render={({ field: controllerField }) => (
+                        <Select value={controllerField.value} onValueChange={controllerField.onChange}>
+                          <SelectTrigger className="w-[385px]">
+                            <SelectValue placeholder="Select core technology" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Java">Java</SelectItem>
+                            <SelectItem value="Python">Python</SelectItem>
+                            <SelectItem value="Ruby on rails">Ruby on rails</SelectItem>
+                            <SelectItem value="Golang">Golang</SelectItem>
+                            <SelectItem value="DevOps">DevOps</SelectItem>
+                            <SelectItem value="NodeJS">NodeJS</SelectItem>
+                            <SelectItem value="React">React</SelectItem>
+                            <SelectItem value="Angular">Angular</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

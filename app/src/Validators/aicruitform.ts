@@ -22,6 +22,12 @@ export const aiCruitRequestSchemaValidator = z.object({
   interviewer_name: z.string().min(2, {
     message: "Interviewer Name should be at least 2 characters long",
   }),
+  core_technology: z
+  .string()
+  .min(2, { message: "Core Technology should be selected" })
+  .refine((val) => ["Java", "Python", "Ruby on rails", "Golang", "DevOps", "NodeJS", "React", "Angular"].includes(val), {
+    message: "Please select a valid core technology",
+  }),
 });
 
 export type AiCruitRequest = z.infer<typeof aiCruitRequestSchemaValidator>;

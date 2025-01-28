@@ -10,7 +10,7 @@ import os
 
 load_dotenv()
 
-def align_interview_with_job_description(job_description_link, interview_qna):
+def align_interview_with_job_description(job_description_link, interview_qna, core_technology):
     try:
         print(f"job_description_link: {job_description_link}")
         print(f"interview_qna: {interview_qna}")
@@ -33,8 +33,8 @@ def align_interview_with_job_description(job_description_link, interview_qna):
         
         if response_text_json:
             response_text_grouped = response_text_json.group()
-            
-        difficulty_level_ratings = get_question_level_ratings(Asked_Questions=questions_string)
+
+        difficulty_level_ratings = get_question_level_ratings(Asked_Questions=questions_string, core_technology=core_technology)
         print("\n\n Got difficulty_level_ratings : ",difficulty_level_ratings)
         
         if response_text_json:
@@ -123,10 +123,10 @@ def align_interview_with_job_description(job_description_link, interview_qna):
         print(f"Error in align_interview_with_job_description: {e}")
         return {"error": str(e)}
 
-def get_question_level_ratings(Asked_Questions):
+def get_question_level_ratings(Asked_Questions, core_technology):
   try:
     file_path = os.getenv('EXCEL_QUESTION_BANK_PATH')
-    sheet_name = "Java"
+    sheet_name = core_technology
     columns_to_fetch = ["Question", "Level"]
 
     questions_from_bank = fetch_columns_from_excel(file_path, sheet_name, columns_to_fetch)
