@@ -32,6 +32,7 @@ from utils.constants import LLM, SCOPES, TEMPERATURE
 from typing import Optional, Dict
 import io
 from conversation_diarization.jd_parser import read_docx 
+from conversation_diarization.jd_interview_aligner import parse_jd_from_llm
 
 dbCursor = initDbConnection()
 import traceback
@@ -227,9 +228,15 @@ async def analyse_interview(
     
 def get_job_description_contents(file_url: Optional[str], jd_file: Optional[UploadFile]):
     if jd_file:
-        return read_contents_of_file(jd_file)
+        file_contents = read_contents_of_file(jd_file)
     elif file_url:
-        return read_docx(file_url)
+        file_contents = read_docx(file_url)
+
+    parsed_jd_contents = parse_jd_from_llm(file_contents)
+
+    if parsed_jd_contents:
+        return parsed_jd_contents
+    
     return None
 
 @app.post("/parse-job-description")

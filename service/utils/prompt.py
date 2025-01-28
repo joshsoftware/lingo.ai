@@ -194,3 +194,23 @@ QNA_DIFFCULTY_LEVEL_RATING_FIND_PROMPT = """
     Important: You must return only the JSON object. Do not add any explanations, headers, or other text outside the JSON object. If you include anything outside of the JSON, the response will be considered invalid.
     Do not prefix or suffix the response with any text like "Here is the analysis."
 """
+
+PARSE_JD_PROMPT = """
+    <FILE_CONTENTS>
+
+    
+    1. Above are the file contents for given job description. Analyze it.
+    2. Now, On the basis of above job description, prepare a list of core skills(Must to have), secondary(Good to have) skills, and domain expertise(responsibilities) required for the job.
+    3. skills must be in full sentences, not just keywords.
+    4. Please provide your response as a **pure JSON string** in the following format:
+
+    ```json
+    {
+        "core_skills": ["skill1", "skill2"],
+        "secondary_skills": ["skill1", "skill2"],
+        "domain_expertise": ["skill1", "skill2"],
+    }
+    ```
+    Important: You must return only the JSON object. Do not add any explanations, headers, or other text outside the JSON object. If you include anything outside of the JSON, the response will be considered invalid.
+    Do not prefix or suffix the response with any text like "Here is the analysis."
+"""

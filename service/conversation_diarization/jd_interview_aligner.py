@@ -4,7 +4,7 @@ import conversation_diarization.jd_parser as jd_parser
 import re
 import pandas as pd
 from utils.constants import LLM, TEMPERATURE
-from utils.prompt import JD_INTERVIEW_ALIGNMENT_PROMPT, QNA_DIFFCULTY_LEVEL_RATING_FIND_PROMPT
+from utils.prompt import JD_INTERVIEW_ALIGNMENT_PROMPT, QNA_DIFFCULTY_LEVEL_RATING_FIND_PROMPT, PARSE_JD_PROMPT
 from dotenv import load_dotenv
 import os
 
@@ -180,3 +180,30 @@ def fetch_columns_from_excel(file_path, sheet_name, columns_to_fetch):
   
 def create_prompt(questionBank: str, asked_questions: str) -> str:
     return QNA_DIFFCULTY_LEVEL_RATING_FIND_PROMPT.replace("<QUESTIONS>", questionBank).replace("<ASKED_QUESTIONS>", asked_questions)
+
+def create_prompt_for_parse_jd(jd_contents: str) -> str:
+    return PARSE_JD_PROMPT.replace("<FILE_CONTENTS>", jd_contents)
+
+def parse_jd_from_llm(jd_contents: str):
+    try:
+        prompt = create_prompt_for_parse_jd(jd_contents)
+        response = ollama.chat(
+            model=LLM,
+            options={"temperature": TEMPERATURE},
+            messages=[{"role": "user", "content": prompt}],
+        )
+        response_text = response.get("message", {}).get("content", "")
+        response_text_json = re.search(r"\{.*\}", response_text, re.DOTALL)
+        
+        if response_text_json:
+            try:
+                response_text_json = json.loads(response_text_json.group())
+            except json.JSONDecodeError as e:
+                response_text_json = None
+        else:
+            response_text_json = None
+        
+        return response_text_json
+    except Exception as e:
+        print(f"Error in parse_jd: {e}")
+        return None
