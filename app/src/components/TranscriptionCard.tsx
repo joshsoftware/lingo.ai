@@ -1,5 +1,4 @@
-'use client'
-
+"use client";
 import { TranscriptionsType } from "@/db/schema";
 import { format } from "date-fns";
 import { useEffect, useRef, useState, forwardRef } from "react";
