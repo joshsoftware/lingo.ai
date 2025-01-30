@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardFooter } from "./ui/card";
@@ -19,17 +19,15 @@ import axios from "axios";
 import { toast } from "sonner";
 import { useUploadThing } from "@/utils/uploadthing";
 import { TranscribeDocumentRequest } from "@/validators/document";
+import { TranscriptionResponse } from "@/types/TranscriptionResponse";
 import { TranscriptionsPayload, TranscriptionsType } from "@/db/schema";
 import { Fragment } from "react";
-import { TranscriptionResponse } from "@/types/TranscriptionResponse";
-import { User } from "lucia";
 
 interface RecorderCardProps {
-  userId: User['id'] | "";
+  userId: string;
 }
 const RecorderCard = (props: RecorderCardProps) => {
   const { userId } = props;
-  const safeUserId = userId || "";
 
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
@@ -128,7 +126,7 @@ const RecorderCard = (props: RecorderCardProps) => {
         saveTranscribe({
           documentUrl: data.documentUrl,
           documentName: data.documentName,
-          userID: safeUserId,
+          userID: userId,
           summary: res.summary,
           segments: res.segments,
           translation: res.translation,

@@ -1,15 +1,18 @@
-'use client'
-
+"use client";
 import { format } from "date-fns";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { TranscriptionsType } from "@/db/schema";
 import { PauseCircleIcon, PlayCircleIcon } from "lucide-react";
 import { Card } from "./ui/card";
 import { getAudioDuration } from "@/utils/recording";
 import Markdown from "react-markdown";
 import { cn } from "@/lib/utils";
 import { primaryFont } from "@/fonts";
-import { DetailedTranscriptionProps } from "@/types/transcriptions";
+
+interface DetailedTranscriptionProps {
+  transcription: TranscriptionsType;
+}
 
 const DetailedTranscription = ({
   transcription,

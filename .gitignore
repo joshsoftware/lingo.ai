@@ -162,11 +162,6 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-# IDE and tools specific
-.history
-.vscode
-
 /service/service.json
 /service/user_account.json
 /service/models
-drive_services/
