@@ -84,7 +84,6 @@ const TranscriptionItem = (props: TranscriptionItemProps) => {
             <SelectValue placeholder="Filter transcriptions" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="true">Demo Transcriptions</SelectItem>
             <SelectItem value="user">My Transcriptions</SelectItem>
           </SelectContent>
         </Select>
