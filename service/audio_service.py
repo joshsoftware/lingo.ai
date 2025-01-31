@@ -109,7 +109,7 @@ def translate_with_whisper_timestamped(audioPath):
             model,
             audioPath,
             condition_on_previous_text=False,
-            vad=True,
+            vad=False,
             trust_whisper_timestamps=False,
             **translate_options
         )
