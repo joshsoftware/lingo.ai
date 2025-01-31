@@ -96,6 +96,17 @@ const RecorderCard = (props: RecorderCardProps) => {
       sendTranscribeRequest({
         documentUrl: url,
         documentName: name,
+      },{
+        onSuccess: (res, data) => {
+          saveTranscribe({
+            documentUrl: data.documentUrl,
+            documentName: data.documentName,
+            userID: userId,
+            summary: res.summary,
+            segments: res.segments,
+            translation: res.translation,
+          });
+        }
       });
     },
     onUploadError: () => {
@@ -120,25 +131,6 @@ const RecorderCard = (props: RecorderCardProps) => {
         const response = await axios.post("/api/transcribe", payload);
 
         return response.data as TranscriptionResponse;
-      },
-      onSuccess: async (res, data) => {
-        // reset all
-        saveTranscribe({
-          documentUrl: data.documentUrl,
-          documentName: data.documentName,
-          userID: userId,
-          summary: res.summary,
-          segments: res.segments,
-          translation: res.translation,
-        });
-
-        setFile(null);
-        setAudioURL("");
-        setAudioBlob(null);
-        setUploadProgress(0);
-        setRecordingTime(0);
-
-        toast.success(`${file?.type} transcribed successfully`);
       },
       onError: (error) => {
         // reset all
@@ -179,6 +171,14 @@ const RecorderCard = (props: RecorderCardProps) => {
       },
       onSuccess: async (res) => {
         if (res.id) {
+          setFile(null);
+          setAudioURL("");
+          setAudioBlob(null);
+          setUploadProgress(0);
+          setRecordingTime(0);
+
+
+          toast.success(`${file?.type} transcribed successfully`);
           router.push(`/transcriptions/${res.id}`);
         }
         return toast.success("Transcription saved successfully");
