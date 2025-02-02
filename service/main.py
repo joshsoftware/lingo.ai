@@ -34,38 +34,10 @@ class Body(BaseModel):
 @app.post("/upload-audio")
 async def upload_audio(body: Body):
     try:
-        #check if string is empty
         if body.audio_file_link == "":
             return JSONResponse(status_code=400, content={"message":"Invalid file link"})
-        # Check file type
-        if not body.audio_file_link.endswith(('.m4a', '.mp4','.mp3','.webm','.mpga','.wav','.mpeg','.ogg')):
-            logger.error("invalid file type")
-            return JSONResponse(status_code=400, content={"message":"Invalid file type"})
-        translation = translate_with_whisper(body.audio_file_link)
 
-
-        logger.info("translation done")
-        summary = summarize_using_openai(translation)
-
-
-        logger.info("summary done")
-        return JSONResponse(content={"message": "File processed successfully!", "translation":translation, "summary": summary}, status_code=200)
-
-    except Exception as e:
-        logger.info(traceback.format_exc())
-        return JSONResponse(content={"message": str(e)}, status_code=500)
-    
-@api_version(2)
-@app.post("/upload-audio")
-async def upload_audio(body: Body):
-    try:
-        #check if string is empty
-        if body.audio_file_link == "":
-            return JSONResponse(status_code=400, content={"message":"Invalid file link"})
-        # Check file type
-        if not body.audio_file_link.endswith(('.m4a', '.mp4','.mp3','.webm','.mpga','.wav','.mpeg','.ogg')):
-            logger.error("invalid file type")
-            return JSONResponse(status_code=400, content={"message":"Invalid file type"})
+        # Remove file extension check since frontend handles this
         translation = translate_with_whisper_timestamped(body.audio_file_link)
 
         logger.info("translation done")
@@ -76,12 +48,32 @@ async def upload_audio(body: Body):
         logger.info(result)
 
         return JSONResponse(content=result, status_code=200)
-        
 
     except Exception as e:
         logger.info(traceback.format_exc())
         return JSONResponse(content={"message": str(e)}, status_code=500)
-    
+@api_version(2)
+@app.post("/upload-audio")
+async def upload_audio(body: Body):
+    try:
+        if body.audio_file_link == "":
+            return JSONResponse(status_code=400, content={"message":"Invalid file link"})
+
+        # Remove file extension check since frontend handles this
+        translation = translate_with_whisper_timestamped(body.audio_file_link)
+
+        logger.info("translation done")
+        summary = summarize_using_ollama(translation["text"])
+
+        logger.info("summary done")
+        result = generate_timestamp_jon(translation,summary)
+        logger.info(result)
+
+        return JSONResponse(content=result, status_code=200)
+
+    except Exception as e:
+        logger.info(traceback.format_exc())
+        return JSONResponse(content={"message": str(e)}, status_code=500)
 versions = Versionizer(
     app=app,
     prefix_format='/v{major}',
