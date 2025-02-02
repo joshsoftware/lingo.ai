@@ -13,13 +13,13 @@ export const metadata: Metadata = {
 };
 
 interface PageProps {
-  params: {
+  params: Promise<{
     transcription_id: string;
-  };
+  }>;
 }
 
 const page = async (props: PageProps) => {
-  const { transcription_id } = props.params;
+  const { transcription_id } = (await props.params);
 
   if (!validateUUID(transcription_id)) {
     return notFound();
