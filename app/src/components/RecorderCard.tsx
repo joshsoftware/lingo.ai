@@ -93,7 +93,6 @@ const RecorderCard = (props: RecorderCardProps) => {
     onUploadProgress: (progress: number) => setUploadProgress(progress),
     onClientUploadComplete: (res) => {
       const { name, url } = res[0];
-
       sendTranscribeRequest({
         documentUrl: url,
         documentName: name,
