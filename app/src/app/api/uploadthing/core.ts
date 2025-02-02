@@ -24,6 +24,8 @@ export const ourFileRouter = {
     })
     // Set permissions and file types for this FileRoute
     .middleware(async ({ req }) => {
+
+      console.log("/api/uploadthing/core",{req});
       // This code runs on your server before upload
       const {user} = await validateRequest();
 
