@@ -174,7 +174,7 @@ const DetailedTranscription = ({
           <h1 className="text-xl font-bold">Summary</h1>
           <Card className="w-full flex-1 max-w-xs md:max-w-full xl:overflow-y-auto p-4 rounded-lg">
             <Markdown className="text-sm">
-            {"```"+transcription.translation+"```" || "No translation available"}
+            {"```"+transcription.summary+"```" || "No Summary available"}
             </Markdown>
           </Card>
         </div>
