@@ -38,6 +38,7 @@ const RecorderCard = (props: RecorderCardProps) => {
   const [audioURL, setAudioURL] = useState("");
   const [recordingTime, setRecordingTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [status, setStatus] = useState<string>("");
 
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const chunks = useRef<Blob[]>([]);
@@ -90,14 +91,22 @@ const RecorderCard = (props: RecorderCardProps) => {
 
   const { startUpload, isUploading } = useUploadThing("audioUploader", {
     onBeforeUploadBegin: (files: File[]) => files,
-    onUploadProgress: (progress: number) => setUploadProgress(progress),
+    onUploadProgress: (progress: number) =>{
+      setUploadProgress(progress),
+      setStatus(`Uploading ${file?.name} ${progress}%`)
+      toast.info(`Uploading ${file?.type} ${progress}%`)
+    },
     onClientUploadComplete: (res) => {
       const { name, url } = res[0];
+      toast.success(`Uploaded ${file?.name} successfully`);
+      setStatus(`Uploaded ${file?.name} successfully`)
       sendTranscribeRequest({
         documentUrl: url,
         documentName: name,
       },{
         onSuccess: (res, data) => {
+          setStatus(`Transcribed ${file?.name} successfully`)
+          toast.success(`Transcribed ${file?.name} successfully`);
           saveTranscribe({
             documentUrl: data.documentUrl,
             documentName: data.documentName,
@@ -110,7 +119,7 @@ const RecorderCard = (props: RecorderCardProps) => {
       });
     },
     onUploadError: () => {
-      toast.error(`Failed to upload ${file?.type}, please try again in some time`, {
+      toast.error(`Failed to upload ${file?.name}, please try again in some time`, {
         description: "If the issue persists, please contact support",
       });
       setFile(null);
@@ -124,6 +133,10 @@ const RecorderCard = (props: RecorderCardProps) => {
   const { mutate: sendTranscribeRequest, isPending: isTranscribing } =
     useMutation({
       mutationKey: ["transcribe"],
+      onMutate: () => {
+        setStatus(`Transcribing ${file?.name}`);
+        toast.info(`Transcribing ${file?.name}`);
+      },
       mutationFn: async (payload: TranscribeDocumentRequest) => {
         const response = await axios.post("/api/transcribe", payload);
 
@@ -138,7 +151,7 @@ const RecorderCard = (props: RecorderCardProps) => {
         setRecordingTime(0);
 
         return toast.error(
-          `Failed to transcribe ${file?.type}, please try again in some time`,
+          `Failed to transcribe ${file?.name}, please try again in some time`,
           {
             description: error.message,
           },
@@ -149,6 +162,10 @@ const RecorderCard = (props: RecorderCardProps) => {
   const { mutate: saveTranscribe, isPending: isSavingTranscribe } = useMutation(
     {
       mutationKey: ["saveTranscribe"],
+      onMutate: () => {
+        setStatus(`Saving transcription for ${file?.name}`);
+        toast.info(`Saving transcription for ${file?.name}`);
+      },
       mutationFn: async (data: TranscriptionsPayload) => {
 
         if(recordingTime > 0) {
@@ -175,9 +192,7 @@ const RecorderCard = (props: RecorderCardProps) => {
           setAudioBlob(null);
           setUploadProgress(0);
           setRecordingTime(0);
-
-
-          toast.success(`${file?.type} transcribed successfully`);
+          setStatus(`Transcription saved successfully... Redirecting`);
           router.push(`/transcriptions/${res.id}`);
         }
         return toast.success("Transcription saved successfully");
@@ -263,8 +278,9 @@ const RecorderCard = (props: RecorderCardProps) => {
   return (
     <div className="flex flex-col w-full max-w-3xl md:h-72">
       {isTranscribing || isUploading || isSavingTranscribe ? (
-        <div className="absolute top-0 left-0 w-full h-full  flex items-center justify-center">
+        <div className="absolute top-0 left-0 w-full h-full  flex flex-col items-center justify-center">
           <Loader2Icon className="w-8 h-8 animate-spin" />
+          <p>{status}</p>
         </div>
       ) : (
         <Card
