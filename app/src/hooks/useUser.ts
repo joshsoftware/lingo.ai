@@ -20,6 +20,7 @@ export const useUser = () => {
         },
         onSuccess: async (res) => {
           toast.success("User Registered Successfully");
+          router.refresh();
           router.push("/new")
         },
         onError: (error) => {
@@ -55,6 +56,7 @@ export const useUser = () => {
       },
       onSuccess: async (res) => {
         toast.success("User sign in Successfull");
+        router.refresh();
         router.push("/new")
       },
       onError: (error) => {
