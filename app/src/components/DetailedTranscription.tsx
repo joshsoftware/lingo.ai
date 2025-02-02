@@ -153,11 +153,11 @@ const DetailedTranscription = ({
                           {`${formatTime(segment.start)} - ${formatTime(segment.end)}`}
                         </span>
                         <div className="flex w-full justify-between">
-                          <p className=" text-sm text-gray-700 leading-relaxed group-hover:text-gray-900">
-                            <Markdown>
-                              {segment.text }
+                          <div className=" text-sm text-gray-700 leading-relaxed group-hover:text-gray-900">
+                            <Markdown className="text-sm">
+                              {"```"+ segment.text + "```"}
                             </Markdown>
-                          </p>
+                          </div>
                           <div className=" opacity-0 group-hover:opacity-100 transition-opacity">
                             <PlayCircleIcon className="w-4 h-4 text-green-600" />
                           </div>
@@ -174,7 +174,7 @@ const DetailedTranscription = ({
           <h1 className="text-xl font-bold">Summary</h1>
           <Card className="w-full flex-1 max-w-xs md:max-w-full xl:overflow-y-auto p-4 rounded-lg">
             <Markdown className="text-sm">
-              {transcription.summary || "No summary available"}
+            {"```"+transcription.translation+"```" || "No translation available"}
             </Markdown>
           </Card>
         </div>
