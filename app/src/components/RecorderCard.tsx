@@ -17,7 +17,6 @@ import Image from "next/image";
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { toast } from "sonner";
-import { useUploadThing } from "@/utils/uploadthing";
 import { TranscribeDocumentRequest } from "@/Validators/document";
 import { TranscriptionResponse } from "@/types/TranscriptionResponse";
 import { TranscriptionsPayload, TranscriptionsType } from "@/db/schema";
@@ -31,7 +30,6 @@ const RecorderCard = (props: RecorderCardProps) => {
 
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
-  const [uploadProgress, setUploadProgress] = useState<number>(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
@@ -89,75 +87,89 @@ const RecorderCard = (props: RecorderCardProps) => {
     noDrag: true,
   });
 
-  const { startUpload, isUploading } = useUploadThing("audioUploader", {
-    onBeforeUploadBegin: (files: File[]) => files,
-    onUploadProgress: (progress: number) =>{
-      setUploadProgress(progress),
-      setStatus(`Uploading ${file?.name} ${progress}%`)
-      toast.info(`Uploading ${file?.type} ${progress}%`)
+  const { mutate: sendTranscribeRequest, isPending: isTranscribing } = useMutation({
+    mutationKey: ["transcribe"],
+    onMutate: () => {
+      setStatus(`Transcribing ${file?.name}`);
+      toast.info(`Transcribing ${file?.name}`);
     },
-    onClientUploadComplete: (res) => {
-      const { name, url } = res[0];
-      toast.success(`Uploaded ${file?.name} successfully`);
-      setStatus(`Uploaded ${file?.name} successfully`)
-      sendTranscribeRequest({
-        documentUrl: url,
-        documentName: name,
-      },{
-        onSuccess: (res, data) => {
-          setStatus(`Transcribed ${file?.name} successfully`)
-          toast.success(`Transcribed ${file?.name} successfully`);
-          saveTranscribe({
-            documentUrl: data.documentUrl,
-            documentName: data.documentName,
-            userID: userId,
-            summary: res.summary,
-            segments: res.segments,
-            translation: res.translation,
-          });
-        }
+    mutationFn: async (payload: TranscribeDocumentRequest) => {
+      const response = await axios.post("/api/transcribe", payload);
+
+      return response.data as TranscriptionResponse;
+    },
+    onSuccess: (res, req_data) => {
+      setStatus(`Transcription complete`);
+      toast.success(`Transcription complete for ${file?.name}`);
+
+      saveTranscribe({
+        documentUrl: req_data.documentUrl,
+        userID: userId,
+        documentName: req_data.documentName,
+        summary: res.summary,
+        translation: res.translation,
+        segments: res.segments,
       });
     },
-    onUploadError: () => {
-      toast.error(`Failed to upload ${file?.name}, please try again in some time`, {
-        description: "If the issue persists, please contact support",
+    onError: (error) => {
+      // reset all
+      setFile(null);
+      setAudioURL("");
+      setAudioBlob(null);
+      setRecordingTime(0);
+
+      return toast.error(
+        `Failed to transcribe ${file?.name}, please try again in some time`,
+        {
+          description: error.message,
+        },
+      );
+    },
+  });
+
+  const { mutate: uploadToS3 } = useMutation({
+    mutationKey: ['uploadToS3'],
+    onMutate: () => {
+      setStatus(`Uploading ${file?.name}`);
+      toast.info(`Uploading ${file?.name}`);
+    },
+    mutationFn: async (file: File) => {
+      // Convert file to base64
+      const base64Data = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
+
+      const response = await axios.post('/api/aws/s3/sign', {
+        file: {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          lastModified: file.lastModified,
+          base64Data: base64Data
+        }
+      });
+
+      return response.data.url;
+    },
+    onSuccess: (url, file) => {
+      setStatus(`Upload complete, starting transcription...`);
+      sendTranscribeRequest({
+        documentUrl: url,
+        documentName: file.name,
+      });
+    },
+    onError: (error) => {
+      toast.error(`Failed to upload ${file?.name}`, {
+        description: error.message,
       });
       setFile(null);
       setAudioURL("");
       setAudioBlob(null);
       setIsPlaying(false);
-      setUploadProgress(0);
     },
   });
-
-  const { mutate: sendTranscribeRequest, isPending: isTranscribing } =
-    useMutation({
-      mutationKey: ["transcribe"],
-      onMutate: () => {
-        setStatus(`Transcribing ${file?.name}`);
-        toast.info(`Transcribing ${file?.name}`);
-      },
-      mutationFn: async (payload: TranscribeDocumentRequest) => {
-        const response = await axios.post("/api/transcribe", payload);
-
-        return response.data as TranscriptionResponse;
-      },
-      onError: (error) => {
-        // reset all
-        setFile(null);
-        setAudioURL("");
-        setAudioBlob(null);
-        setUploadProgress(0);
-        setRecordingTime(0);
-
-        return toast.error(
-          `Failed to transcribe ${file?.name}, please try again in some time`,
-          {
-            description: error.message,
-          },
-        );
-      },
-    });
 
   const { mutate: saveTranscribe, isPending: isSavingTranscribe } = useMutation(
     {
@@ -190,7 +202,6 @@ const RecorderCard = (props: RecorderCardProps) => {
           setFile(null);
           setAudioURL("");
           setAudioBlob(null);
-          setUploadProgress(0);
           setRecordingTime(0);
           setStatus(`Transcription saved successfully... Redirecting`);
           router.push(`/transcriptions/${res.id}`);
@@ -207,12 +218,6 @@ const RecorderCard = (props: RecorderCardProps) => {
       },
     },
   );
-
-  const handleUploadClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
 
   const handleToggleAudioPlayback = () => {
     if (audioRef.current) {
@@ -271,13 +276,20 @@ const RecorderCard = (props: RecorderCardProps) => {
     return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
   };
 
+  const handleTranscribeClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (file) {
+      uploadToS3(file);
+    }
+  };
+
   if (!userId) {
     return <Loader2Icon className="w-8 h-8 animate-spin" />;
   }
 
   return (
     <div className="flex flex-col w-full max-w-3xl md:h-72">
-      {isTranscribing || isUploading || isSavingTranscribe ? (
+      {isTranscribing || isSavingTranscribe ? (
         <div className="absolute top-0 left-0 w-full h-full  flex flex-col items-center justify-center">
           <Loader2Icon className="w-8 h-8 animate-spin" />
           <p>{status}</p>
@@ -367,7 +379,6 @@ const RecorderCard = (props: RecorderCardProps) => {
                       setAudioURL("");
                       setAudioBlob(null);
                       setIsPlaying(false);
-                      setUploadProgress(0);
                       setRecordingTime(0);
                     }}
                     className="flex gap-2 bg-white border-2 border-[#668D7E] hover:bg-white hover:border-2 hover:border-[#668D7E] text-[#668D7E]"
@@ -375,10 +386,7 @@ const RecorderCard = (props: RecorderCardProps) => {
                     Restart
                   </Button>
                   <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      startUpload([file]);
-                    }}
+                    onClick={handleTranscribeClick}
                     className="flex gap-2 bg-[#668D7E] hover:bg-[#668D7E] text-white"
                   >
                     <SendIcon className="w-4 h-4" />
@@ -389,7 +397,6 @@ const RecorderCard = (props: RecorderCardProps) => {
                 <Fragment>
                   {!isRecording && (
                     <Button
-                      onClick={handleUploadClick}
                       className="flex gap-2 bg-white border-2 border-[#668D7E] hover:bg-white hover:border-2 hover:border-[#668D7E] text-[#668D7E]"
                     >
                       <UploadIcon className="w-4 h-4" />
