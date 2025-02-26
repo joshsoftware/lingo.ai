@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Audio Recorder Final",
+  "version": "1.0",
+  "description": "Record audio and stream it to server",
+  "permissions": ["storage", "activeTab", "tabs"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_icon": {
+     "48": "mic.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["welcome.html"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
