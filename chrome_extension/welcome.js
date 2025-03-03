@@ -7,29 +7,7 @@ document.addEventListener("DOMContentLoaded", function () {
   let stream;
 
   // Server URL to which the audio will be streamed
-  const SERVER_URL = "https://your-streaming-server.com/upload";
-
-  // Check if microphone permission was granted
-  // chrome.storage.local.get(["microphonePermissionGranted"], function (result) {
-  //   if (result.microphonePermissionGranted) {
-  //     statusDiv.textContent = "Ready to record";
-  //   } else {
-  //     statusDiv.textContent =
-  //       "Please complete setup by opening the welcome page";
-
-  //     // Add button to open welcome page
-  //     const setupBtn = document.createElement("button");
-  //     setupBtn.textContent = "Open Setup Page";
-  //     setupBtn.className = "btn";
-  //     setupBtn.style.backgroundColor = "#4285f4";
-  //     setupBtn.onclick = function () {
-  //       chrome.tabs.create({
-  //         url: chrome.runtime.getURL("welcome.html"),
-  //       });
-  //     };
-  //     document.body.insertBefore(setupBtn, startBtn);
-  //   }
-  // });
+  const SERVER_URL = "https://lingo.ai.joshsoftware.com";
 
   startBtn.addEventListener("click", async function () {
     try {
@@ -63,16 +41,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Stream the audio chunk to the server
         if (event.data.size > 0) {
-          downloadAudio(event.data);
-          // streamToServer(event.data);
+          streamToServer(event.data);
         }
       };
 
       // Event handler for when recording is stopped
       mediaRecorder.onstop = function () {
         if (audioChunks > 0) {
-          downloadAudio(audioChunks);
-          // streamToServer(audioChunks);
+          streamToServer(audioChunks);
         }
         // Clear the audioChunks array
         audioChunks = [];
@@ -87,7 +63,7 @@ document.addEventListener("DOMContentLoaded", function () {
       };
 
       // Start recording
-      mediaRecorder.start(50000); // Capture in 1-second intervals
+      mediaRecorder.start(); // Capture in 1-second intervals
 
       // Update UI
       statusDiv.textContent = "Recording...";
@@ -99,24 +75,6 @@ document.addEventListener("DOMContentLoaded", function () {
     } catch (err) {
       console.error("Error accessing microphone:", err);
       statusDiv.textContent = "Error: " + err.message;
-
-      // if (err.name === "NotAllowedError") {
-      //   statusDiv.textContent = "Microphone permission denied.";
-
-      //   // Create button to open welcome page
-      //   const reopenSetupBtn = document.createElement("button");
-      //   reopenSetupBtn.textContent = "Grant Microphone Access";
-      //   reopenSetupBtn.className = "btn";
-      //   reopenSetupBtn.style.backgroundColor = "#4285f4";
-      //   reopenSetupBtn.onclick = function () {
-      //     chrome.tabs.create({
-      //       url: chrome.runtime.getURL("welcome.html"),
-      //     });
-      //   };
-      //   document.body.appendChild(reopenSetupBtn);
-      // } else {
-      //   statusDiv.textContent = "Error: " + err.message;
-      // }
     }
   });
 
@@ -131,48 +89,99 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  function downloadAudio(audioBlob) {
-    const audioURL = URL.createObjectURL(audioBlob);
-    const downloadLink = document.createElement("a");
-    downloadLink.href = audioURL;
-    downloadLink.download = "recording.webm";
+  // Function to stream audio chunks to the server
+  async function streamToServer(audioBlob) {
+    try {
+      console.log("start", audioBlob);
 
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
+      // Create a base64 string from the audioBlob
+      const base64String = await blobToBase64(audioBlob);
+      console.log("Base64 Data:", base64String);
 
-    // Optional: Show status to the user
-    if (typeof statusDiv !== "undefined") {
-      statusDiv.textContent = "Audio downloaded successfully";
+      // Prepare the payload to send to the server, including the audio duration
+      const payload = {
+        file: {
+          name: "recording.webm",
+          type: audioBlob.type,
+          size: audioBlob.size,
+          lastModified: Date.now(),
+          base64Data: base64String,
+        },
+      };
+
+      // Request to sign the file with AWS S3
+      const signedData = await postToServer(
+        SERVER_URL + "/api/aws/s3/sign",
+        payload
+      );
+      console.log("AWS S3 Signed Data:", signedData);
+
+      // Transcribe the file after it is successfully signed
+      const transcriptionData = await transcribeFile(
+        signedData.url,
+        signedData.key
+      );
+      console.log("Transcription Data:", transcriptionData);
+
+      // Save the transcription results
+      const saveData = await saveTranscription(
+        signedData,
+        transcriptionData
+      );
+      console.log("Save Response:", saveData);
+
+      // Open the transcription in a new tab
+      window.open(SERVER_URL + "/transcriptions/" + saveData[0].id, "_blank");
+    } catch (error) {
+      console.error("Error streaming to server:", error);
     }
-
-    // Release the blob URL
-    URL.revokeObjectURL(audioURL);
   }
 
-  // Replace the streamToServer function call with downloadAudio
+  // Function to convert Blob to Base64
+  function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result.split(",")[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
 
-  // Function to stream audio chunks to the server
-  function streamToServer(audioBlob) {
-    const formData = new FormData();
-    formData.append("audio", audioBlob, "recording.webm");
-    debugger;
-    fetch(SERVER_URL, {
+  // Helper function to send data to the server
+  async function postToServer(url, payload) {
+    const response = await fetch(url, {
       method: "POST",
-      body: formData,
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-        return response.json();
-      })
-      .then((data) => {
-        console.log("Success:", data);
-      })
-      .catch((error) => {
-        console.error("Error streaming to server:", error);
-        statusDiv.textContent = "Error streaming: " + error.message;
-      });
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error posting data to ${url}`);
+    }
+    return response.json();
+  }
+
+  // Function to initiate transcription
+  async function transcribeFile(url, key) {
+    const payload = { documentUrl: url, documentName: key };
+    return postToServer(SERVER_URL + "/api/transcribe", payload);
+  }
+
+  // Function to save transcription results
+  async function saveTranscription(
+    signedData,
+    transcriptionData
+  ) {
+    const payload = {
+      documentUrl: signedData.url,
+      userID: "huvcypmasa5xwgyf",
+      documentName: signedData.key,
+      summary: transcriptionData.summary,
+      translation: transcriptionData.translation,
+      // audioDuration: 1, // Include the calculated audio duration
+      segments: transcriptionData.segments,
+    };
+    console.log("in payload", payload)
+    return postToServer(SERVER_URL + "/api/transcribe/save", payload);
   }
 });
