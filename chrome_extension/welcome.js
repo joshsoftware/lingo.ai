@@ -2,6 +2,9 @@ document.addEventListener("DOMContentLoaded", function () {
   const startBtn = document.getElementById("startBtn");
   const stopBtn = document.getElementById("stopBtn");
   const statusDiv = document.getElementById("status");
+  const resumeBtn = document.getElementById("resumeBtn");
+  const transcribeBtn = document.getElementById("transcribeBtn");
+
   let mediaRecorder;
   let audioChunks = [];
   let stream;
@@ -47,7 +50,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       // Event handler for when recording is stopped
       mediaRecorder.onstop = function () {
-        if (audioChunks > 0) {
+        if (audioChunks.length > 0) {
           streamToServer(audioChunks);
         }
         // Clear the audioChunks array
@@ -78,9 +81,28 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  // handle pause recording
   stopBtn.addEventListener("click", function () {
+    mediaRecorder.pause();
+    resumeBtn.style.display = "block";
+    transcribeBtn.style.display = "block";
+    stopBtn.style.display = "none";
+    // }
+  });
+
+  //handle resume 
+  resumeBtn.addEventListener("click", function () {
+    mediaRecorder.resume();
+    resumeBtn.style.display = "none";
+    transcribeBtn.style.display = "none";
+    stopBtn.style.display = "block";
+  });
+
+  transcribeBtn.addEventListener("click", function () {
     if (mediaRecorder && mediaRecorder.state !== "inactive") {
-      mediaRecorder.stop();
+      mediaRecorder.pause();
+      resumeBtn.style.display = "block";
+      transcribeBtn.style.display = "block";
 
       // Stop all tracks of the stream
       if (stream) {
@@ -108,7 +130,7 @@ document.addEventListener("DOMContentLoaded", function () {
           base64Data: base64String,
         },
       };
-
+      statusDiv.textContent = "Uploading to server...";
       // Request to sign the file with AWS S3
       const signedData = await postToServer(
         SERVER_URL + "/api/aws/s3/sign",
@@ -124,13 +146,11 @@ document.addEventListener("DOMContentLoaded", function () {
       console.log("Transcription Data:", transcriptionData);
 
       // Save the transcription results
-      const saveData = await saveTranscription(
-        signedData,
-        transcriptionData
-      );
+      const saveData = await saveTranscription(signedData, transcriptionData);
       console.log("Save Response:", saveData);
 
       // Open the transcription in a new tab
+      statusDiv.textContent = "Opening in new window...";
       window.open(SERVER_URL + "/transcriptions/" + saveData[0].id, "_blank");
     } catch (error) {
       console.error("Error streaming to server:", error);
@@ -163,15 +183,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Function to initiate transcription
   async function transcribeFile(url, key) {
+    statusDiv.textContent = "Transcribing...";
     const payload = { documentUrl: url, documentName: key };
     return postToServer(SERVER_URL + "/api/transcribe", payload);
   }
 
   // Function to save transcription results
-  async function saveTranscription(
-    signedData,
-    transcriptionData
-  ) {
+  async function saveTranscription(signedData, transcriptionData) {
+    statusDiv.textContent = "Saving to database...";
     const payload = {
       documentUrl: signedData.url,
       userID: "huvcypmasa5xwgyf",
@@ -181,7 +200,7 @@ document.addEventListener("DOMContentLoaded", function () {
       // audioDuration: 1, // Include the calculated audio duration
       segments: transcriptionData.segments,
     };
-    console.log("in payload", payload)
+    console.log("in payload", payload);
     return postToServer(SERVER_URL + "/api/transcribe/save", payload);
   }
 });

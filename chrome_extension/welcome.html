@@ -1,45 +1,119 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Audio Recorder</title>
+  <title>Longo.ai Chrome Extension</title>
+
+  <!-- Icons link -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  
   <style>
     body {
-      width: 600px;
-      height: 600px;
-      padding: 20px;
       font-family: Arial, sans-serif;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-color: #f9f9f9;
     }
+
+    .recorder-wrapper {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      width: 325px;
+      padding: 1.25rem 0;
+      text-align: center;
+      border: 1px solid rgb(229, 231, 235);
+      margin: 2.5rem auto;
+      border-radius: 1rem;
+      background: white;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .recorder-title {
+      border-bottom: 1px solid rgb(229, 231, 235);
+      margin: 0;
+      padding-bottom: 1.25rem;
+    }
+
+    .recorder-body {
+      padding: 1.25rem 2.5rem;
+    }
+
     .btn {
-      padding: 10px 20px;
-      margin: 10px 0;
-      border: none;
-      border-radius: 4px;
+      padding: 0.75rem 1.25rem;
+      margin: 1rem 0;
       cursor: pointer;
-      font-weight: bold;
+      font-weight: 600;
       width: 100%;
+      background-color: white;
+      border: 2px solid rgb(0, 118, 255);
+      color: rgb(0, 118, 255);
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.3s ease-in-out;
     }
-    #startBtn {
-      background-color: #4CAF50;
+
+    .btn:hover {
+      background-color: rgb(0, 118, 255);
       color: white;
+      transform: translateY(-2px);
+      box-shadow: 0px 4px 10px rgba(0, 118, 255, 0.3);
     }
+
+    .btn:active {
+      transform: scale(0.98);
+      box-shadow: 0px 2px 5px rgba(0, 118, 255, 0.5);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
     #stopBtn {
-      background-color: #f44336;
-      color: white;
       display: none;
     }
+
     .status {
-      margin-top: 15px;
+      margin-top: 2rem;
       text-align: center;
       font-weight: bold;
+    }
+
+    #resumeBtn {
+      display: none;
+    }
+
+    #transcribeBtn {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <h2>Audio Recorder</h2>
-  <button id="startBtn" class="btn">Start Recording</button>
-  <button id="stopBtn" class="btn">Stop Recording</button>
-  <div id="status" class="status">Ready to record</div>
-  
+  <div class="recorder-wrapper">
+    <h2 class="recorder-title">Lingo.ai Recorder</h2>
+    <div class="recorder-body">
+      <button id="startBtn" class="btn">
+        <i class="fa-solid fa-circle-dot"></i>
+        Start Recording</button>
+      <button id="stopBtn" class="btn">
+        <i class="fa-solid fa-circle-stop"></i>
+        Stop Recording</button>
+      <button id="resumeBtn" class="btn">
+        <i class="fa-solid fa-play"></i>
+        Resume</button>
+      <button id="transcribeBtn" class="btn">
+        <i class="fa fa-language" aria-hidden="true"></i>
+        Transcribe</button>
+      <div id="status" class="status">
+        Ready to record?</div>
+    </div>
+  </div>
   <script src="welcome.js"></script>
 </body>
 </html>
