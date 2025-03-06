@@ -58,7 +58,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Update UI
         statusDiv.textContent = "Recording stopped";
-        startBtn.style.display = "block";
         stopBtn.style.display = "none";
 
         // Notify background script
@@ -87,6 +86,7 @@ document.addEventListener("DOMContentLoaded", function () {
     resumeBtn.style.display = "block";
     transcribeBtn.style.display = "block";
     stopBtn.style.display = "none";
+    statusDiv.textContent = "Recording Paused"
     // }
   });
 
@@ -96,14 +96,16 @@ document.addEventListener("DOMContentLoaded", function () {
     resumeBtn.style.display = "none";
     transcribeBtn.style.display = "none";
     stopBtn.style.display = "block";
+    statusDiv.textContent = "Recording..."
   });
 
   transcribeBtn.addEventListener("click", function () {
     if (mediaRecorder && mediaRecorder.state !== "inactive") {
-      mediaRecorder.pause();
-      resumeBtn.style.display = "block";
-      transcribeBtn.style.display = "block";
-
+      mediaRecorder.stop();
+      resumeBtn.style.display = "none";
+      transcribeBtn.style.display = "none";
+      stopBtn.style.display = "none";
+      startBtn.style.display = "none";
       // Stop all tracks of the stream
       if (stream) {
         stream.getTracks().forEach((track) => track.stop());
@@ -152,6 +154,8 @@ document.addEventListener("DOMContentLoaded", function () {
       // Open the transcription in a new tab
       statusDiv.textContent = "Opening in new window...";
       window.open(SERVER_URL + "/transcriptions/" + saveData[0].id, "_blank");
+      startBtn.style.display = "block"
+      statusDiv.textContent = "Ready to record?"
     } catch (error) {
       console.error("Error streaming to server:", error);
     }
