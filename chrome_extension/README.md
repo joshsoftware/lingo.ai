@@ -43,7 +43,7 @@ Click on the **Lingo.ai** extension from the dropdown menu to activate it.
 After activating the extension, a new tab will open. Click the **"Start Recording"** button, allow microphone access, and share the tab with your meeting participants.
 
 ### 10. Stop Recording
-When finished, click the **"Stop Recording"** button to end the recording.
+When finished, click the **"Stop Recording"** button to pause the recording. After that, you can either resume the recording or, if you're completely finished, click the **"Transcribe"** button to have the recording transcribed.
 
 ## Important Notes
 
