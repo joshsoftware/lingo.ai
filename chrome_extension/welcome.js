@@ -8,9 +8,34 @@ document.addEventListener("DOMContentLoaded", function () {
   let mediaRecorder;
   let audioChunks = [];
   let stream;
+  let activeTabName;
+  let recordingFileName;
 
   // Server URL to which the audio will be streamed
   const SERVER_URL = "https://lingo.ai.joshsoftware.com";
+
+  // Function to format the current date and time as a string
+  function formatDateTime(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0"); // Month is zero-indexed
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const seconds = String(date.getSeconds()).padStart(2, "0");
+
+    return `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
+  }
+
+  // Function to generate a filename based on tab title and current date-time
+  function generateRecordingFilename(tabTitle) {
+    const now = new Date();
+    const formattedDateTime = formatDateTime(now);
+
+    // Ensure the tab title is safe for use in a filename (remove any invalid characters)
+    const safeTabTitle = tabTitle.replace(/[<>:"/\\|?*]/g, "_"); // Replace invalid filename characters
+
+    return `${safeTabTitle}_${formattedDateTime}.webm`; // Example format: TabName_2025-03-06_14-30-45_123.webm
+  }
 
   startBtn.addEventListener("click", async function () {
     try {
@@ -37,6 +62,12 @@ document.addEventListener("DOMContentLoaded", function () {
       stream = destination.stream;
       // Create MediaRecorder instance
       mediaRecorder = new MediaRecorder(stream);
+
+      // get active tab name
+      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+        const currentTab = tabs[0]; // Get the active tab
+        activeTabName = currentTab.title;
+      });
 
       // Event handler for when data is available
       mediaRecorder.ondataavailable = function (event) {
@@ -86,17 +117,17 @@ document.addEventListener("DOMContentLoaded", function () {
     resumeBtn.style.display = "block";
     transcribeBtn.style.display = "block";
     stopBtn.style.display = "none";
-    statusDiv.textContent = "Recording Paused"
+    statusDiv.textContent = "Recording Paused";
     // }
   });
 
-  //handle resume 
+  //handle resume
   resumeBtn.addEventListener("click", function () {
     mediaRecorder.resume();
     resumeBtn.style.display = "none";
     transcribeBtn.style.display = "none";
     stopBtn.style.display = "block";
-    statusDiv.textContent = "Recording..."
+    statusDiv.textContent = "Recording...";
   });
 
   transcribeBtn.addEventListener("click", function () {
@@ -122,16 +153,18 @@ document.addEventListener("DOMContentLoaded", function () {
       const base64String = await blobToBase64(audioBlob);
       console.log("Base64 Data:", base64String);
 
+      recordingFileName = generateRecordingFilename(activeTabName);
       // Prepare the payload to send to the server, including the audio duration
       const payload = {
         file: {
-          name: "recording.webm",
+          name: recordingFileName,
           type: audioBlob.type,
           size: audioBlob.size,
           lastModified: Date.now(),
           base64Data: base64String,
         },
       };
+      console.log("payload", payload);
       statusDiv.textContent = "Uploading to server...";
       // Request to sign the file with AWS S3
       const signedData = await postToServer(
@@ -154,8 +187,8 @@ document.addEventListener("DOMContentLoaded", function () {
       // Open the transcription in a new tab
       statusDiv.textContent = "Opening in new window...";
       window.open(SERVER_URL + "/transcriptions/" + saveData[0].id, "_blank");
-      startBtn.style.display = "block"
-      statusDiv.textContent = "Ready to record?"
+      startBtn.style.display = "block";
+      statusDiv.textContent = "Ready to record?";
     } catch (error) {
       console.error("Error streaming to server:", error);
     }
@@ -188,7 +221,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // Function to initiate transcription
   async function transcribeFile(url, key) {
     statusDiv.textContent = "Transcribing...";
-    const payload = { documentUrl: url, documentName: key };
+    const payload = { documentUrl: url, documentName: recordingFileName };
     return postToServer(SERVER_URL + "/api/transcribe", payload);
   }
 
@@ -198,7 +231,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const payload = {
       documentUrl: signedData.url,
       userID: "huvcypmasa5xwgyf",
-      documentName: signedData.key,
+      documentName: recordingFileName,
       summary: transcriptionData.summary,
       translation: transcriptionData.translation,
       // audioDuration: 1, // Include the calculated audio duration
