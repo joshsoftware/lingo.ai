@@ -1,0 +1,75 @@
+{% extends 'projects/sidebar.html' %}
+
+{% block content %}
+    <div class="container mt-4">          
+        <div class="card bg-info-subtle text-dark">
+            <div class="card-body">
+                <h5 class="card-title">Hi {{ request.user.email }}! 👋</h5>
+                <p class="card-text">Welcome to Attendee - the open source meeting bot API. We're in public beta and our hosted instance is free to use.</p>
+                <p class="card-text mb-0">
+                    If you're building something that needs meeting bots, we'd love to chat!
+                    
+                    Join our <a href="https://join.slack.com/t/attendeecommu-rff8300/shared_invite/zt-2uhpam6p2-ZzLAoVrljbL2UEjqdSHrgQ">Slack</a> or send us an <a href="mailto:crusty.noah@gmail.com">email</a>. And please ⭐ us on <a href="https://github.com/noah-duncan/attendee" target="_blank" rel="noopener noreferrer">Github</a> if you find us useful. 
+                    
+                </p>
+            </div>
+        </div>
+        <div">
+            <div class="card-body">
+                <h4 class="mt-4">Follow these steps to get started 🚀</h4>
+                <ol class="list-group list-group-flush">
+                    <!-- Step 1: Credentials -->
+                    <li class="list-group-item {% if quick_start.has_credentials %}text-decoration-line-through{% endif %} pt-4 pb-4 fs-5">
+                        1. Add credentials
+                        {% if not quick_start.has_credentials %}
+                            <div class="mt-2">
+                                <a href="{% url 'projects:project-settings' project.object_id %}" class="btn btn-sm btn-primary">
+                                    Go to Settings
+                                </a>
+                            </div>
+                        {% endif %}
+                    </li>
+
+                    <!-- Step 2: API Key -->
+                    <li class="list-group-item {% if quick_start.has_api_keys %}text-decoration-line-through{% endif %} pt-4 pb-4 fs-5">
+                        2. Create an API key
+                        {% if not quick_start.has_api_keys %}
+                            <div class="mt-2">
+                                <a href="{% url 'projects:project-api-keys' project.object_id %}" class="btn btn-sm btn-primary">
+                                    Go to API Keys
+                                </a>
+                            </div>
+                        {% endif %}
+                    </li>
+
+                    <!-- Step 3: Call API -->
+                    <li class="list-group-item {% if quick_start.has_ended_bots %}text-decoration-line-through{% endif %} pt-4 pb-4 fs-5">
+                        3. Call the API
+                        {% if not quick_start.has_ended_bots %}
+                        
+                            <div class="mt-2">
+                                <small>Create bot</small>
+                                <pre class="bg-light p-1 m-1 rounded">
+<code class="small">curl -X POST \
+https://app.attendee.dev/api/v1/bots \
+-H 'Authorization: Token &lt;YOUR_API_KEY&gt;' \
+-H 'Content-Type: application/json' \
+-d '{"meeting_url": "https://us05web.zoom.us/j/xxxxxxx?pwd=xxxxxx", "bot_name": "My Bot"}'</code>
+                                </pre>
+                            </div>
+                            <div class="mt-2">
+                                <small>Retrieve transcript</small>
+                                <pre class="bg-light p-1 m-1 rounded">
+<code class="small">curl -X GET \
+https://app.attendee.dev/api/v1/bots/&lt;BOT_ID&gt/transcript \
+-H 'Authorization: Token &lt;YOUR_API_KEY&gt;' \
+-H 'Content-Type: application/json'</code>
+                                </pre>
+                            </div>
+                        {% endif %}
+                    </li>
+                </ol>
+            </div>
+        </div>
+    </div>
+{% endblock %} 
