@@ -1,0 +1,69 @@
+{% extends 'projects/sidebar.html' %}
+
+{% block content %}
+<style>
+    .meeting-url {
+        max-width: 300px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: block;
+    }
+    
+    /* Updated styles for clickable rows */
+    .clickable-row {
+        cursor: pointer;
+        transition: background-color 0.15s ease-in-out;
+    }
+    /* Apply hover effect to td elements */
+    table tbody tr.clickable-row:hover td {
+        background-color: #f8f9fa;  /* Using Bootstrap's light gray */
+    }
+</style>
+
+<div class="container mt-4">
+    <h2 class="mb-4">Bots</h2>
+    
+    <div class="table-responsive">
+        {% if bots %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Meeting URL</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bot in bots %}
+                    <tr class="clickable-row"
+                        hx-get="{% url 'projects:project-bot-detail' project.object_id bot.object_id %}"
+                        hx-select="#content"
+                        hx-target="#content"
+                        hx-swap="outerHTML"
+                        hx-push-url="true">
+                        <td>{{ bot.object_id }}</td>
+                        <td><span class="meeting-url" title="{{ bot.meeting_url }}">{{ bot.meeting_url }}</span></td>
+                        <td>
+                            <span class="badge {% if bot.state == BotStates.READY %}bg-warning{% elif bot.state == BotStates.FATAL_ERROR %}bg-danger{% elif bot.state == BotStates.ENDED %}bg-secondary{% else %}bg-success{% endif %}">
+                                {{ bot.get_state_display }}
+                                {% if bot.sub_state %}
+                                    - {{ bot.get_sub_state_display }}
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td>{{ bot.created_at|date:"M d, Y H:i" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="alert alert-info" role="alert">
+                <i class="bi bi-info-circle me-2"></i>
+                No bots found. Use the API to create bots.
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

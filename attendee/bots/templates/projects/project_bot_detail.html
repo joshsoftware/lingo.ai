@@ -1,0 +1,300 @@
+{% extends 'projects/sidebar.html' %}
+
+{% load bot_filters %}
+
+{% block content %}
+<style>
+    .detail-card {
+        margin-bottom: 1.5rem;
+    }
+    .timeline-item {
+        padding: 1rem;
+        border-left: 2px solid #dee2e6;
+        margin-left: 1rem;
+        position: relative;
+    }
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -0.5rem;
+        top: 1.5rem;
+        width: 1rem;
+        height: 1rem;
+        background: #fff;
+        border: 2px solid #007bff;
+        border-radius: 50%;
+    }
+    .recording-item {
+        border-radius: 0.25rem;
+        margin-bottom: 1rem;
+    }
+    .recording-container {
+        display: flex;
+        gap: 1rem;
+        height: 600px;  /* Fixed height for the container */
+    }
+    .transcript-column {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+    }
+    .video-column {
+        flex: 1;
+    }
+    .utterance-item {
+        margin-bottom: 1rem;
+        padding: 0.5rem;
+        border-bottom: 1px solid #eee;
+        display: flex;
+    }
+    .speaker-bar {
+        width: 4px;
+        margin-right: 10px;
+        border-radius: 2px;
+    }
+    .utterance-content {
+        flex: 1;
+    }
+    .utterance-timestamp {
+        font-size: 0.8rem;
+        color: #666;
+    }
+    .utterance-text {
+        margin-top: 0.25rem;
+    }
+    .highlighted {
+        background-color: #e2f0ff;
+    }
+    .word {
+        display: inline;
+    }
+    .bold {
+        font-weight: bold;
+    }
+</style>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Bot Details</h2>
+        <a href="{% url 'projects:project-bots' project.object_id %}" 
+           class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Bots
+        </a>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <p><strong>ID:</strong> {{ bot.object_id }}</p>
+            <p><strong>Name:</strong> {{ bot.name }}</p>
+            <p><strong>Created:</strong> {{ bot.created_at|date:"M d, Y H:i" }}</p>
+        </div>
+        <div class="col-md-6">
+            <p><strong>Meeting URL:</strong> {{ bot.meeting_url }}</p>
+            <p><strong>Status:</strong> 
+                <span class="badge {% if bot.state == BotStates.READY %}bg-warning{% elif bot.state == BotStates.FATAL_ERROR %}bg-danger{% elif bot.state == BotStates.ENDED %}bg-secondary{% else %}bg-success{% endif %}">
+                    {{ bot.get_state_display }}
+                    {% if bot.sub_state %}
+                        - {{ bot.get_sub_state_display }}
+                    {% endif %}
+                </span>
+            </p>
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="recordings-tab" data-bs-toggle="tab" 
+                    data-bs-target="#recordings" type="button" role="tab">
+                Recordings
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="timeline-tab" data-bs-toggle="tab" 
+                    data-bs-target="#timeline" type="button" role="tab">
+                Event Timeline
+            </button>
+        </li>
+    </ul>
+    <div class="tab-content">
+        <!-- Recordings Tab -->
+        <div class="tab-pane fade show active" id="recordings" role="tabpanel">
+            {% if recordings %}
+                {% for recording in recordings %}
+                    <div class="recording-item">
+                        {% if recording.state == RecordingStates.COMPLETE %}
+                            <div class="recording-container">
+                                <div class="transcript-column">
+                                    {% for utterance in recording.utterances %}
+                                        <div class="utterance-item">
+                                            <div class="speaker-bar" style="background-color: {{ utterance.participant.uuid|participant_color }}"></div>
+                                            <div class="utterance-content">
+                                                <div class="utterance-timestamp" role="button" style="cursor: pointer" 
+                                                     onclick="seekVideo(this, {{ utterance.relative_timestamp_ms }})">
+                                                    {{ utterance.timestamp_display }} | 
+                                                    {{ utterance.participant.full_name }}
+                                                </div>
+                                                <div class="utterance-text">
+                                                    {% if utterance.words %}
+                                                        {% for word_data in utterance.words %}
+                                                            <span class="{% if word_data.is_space %}word-space{% else %}word{% endif %}" 
+                                                                  data-utterance-id="{{ word_data.utterance_id|md5 }}" 
+                                                                  data-start="{{ word_data.start }}" 
+                                                                  data-end="{{ word_data.end }}">{{ word_data.word }}
+                                                            </span>
+                                                        {% endfor %}
+                                                    {% else %}
+                                                        {{ utterance.transcript }}
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% empty %}
+                                        <div class="alert alert-info">No transcripts available.</div>
+                                    {% endfor %}
+                                </div>
+                                <div class="video-column">
+                                    <video preload="auto" width="100%" controls id="recording-video">
+                                        <source src="{{ recording.url }}">
+                                        Your browser does not support the video tag.
+                                    </video>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning">
+                                Recording status: 
+                                <span class="badge {% if recording.state == RecordingStates.FAILED %}bg-danger{% else %}bg-warning{% endif %}">
+                                    {{ recording.get_state_display }}
+                                </span>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-info">No recordings available.</div>
+            {% endif %}
+        </div>
+
+        <!-- Timeline Tab -->
+        <div class="tab-pane fade" id="timeline" role="tabpanel">
+            {% if bot.bot_events.all %}
+                <div class="timeline">
+                    {% for event in bot.bot_events.all %}
+                        <div class="timeline-item">
+                            <h6>
+                                {% if event.event_sub_type %}
+                                    {{ event.get_event_sub_type_display }}
+                                {% else %}
+                                    {{ event.get_event_type_display }}
+                                {% endif %}
+                            </h6>
+                            <p class="text-muted mb-1">{{ event.created_at|date:"M d, Y H:i:s" }}</p>
+                            <p class="mb-0">
+                                State changed from 
+                                <span class="badge bg-secondary">{{ event.get_old_state_display }}</span>
+                                → 
+                                <span class="badge bg-primary">{{ event.get_new_state_display }}</span>
+                            </p>
+                            {% if event.metadata %}
+                                <pre class="small mt-3"><span class="small">metadata: </span>{{ event.metadata|pprint }}</pre>
+                            {% endif %}
+                            {% if event.debug_screenshots.all %}
+                                <div class="mt-2">
+                                    <h6 class="text-muted mb-2">Debug Screenshots:</h6>
+                                    {% for screenshot in event.debug_screenshots.all %}
+                                        <img src="{{ screenshot.url }}" 
+                                             class="img-fluid mb-2" 
+                                             alt="Debug Screenshot"
+                                             style="max-width: 300px;">
+                                        {% if screenshot.metadata %}
+                                            <pre class="small">{{ screenshot.metadata|pprint }}</pre>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info">No events recorded.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<script>
+    function seekVideo(element, timestamp_ms) {
+        const container = element.closest('.recording-container');
+        const video = container.querySelector('video');
+        if (video) {
+            video.currentTime = timestamp_ms / 1000.0;
+            video.play();
+        }
+    }
+
+    // Add highlighting functionality
+    document.querySelectorAll('video').forEach(video => {
+        video.addEventListener('timeupdate', function() {
+            const container = this.closest('.recording-container');
+            const words = container.querySelectorAll('.word, .word-space');
+            let lastHighlightedUtteranceId = null;
+            
+            // Find utterance bounds
+            const utteranceBounds = {};
+            words.forEach(word => {
+                const utteranceId = word.dataset.utteranceId;
+                if (!utteranceBounds[utteranceId]) {
+                    utteranceBounds[utteranceId] = {
+                        start: Infinity,
+                        end: -Infinity
+                    };
+                }
+                utteranceBounds[utteranceId].start = Math.min(utteranceBounds[utteranceId].start, parseFloat(word.dataset.start) / 1000.0);
+                utteranceBounds[utteranceId].end = Math.max(utteranceBounds[utteranceId].end, parseFloat(word.dataset.end) / 1000.0);
+            });
+
+            // Find current utterance
+            for (const [utteranceId, utterance] of Object.entries(utteranceBounds)) {
+                if (this.currentTime >= utterance.start && this.currentTime <= utterance.end) {
+                    lastHighlightedUtteranceId = utteranceId;
+                    break;
+                }
+            }
+            
+            // Update highlighting
+            let firstWordAfterStart = null;
+            words.forEach(word => {
+                const start = parseFloat(word.dataset.start) / 1000.0;
+                if (this.currentTime <= start && firstWordAfterStart == null) {
+                    firstWordAfterStart = word;
+                }
+                if (this.currentTime > start && word.dataset.utteranceId === lastHighlightedUtteranceId) {
+                    word.classList.add('highlighted');
+                } else {
+                    word.classList.remove('highlighted');
+                }
+            });
+            firstWordAfterStart = firstWordAfterStart || words[words.length - 1];
+
+            // Auto-scroll to first word of highlighted utterance
+            if (firstWordAfterStart) {
+                const firstWord = firstWordAfterStart;
+                const transcriptColumn = container.querySelector('.transcript-column');
+                const wordRect = firstWord.getBoundingClientRect();
+                const containerRect = transcriptColumn.getBoundingClientRect();
+
+                if (wordRect.top < containerRect.top || wordRect.bottom > containerRect.bottom) {
+                    firstWord.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+
+                // Bold the timestamp of the first word's utterance
+                const utteranceTimestamp = firstWord.closest('.utterance-item').querySelector('.utterance-timestamp');
+                document.querySelectorAll('.utterance-timestamp').forEach(timestamp => {
+                    timestamp.classList.remove('bold');
+                });
+                utteranceTimestamp.classList.add('bold');
+            }
+        });
+    });
+</script>
+{% endblock %}

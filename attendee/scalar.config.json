@@ -1,0 +1,11 @@
+{
+  "subdomain": "attendee",
+  "guides": [],
+  "references": [
+    {
+      "name": "API Reference",
+      "path": "docs/openapi.yaml"
+    }
+  ],
+  "publishOnMerge": true
+}
