@@ -10,3 +10,4 @@ google-auth-oauthlib
 apscheduler 
 requests
 google-api-python-client
+boto3

@@ -4,6 +4,7 @@ from app.helper.bot_actions import join_meeting_with_retry
 from app.models.schemas import ScheduleBotRequest
 import requests
 import time
+from app.log_config import logger
 
 router = APIRouter(prefix="/scheduler", tags=["Scheduler"])
 
@@ -16,7 +17,7 @@ def schedule_join_bot(request: ScheduleBotRequest):
 
     def join_meeting_with_retry():
         while True:
-            print(f"Joining meeting: {meeting_url} with bot: {bot_name}")
+            logger.info(f"Joining meeting: {meeting_url} with bot: {bot_name}")
             response = requests.post(
                 "http://attendee-attendee-app-local-1:8000/api/v1/bots",
                 headers={
@@ -25,11 +26,11 @@ def schedule_join_bot(request: ScheduleBotRequest):
                 },
                 json={"meeting_url": meeting_url, "bot_name": bot_name}
             )
-            print(f"Join bot response: {response.status_code}, {response.text}")
+            logger.info(f"Join bot response: {response.status_code}, {response.text}")
 
             if response.status_code == 201:
                 bot_id = response.json().get("id")
-                print(f"Bot created with ID: {bot_id}")
+                logger.info(f"Bot created with ID: {bot_id}")
 
                 # Check bot status until success or meeting ends
                 while True:
@@ -41,19 +42,19 @@ def schedule_join_bot(request: ScheduleBotRequest):
                         }
                     )
                     status_data = status_response.json()
-                    print(f"Bot status: {status_data}")
+                    logger.info(f"Bot status: {status_data}")
 
                     if status_data.get("state") in ["joined_recording", "joined"]:
-                        print("Bot joined successfully")
+                        logger.info("Bot joined successfully")
                         return
                     elif status_data.get("state") == "fatal_error":
-                        print("Bot failed to join. Retrying...")
+                        logger.info("Bot failed to join. Retrying...")
                         break
 
-                    print("Retrying bot status check in 30 seconds...")
+                    logger.info("Retrying bot status check in 30 seconds...")
                     time.sleep(30)
 
-            print("Retrying bot join in 30 seconds...")
+            logger.info("Retrying bot join in 30 seconds...")
             time.sleep(30)
 
     # Schedule the job at the meeting time and keep retrying until meeting ends
