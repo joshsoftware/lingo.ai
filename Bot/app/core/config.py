@@ -8,3 +8,4 @@ OAUTH2_SCHEME = OAuth2AuthorizationCodeBearer(
     tokenUrl="",
     authorizationUrl="https://accounts.google.com/o/oauth2/auth"
 )
+USER_ID = ""

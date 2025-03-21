@@ -4,6 +4,7 @@ import logging
 import os
 import signal
 import traceback
+import threading
 
 import gi
 import redis
@@ -49,6 +50,24 @@ logger = logging.getLogger(__name__)
 
 
 class BotController:
+    def call_lingo_callback(self, file_key):
+        url = "http://lingo-bot:8001/meetings/call-to-lingo"
+        logger.info(os.environ.get('AWS_RECORDING_STORAGE_BUCKET_NAME'))
+        payload = {"key": f"s3://{os.environ.get('AWS_RECORDING_STORAGE_BUCKET_NAME')}/{file_key}"}
+        
+        def send_request():
+            try:
+                response = requests.post(url, json=payload)  # Optional timeout
+                if response.status_code == 200:
+                    logger.info("Callback received successfully.")
+                else:
+                    logger.info(f"Failed to get callback. Status code: {response.status_code}, Response: {response.text}")
+            except Exception as e:
+                logger.info(f"Failed to send callback: {e}")
+
+        # Fire and forget
+        threading.Thread(target=send_request, daemon=True).start()
+
     def get_google_meet_bot_adapter(self):
         from bots.google_meet_bot_adapter import GoogleMeetBotAdapter
 
@@ -223,18 +242,18 @@ class BotController:
             file_uploader.delete_file(self.get_gstreamer_file_location())
             logger.info("File uploader deleted file from local filesystem")
             self.recording_file_saved(file_uploader.key)
+            self.call_lingo_callback(file_key)
 
-
-            url = "http://lingo-bot:8001/meetings/call-to-lingo"
-            logger.info(os.environ.get('AWS_RECORDING_STORAGE_BUCKET_NAME'))
-            payload = {"key": f"s3://{os.environ.get('AWS_RECORDING_STORAGE_BUCKET_NAME')}/{file_key}"}
+            # url = "http://lingo-bot:8001/meetings/call-to-lingo"
+            # logger.info(os.environ.get('AWS_RECORDING_STORAGE_BUCKET_NAME'))
+            # payload = {"key": f"s3://{os.environ.get('AWS_RECORDING_STORAGE_BUCKET_NAME')}/{file_key}"}
             
-            response = requests.post(url, json=payload)
+            # response = requests.post(url, json=payload)
 
-            if response.status_code == 200:
-                print("Callback received successfully.")
-            else:       
-                print(f"Failed to get callback. Status code: {response.status_code}, Response: {response.text}")
+            # if response.status_code == 200:
+            #     print("Callback received successfully.")
+            # else:       
+            #     print(f"Failed to get callback. Status code: {response.status_code}, Response: {response.text}")
 
         if self.bot_in_db.state == BotStates.POST_PROCESSING:
             BotEventManager.create_event(bot=self.bot_in_db, event_type=BotEventTypes.POST_PROCESSING_COMPLETED)
