@@ -134,21 +134,12 @@ const RecorderCard = (props: RecorderCardProps) => {
       toast.info(`Uploading ${file?.name}`);
     },
     mutationFn: async (file: File) => {
-      // Convert file to base64
-      const base64Data = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.readAsDataURL(file);
-      });
-
-      const response = await axios.post('/api/aws/s3/sign', {
-        file: {
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          lastModified: file.lastModified,
-          base64Data: base64Data
-        }
+      const formData = new FormData();
+      formData.append("file", file);  
+      const response = await axios.post("/api/aws/s3/sign", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
 
       return response.data.url;
