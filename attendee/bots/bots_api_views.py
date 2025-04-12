@@ -205,8 +205,8 @@ class BotCreateView(APIView):
         )
 
         # Try to transition the state from READY to JOINING
+        logger = logging.getLogger(__name__)
         BotEventManager.create_event(bot, BotEventTypes.JOIN_REQUESTED)
-
         launch_bot(bot)
 
         return Response(BotSerializer(bot).data, status=status.HTTP_201_CREATED)
@@ -515,7 +515,6 @@ class BotLeaveView(APIView):
             BotEventManager.create_event(bot, BotEventTypes.LEAVE_REQUESTED, event_sub_type=BotEventSubTypes.LEAVE_REQUESTED_USER_REQUESTED)
 
             send_sync_command(bot)
-            print("Hellooooooooooooooooooooooooooooooooooooooooooooooooo")
             return Response(BotSerializer(bot).data, status=status.HTTP_200_OK)
         except ValidationError as e:
             logging.error(f"Error leaving meeting: {str(e)} (bot_id={object_id})")

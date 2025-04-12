@@ -4,18 +4,18 @@ from app.helper.bot_actions import join_meeting_with_retry
 from app.models.schemas import ScheduleBotRequest
 import requests
 import time
+import threading
 from app.log_config import logger
 
 router = APIRouter(prefix="/scheduler", tags=["Scheduler"])
 
-@router.post("/schedule-join-bot")
-def schedule_join_bot(request: ScheduleBotRequest):
-    meeting_url = request.meeting_url
-    bot_name = request.bot_name
-    meeting_time = request.meeting_time
-    meeting_end_time = request.meeting_end_time
 
-    def join_meeting_with_retry():
+def background_join_meeting(meeting_url, bot_name):
+    """Runs join logic in a separate thread."""
+    thread = threading.Thread(target=join_meeting_with_retry, args=(meeting_url, bot_name))
+    thread.start()
+
+def join_meeting_with_retry(meeting_url, bot_name):
         while True:
             logger.info(f"Joining meeting: {meeting_url} with bot: {bot_name}")
             response = requests.post(
@@ -57,8 +57,16 @@ def schedule_join_bot(request: ScheduleBotRequest):
             logger.info("Retrying bot join in 30 seconds...")
             time.sleep(30)
 
+@router.post("/schedule-join-bot")
+async def schedule_join_bot(request: ScheduleBotRequest):
+    meeting_url = request.meeting_url
+    bot_name = request.bot_name
+    meeting_time = request.meeting_time
+    meeting_end_time = request.meeting_end_time
+
+
     # Schedule the job at the meeting time and keep retrying until meeting ends
-    scheduler.add_job(join_meeting_with_retry, 'date', run_date=meeting_time, id=meeting_url, replace_existing=True)
+    scheduler.add_job(background_join_meeting, 'date', run_date=meeting_time, id=meeting_url, replace_existing=True, kwargs={"meeting_url": meeting_url, "bot_name": bot_name})
     return {"message": "Job scheduled", "meeting_url": meeting_url, "meeting_time": meeting_time, "meeting_end_time": meeting_end_time}
 
 
