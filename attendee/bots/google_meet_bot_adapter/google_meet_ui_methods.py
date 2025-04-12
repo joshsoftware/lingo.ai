@@ -130,8 +130,10 @@ class GoogleMeetUIMethods:
 
     # returns nothing if succeeded, raises an exception if failed
     def attempt_to_join_meeting(self):
+        logger.info("Reached code till here.......................")
         self.driver.get(self.meeting_url)
 
+        logger.info("Here as well")
         self.driver.execute_cdp_cmd(
             "Browser.grantPermissions",
             {

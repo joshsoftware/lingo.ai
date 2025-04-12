@@ -9,4 +9,4 @@ class GoogleMeetBotAdapter(WebBotAdapter, GoogleMeetUIMethods):
         return "google_meet_bot_adapter/google_meet_chromedriver_payload.js"
 
     def get_websocket_port(self):
-        return 8765
+        return 8700
