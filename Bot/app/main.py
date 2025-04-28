@@ -1,8 +1,16 @@
 from fastapi import FastAPI
 from app.api import auth, meetings, scheduler
 from app.core.scheduler import scheduler as apscheduler
+from starlette.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all HTTP methods
+    allow_headers=["*"],  # Allows all headers
+)
 
 @app.on_event("startup")
 def startup_event():
