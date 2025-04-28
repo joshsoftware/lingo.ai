@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
 import { BotIcon } from "lucide-react";
@@ -11,13 +11,19 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Button, buttonVariants } from "./ui/button";
 import { Modal } from "./ui/modal";
+import { handleSignOut, isSignedIn } from "@/actions/auth";
 
-const Header = () => {
+type HeaderProps = {
+  isSignedIn: boolean;
+};
+
+const Header = ({ isSignedIn }: HeaderProps) => {
   // TODO: this flag will come from backend
   const isBotAdded = false;
 
   const pathName = usePathname();
   const [isModalOpen, setIsModalOpen] = useState(false);
+
   const router = useRouter();
 
   const {
@@ -28,7 +34,7 @@ const Header = () => {
     queryKey: ["google-auth"],
     queryFn: async () => {
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BOT_URL}/google/auth`
+        `${process.env.NEXT_PUBLIC_BOT_URL}/auth/google`
       );
       return response.data;
     },
@@ -53,13 +59,8 @@ const Header = () => {
     }
   };
 
-  const handleLogout = () => {
-    debugger;
-    document.cookie.split(";").forEach((cookie) => {
-      const name = cookie.split("=")[0].trim();
-      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-    });
-    router.push("/");
+  const handleLogout = async () => {
+    await handleSignOut();
   };
 
   return (
@@ -84,7 +85,7 @@ const Header = () => {
             />
           </div>
           <div className="flex gap-2 min-w-fit justify-end">
-            {pathName !== "/" && pathName !== "/new" && (
+            {pathName !== "/" && pathName !== "/new" && isSignedIn && (
               <Link
                 href={"/new"}
                 className={cn(
@@ -114,32 +115,36 @@ const Header = () => {
                 View Records
               </Link>
             )}
-            <Button
-              className={cn(
-                buttonVariants({
-                  className:
-                    "!bg-[#668D7E] !hover:bg-[#668D7E] text-white text-xs px-3",
-                  size: "xs",
-                }),
-                tertiaryFont.className
-              )}
-              onClick={toggleModal}
-            >
-              <BotIcon />
-            </Button>
-            <Button
-              className={cn(
-                buttonVariants({
-                  className:
-                    "!bg-[#ff0000] !hover:bg-[#668D7E] text-white text-xs px-3",
-                  size: "xs",
-                }),
-                tertiaryFont.className
-              )}
-              onClick={handleLogout}
-            >
-              Logout
-            </Button>
+            {isSignedIn && (
+              <Button
+                className={cn(
+                  buttonVariants({
+                    className:
+                      "!bg-[#668D7E] !hover:bg-[#668D7E] text-white text-xs px-3",
+                    size: "xs",
+                  }),
+                  tertiaryFont.className
+                )}
+                onClick={toggleModal}
+              >
+                <BotIcon />
+              </Button>
+            )}
+            {isSignedIn && (
+              <Button
+                className={cn(
+                  buttonVariants({
+                    className:
+                      "!bg-[#ff0000] !hover:bg-[#668D7E] text-white text-xs px-3",
+                    size: "xs",
+                  }),
+                  tertiaryFont.className
+                )}
+                onClick={handleLogout}
+              >
+                Logout
+              </Button>
+            )}
           </div>
         </div>
       </header>
