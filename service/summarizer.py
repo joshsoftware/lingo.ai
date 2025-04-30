@@ -4,6 +4,7 @@ from langchain.schema.runnable.base import RunnableSequence
 from template_config import get_summarization_template
 import logging
 import ollama
+from config import ollama_host, ollama_model_name
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -22,17 +23,17 @@ llm_chain = RunnableSequence(prompt_template, model)
 
 def summarize_using_openai(text):
     """
-    Function to summarize the input conversation text using OpenAI.
+    Function to summarize the input conversation text using OpenAI.`
     :param text: The conversation text to be summarized.
     :return: Summarized text.
     """
     if not text or len(text.strip()) == 0:
         return "The conversation text is empty. Please provide valid input."
-    
+
     logger.info("summary started")
     try:
         # Run the chain with the conversation text
-        
+
         summary = llm_chain.invoke({"conversation_text": text})
         return summary.content
     except Exception as e:
@@ -41,6 +42,6 @@ def summarize_using_openai(text):
 
 #Using Ollama and llama3.2 model, summarize the English translation
 def summarize_using_ollama(text):
-    response = ollama.generate(model= "llama3.2", prompt = text+"\n \n""Provide highlights above conversation in Markdown bullet points, ready for direct inclusion in a file, with no pretext, and formatted as a multiline string.")
+    response = ollama.Client(host=ollama_host).generate(model=ollama_model_name, prompt = text+"\n \n""Provide highlights above conversation in Markdown bullet points, ready for direct inclusion in a file, with no pretext, and formatted as a multiline string.")
     summary = response["response"]
-    return summary    
+    return summary
