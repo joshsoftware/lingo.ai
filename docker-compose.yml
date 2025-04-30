@@ -1,0 +1,56 @@
+services:
+  nextjs:
+    container_name: app
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://lingo:password@postgres:5432/lingo_dev"
+      NEXT_PUBLIC_MICROSERVICE_URL: "http://fastapi:8000/v2"
+    depends_on:
+      - fastapi
+      - postgres
+    volumes:
+      - ./app:/lingo/app
+      - /lingo/app/node_modules
+
+  fastapi:
+    container_name: service
+    build:
+      context: ./service
+      dockerfile: Dockerfile
+    depends_on:
+      - ollama
+    ports:
+      - "8000:8000"
+    environment:
+      OLLAMA_HOST: "http://ollama:11434"
+    volumes:
+      - ./service:/lingo/service
+  postgres:
+    container_name: lingo-db
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: lingo
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: lingo_dev
+    ports:
+     - "5432:5432"
+    volumes:
+    - postgres_data:/var/lib/postgresql/data
+
+  ollama:
+    container_name: ollama
+    image: ollama/ollama:latest
+    restart: always
+    ports:
+      - "11345:11345"
+    volumes:
+      - ollama_data:/root/.ollama
+
+volumes:
+  postgres_data:
+  ollama_data:

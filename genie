@@ -1,0 +1,77 @@
+#!/bin/bash
+# genie - A command wrapper to run development scripts.
+#
+# Usage:
+#   genie <command> [options]
+#
+# Available Commands:
+#   setup          Build Docker images for all services.
+#                  This command stops any running containers, then builds images using "docker-compose build".
+#
+#   logs           Stream live logs for one or more containers.
+#                  To view logs for specific containers, use: genie logs <container_name> [container_name ...].
+#
+#   stop           Stop specified Docker containers.
+#                  If no container names are provided, it stops all containers defined in docker-compose.
+#
+#   start          Start specified Docker containers.
+#                  If no container names are provided, it starts all containers using "docker-compose up -d".
+#
+#   check          Display a dynamic status of containers (container name, status, and port mappings).
+#
+#
+#   help           Display this help message.
+#
+# Examples:
+#    genie setup             # Build images for all services.
+#    genie start service     # Start only the "service" container.
+#    genie logs app service  # Stream logs for "app" and "service" containers.
+#    genie check             # Show dynamic status of all containers.
+#
+
+COMMAND=$1
+shift
+
+case "$COMMAND" in
+    setup)
+        ./ops/setup.sh "$@"
+        ;;
+    logs)
+        ./ops/logs.sh "$@"
+        ;;
+    stop)
+        ./ops/stop.sh "$@"
+        ;;
+    start)
+        ./ops/start.sh "$@"
+        ;;
+    check)
+        ./ops/status.sh "$@"
+        ;;
+    help|*)
+        echo "Usage: genie <command> [options]"
+        echo ""
+        echo "Available Commands:"
+        echo "  setup          Build Docker images for all services."
+        echo "                 - Stops running containers and builds images using docker-compose build."
+        echo ""
+        echo "  logs           Stream live logs for one or more containers."
+        echo "                 - Example: 'genie logs app service' streams logs for 'app' and 'service'."
+        echo ""
+        echo "  stop           Stop specified Docker containers."
+        echo "                 - If no container names are provided, stops all containers defined in docker-compose."
+        echo ""
+        echo "  start          Start specified Docker containers."
+        echo "                 - If no container names are provided, starts all containers using docker-compose up -d."
+        echo ""
+        echo "  check          Display a dynamic status of containers (container name, status, and port mappings)."
+        echo ""
+        echo "  help           Display this help message."
+        echo ""
+        echo "Examples:"
+        echo "    genie setup"
+        echo "    genie start service"
+        echo "    genie logs app service"
+        echo "    genie check"
+        ;;
+esac
