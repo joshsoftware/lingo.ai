@@ -4,29 +4,28 @@ services:
     build:
       context: ./app
       dockerfile: Dockerfile
+    env_file:
+      - ./app/.env
     ports:
       - "3000:3000"
-    environment:
-      DATABASE_URL: "postgresql://lingo:password@postgres:5432/lingo_dev"
-      NEXT_PUBLIC_MICROSERVICE_URL: "http://fastapi:8000/v2"
+
     depends_on:
       - fastapi
       - postgres
     volumes:
       - ./app:/lingo/app
-      - /lingo/app/node_modules
 
   fastapi:
     container_name: service
     build:
       context: ./service
       dockerfile: Dockerfile
+    env_file:
+      - ./service/.env
     depends_on:
       - ollama
     ports:
       - "8000:8000"
-    environment:
-      OLLAMA_HOST: "http://ollama:11434"
     volumes:
       - ./service:/lingo/service
   postgres:
@@ -34,22 +33,34 @@ services:
     image: postgres:16
     restart: always
     environment:
-      POSTGRES_USER: lingo
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: lingo_dev
+      POSTGRES_USER_FILE:  /run/secrets/db_user
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      POSTGRES_DB_FILE: /run/secrets/db_name
     ports:
      - "5432:5432"
     volumes:
     - postgres_data:/var/lib/postgresql/data
+    secrets:
+      - db_user
+      - db_name
+      - db_password
 
   ollama:
     container_name: ollama
-    image: ollama/ollama:latest
+    image: ollama/ollama:0.6.6
     restart: always
     ports:
-      - "11345:11345"
+      - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
+
+secrets:
+  db_user:
+    file: ./secrets/pg/db_user.txt
+  db_name:
+    file: ./secrets/pg/db_name.txt
+  db_password:
+    file: ./secrets/pg/db_password.txt
 
 volumes:
   postgres_data:
