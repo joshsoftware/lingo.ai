@@ -32,13 +32,17 @@ LINGO_API_URL = "https://lingo.ai.joshsoftware.com"
 class LingoRequest(BaseModel):
     key: str
 
+class ScheduleMeeting(BaseModel):
+    refresh_token: str
+    bot_name: str
+
 
 @router.get("/")
-def get_meetings(token: str = Depends(OAUTH2_SCHEME), refresh_token: str = Body(..., embed=True)):
+def get_meetings(body: ScheduleMeeting, token: str = Depends(OAUTH2_SCHEME)):
     logger.info("Received request to fetch and schedule meetings")
     creds = Credentials(
         token=token,
-        refresh_token=refresh_token,
+        refresh_token=body.refresh_token,
         token_uri=token_uri,
         client_id=client_id,
         client_secret=client_secret
@@ -86,7 +90,7 @@ def get_meetings(token: str = Depends(OAUTH2_SCHEME), refresh_token: str = Body(
                         headers={"Content-Type": "application/json"},
                         json={
                             "meeting_url": meeting_url,
-                            "bot_name": "My Bot",
+                            "bot_name": body.bot_name,
                             "meeting_time": meeting_time,
                             "meeting_end_time": meeting_end_time
                         }
