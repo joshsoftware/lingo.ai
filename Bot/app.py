@@ -25,6 +25,7 @@ from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.security import OAuth2AuthorizationCodeBearer
 from google.auth.transport.requests import Request as GoogleRequest
 from google.oauth2.credentials import Credentials
+from starlette.middleware.cors import CORSMiddleware
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 import datetime
@@ -81,6 +82,14 @@ class ScheduleBotRequest(BaseModel):
     meeting_end_time: str
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all HTTP methods
+    allow_headers=["*"],  # Allows all headers
+)
+
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 CLIENT_SECRETS_FILE = 'credentials.json'
 REDIRECT_URI = "http://localhost:8000/auth/google/callback"
