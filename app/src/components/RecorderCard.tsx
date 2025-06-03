@@ -15,7 +15,7 @@ import { useDropzone } from "react-dropzone";
 import { useRef, useState, useEffect } from "react";
 import Image from "next/image";
 import { useMutation } from "@tanstack/react-query";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { toast } from "sonner";
 import { TranscribeDocumentRequest } from "@/Validators/document";
 import { TranscriptionResponse } from "@/types/TranscriptionResponse";
@@ -87,68 +87,60 @@ const RecorderCard = (props: RecorderCardProps) => {
     noDrag: true,
   });
 
-  const { mutate: sendTranscribeRequest, isPending: isTranscribing } = useMutation({
-    mutationKey: ["transcribe"],
-    onMutate: () => {
-      setStatus(`Transcribing ${file?.name}`);
-      toast.info(`Transcribing ${file?.name}`);
-    },
-    mutationFn: async (payload: TranscribeDocumentRequest) => {
-      const response = await axios.post("/api/transcribe", payload);
+  const { mutate: sendTranscribeRequest, isPending: isTranscribing } =
+    useMutation({
+      mutationKey: ["transcribe"],
+      onMutate: () => {
+        setStatus(`Transcribing ${file?.name}`);
+        toast.info(`Transcribing ${file?.name}`);
+      },
+      mutationFn: async (payload: TranscribeDocumentRequest) => {
+        const response = await axios.post("/api/transcribe", payload);
 
-      return response.data as TranscriptionResponse;
-    },
-    onSuccess: (res, req_data) => {
-      setStatus(`Transcription complete`);
-      toast.success(`Transcription complete for ${file?.name}`);
+        return response.data as TranscriptionResponse;
+      },
+      onSuccess: (res, req_data) => {
+        setStatus(`Transcription complete`);
+        toast.success(`Transcription complete for ${file?.name}`);
 
-      saveTranscribe({
-        documentUrl: req_data.documentUrl,
-        userID: userId,
-        documentName: req_data.documentName,
-        summary: res.summary,
-        translation: res.translation,
-        segments: res.segments,
-      });
-    },
-    onError: (error) => {
-      // reset all
-      setFile(null);
-      setAudioURL("");
-      setAudioBlob(null);
-      setRecordingTime(0);
+        saveTranscribe({
+          documentUrl: req_data.documentUrl,
+          userID: userId,
+          documentName: req_data.documentName,
+          summary: res.summary,
+          translation: res.translation,
+          segments: res.segments,
+        });
+      },
+      onError: (error) => {
+        // reset all
+        setFile(null);
+        setAudioURL("");
+        setAudioBlob(null);
+        setRecordingTime(0);
 
-      return toast.error(
-        `Failed to transcribe ${file?.name}, please try again in some time`,
-        {
-          description: error.message,
-        },
-      );
-    },
-  });
+        return toast.error(
+          `Failed to transcribe ${file?.name}, please try again in some time`,
+          {
+            description: error.message,
+          }
+        );
+      },
+    });
 
   const { mutate: uploadToS3 } = useMutation({
-    mutationKey: ['uploadToS3'],
+    mutationKey: ["uploadToS3"],
     onMutate: () => {
       setStatus(`Uploading ${file?.name}`);
       toast.info(`Uploading ${file?.name}`);
     },
     mutationFn: async (file: File) => {
-      // Convert file to base64
-      const base64Data = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.readAsDataURL(file);
-      });
-
-      const response = await axios.post('/api/aws/s3/sign', {
-        file: {
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          lastModified: file.lastModified,
-          base64Data: base64Data
-        }
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await axios.post("/api/aws/s3/sign", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
 
       return response.data.url;
@@ -161,6 +153,10 @@ const RecorderCard = (props: RecorderCardProps) => {
       });
     },
     onError: (error) => {
+      if (error instanceof AxiosError) {
+        toast.error(error?.response?.data?.error);
+      }
+
       toast.error(`Failed to upload ${file?.name}`, {
         description: error.message,
       });
@@ -179,12 +175,10 @@ const RecorderCard = (props: RecorderCardProps) => {
         toast.info(`Saving transcription for ${file?.name}`);
       },
       mutationFn: async (data: TranscriptionsPayload) => {
-
-        if(recordingTime > 0) {
+        if (recordingTime > 0) {
           // recorded
           data.audioDuration = recordingTime;
-        }
-        else{
+        } else {
           // uploaded
           const audio = new Audio(data.documentUrl);
           await new Promise<void>((resolve) => {
@@ -213,10 +207,10 @@ const RecorderCard = (props: RecorderCardProps) => {
           "Failed to save transcription, please try again in some time",
           {
             description: error.message,
-          },
+          }
         );
       },
-    },
+    }
   );
 
   const handleToggleAudioPlayback = () => {
@@ -356,7 +350,8 @@ const RecorderCard = (props: RecorderCardProps) => {
                   ) : (
                     <>
                       <p>
-                        Enable mic access, record yourself, or upload an audio or video file
+                        Enable mic access, record yourself, or upload an audio
+                        or video file
                       </p>
                       {/* leaving this comment if we need to enable max file size later on */}
                       {/* <p className="text-gray-400 text-sm">
@@ -396,9 +391,7 @@ const RecorderCard = (props: RecorderCardProps) => {
               ) : (
                 <Fragment>
                   {!isRecording && (
-                    <Button
-                      className="flex gap-2 bg-white border-2 border-[#668D7E] hover:bg-white hover:border-2 hover:border-[#668D7E] text-[#668D7E]"
-                    >
+                    <Button className="flex gap-2 bg-white border-2 border-[#668D7E] hover:bg-white hover:border-2 hover:border-[#668D7E] text-[#668D7E]">
                       <UploadIcon className="w-4 h-4" />
                       Upload File
                     </Button>
