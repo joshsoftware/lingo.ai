@@ -46,9 +46,10 @@ async def make_request(session, data):
             API_URL, headers=headers, json=body, timeout=10
         ) as response:
             status = response.status
-            print(f"[INFO] Token: {data['access_token'][:10]}... -> Status: {status}")
+            #  text = await response.text()
+            print(f"[INFO] Token: {data['bot_name']}: -> Status: {status}")
     except Exception as e:
-        print(f"[ERROR] Token {data['access_token'][:10]}... failed: {e}")
+        print(f"[ERROR] Token {data['bot_name']}: failed: {e}")
 
 
 # Main async workflow
