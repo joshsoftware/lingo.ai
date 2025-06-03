@@ -33,23 +33,7 @@ export const userTable = pgTable("user", {
   name: text("name"),
   contactNumber: text("contactNumber"),
   role: text("role"),
-  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
-});
-
-// New bot table with tokens and user reference
-export const botTable = pgTable("bot", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => userTable.id),
-  botName: text("botName"),
-  botEmail: text("botEmail"),
-  botHd: text("botHd"),
-  botPicture: text("botPicture"),
-  accessToken: text("accessToken"),
-  refreshToken: text("refreshToken"),
-  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
-  updatedAt: timestamp("updatedAt", { mode: "date" }).defaultNow(),
+  createdAt: timestamp("createdAt",{mode:"date"}).defaultNow()
 });
 
 export const sessionTable = pgTable("session", {
@@ -61,7 +45,7 @@ export const sessionTable = pgTable("session", {
     withTimezone: true,
     mode: "date"
   }).notNull(),
-  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
+  createdAt: timestamp("createdAt",{mode:"date"}).defaultNow()
 });
 
 export type TranscriptionsPayload = typeof transcriptions.$inferInsert;

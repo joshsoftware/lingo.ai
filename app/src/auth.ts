@@ -50,19 +50,6 @@ export const validateRequest = cache(
 	}
 );
 
-export async function signOut(): Promise<void> {
-	const session = await validateRequest()
-
-	if(!session.session){
-		return
-	}
-
-	await lucia.invalidateSession(session.session.id)
-
-	const sessionCookie = lucia.createBlankSessionCookie();
-	(await cookies()).set(sessionCookie.name, sessionCookie.value, sessionCookie.attributes);
-}
-
 declare module "lucia" {
 	interface Register {
 		Lucia: typeof lucia;
