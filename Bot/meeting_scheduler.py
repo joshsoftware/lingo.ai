@@ -37,7 +37,7 @@ async def fetch_data():
 # Make one request
 async def make_request(session, data):
     headers = {
-        "Authorization": f"Bearer {data["access_token"]}",
+        "Authorization": f"Bearer {data['access_token']}",
         "Content-Type": "application/json",
     }
     body = {"refresh_token": data["refresh_token"], "bot_name": data["bot_name"]}
