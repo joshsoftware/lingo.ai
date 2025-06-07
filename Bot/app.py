@@ -215,15 +215,16 @@ def schedule_join_bot(request: ScheduleBotRequest):
     meeting_end_time = request.meeting_end_time
 
     def join_meeting_with_retry():
+        attendee_api_key = os.getenv("ATTENDEE_API_KEY")
+        headers={
+            "Authorization": f"Token {attendee_api_key}",
+            "Content-Type": "application/json"
+        }
         while True:
-            
             print(f"Joining meeting: {meeting_url} with bot: {bot_name}")
             response = requests.post(
                 "http://localhost:8000/api/v1/bots",
-                headers={
-                    "Authorization": "Token r9HdnelHbYxvOVsTyZpjNvDog68OI6Pt",
-                    "Content-Type": "application/json"
-                },
+                headers=headers,
                 json={"meeting_url": meeting_url, "bot_name": bot_name}
             )
             print(f"Join bot response: {response.status_code}, {response.text}")
@@ -236,10 +237,7 @@ def schedule_join_bot(request: ScheduleBotRequest):
                 while True:
                     status_response = requests.get(
                         f"http://localhost:8000/api/v1/bots/{bot_id}",
-                        headers={
-                            "Authorization": "Token NdSQYHmxkqAExXlkOOgUwKCTO8oFlXMd",
-                            "Content-Type": "application/json"
-                        }
+                        headers=headers
                     )
                     status_data = status_response.json()
                     print(f"Bot status: {status_data}")
