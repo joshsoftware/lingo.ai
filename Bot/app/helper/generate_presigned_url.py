@@ -1,6 +1,7 @@
 import os
 import boto3
 from botocore.exceptions import NoCredentialsError
+from app.log_config import logger
 
 
 AWS_RECORDING_STORAGE_BUCKET_NAME = os.getenv("AWS_RECORDING_STORAGE_BUCKET_NAME")
@@ -25,7 +26,7 @@ def generate_presigned_url(file_key, expiration=3600):
         return presigned_url
 
     except NoCredentialsError:
-        print("Credentials not available.")
+        logger.error("Credentials not available.")
         return None
     
     
