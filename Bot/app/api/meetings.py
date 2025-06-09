@@ -13,15 +13,13 @@ import redis
 from uuid import uuid4
 import json
 from app.core import config
-
-with open("app/core/credentials.json") as f:
-    google_credentials = json.load(f)
+import os
 
 # Now you can access the values like this:
-client_id = google_credentials["installed"]["client_id"]
-client_secret = google_credentials["installed"]["client_secret"]
-redirect_uris = google_credentials["installed"]["redirect_uris"]
-token_uri = google_credentials["installed"]["token_uri"]
+CLIENT_ID = os.getenv("CLIENT_ID")
+CLIENT_SECRET = os.getenv("CLIENT_SECRET")
+TOKEN_URI = os.getenv("TOKEN_URI")
+REDIRECT_URIS = os.getenv("REDIRECT_URIS")
 
 redis_client = redis.Redis(host='redis', port=6379, db=0, decode_responses=True)
 
@@ -43,9 +41,9 @@ def get_meetings(body: ScheduleMeeting, token: str = Depends(OAUTH2_SCHEME)):
     creds = Credentials(
         token=token,
         refresh_token=body.refresh_token,
-        token_uri=token_uri,
-        client_id=client_id,
-        client_secret=client_secret
+        token_uri=TOKEN_URI,
+        client_id=CLIENT_ID,
+        client_secret=CLIENT_SECRET
     )
 
     logger.info(creds)
@@ -157,9 +155,9 @@ def watch_calendar(token: str = Depends(OAUTH2_SCHEME), refresh_token: str = Bod
     creds = Credentials(
     token=token,
     refresh_token=refresh_token,
-    token_uri=token_uri,
-    client_id=client_id,
-    client_secret=client_secret
+    token_uri=TOKEN_URI,
+    client_id=CLIENT_ID,
+    client_secret=CLIENT_SECRET
 )
     service = build('calendar', 'v3', credentials=creds)
     # Unique channel ID for this watch session
