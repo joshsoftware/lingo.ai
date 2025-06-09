@@ -1,11 +1,5 @@
 "use client";
 
-import { primaryFont } from "@/fonts";
-import { cn } from "@/lib/utils";
-import Image from "next/image";
-import { Button, buttonVariants } from "./ui/button";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 import Navigation from "./Navigation";
 import Hero from "./Hero";
 import Features from "./Features";
@@ -16,7 +10,7 @@ import Footer from "./Footer";
 const Landing = () => {
   return (
     // <div className="flex flex-col md:flex-row w-full h-full justify-between gap-4 pt-16">
-    <div className="min-h-screen bg-background w-full flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navigation />
       <Hero />
       <Features />
