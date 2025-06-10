@@ -31,6 +31,7 @@ from googleapiclient.discovery import build
 import datetime
 import os
 import time
+from app.log_config import logger
 
 # app = FastAPI()
 # SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
@@ -215,46 +216,44 @@ def schedule_join_bot(request: ScheduleBotRequest):
     meeting_end_time = request.meeting_end_time
 
     def join_meeting_with_retry():
+        attendee_api_key = os.getenv("ATTENDEE_API_KEY")
+        headers={
+            "Authorization": f"Token {attendee_api_key}",
+            "Content-Type": "application/json"
+        }
         while True:
-            
-            print(f"Joining meeting: {meeting_url} with bot: {bot_name}")
+            logger.info(f"Joining meeting: {meeting_url} with bot: {bot_name}")
             response = requests.post(
                 "http://localhost:8000/api/v1/bots",
-                headers={
-                    "Authorization": "Token r9HdnelHbYxvOVsTyZpjNvDog68OI6Pt",
-                    "Content-Type": "application/json"
-                },
+                headers=headers,
                 json={"meeting_url": meeting_url, "bot_name": bot_name}
             )
-            print(f"Join bot response: {response.status_code}, {response.text}")
+            logger.info(f"Join bot response: {response.status_code}, {response.text}")
 
             if response.status_code == 201:
                 bot_id = response.json().get("id")
-                print(f"Bot created with ID: {bot_id}")
+                logger.info(f"Bot created with ID: {bot_id}")
 
                 # Check bot status until success or meeting ends
                 while True:
                     status_response = requests.get(
                         f"http://localhost:8000/api/v1/bots/{bot_id}",
-                        headers={
-                            "Authorization": "Token NdSQYHmxkqAExXlkOOgUwKCTO8oFlXMd",
-                            "Content-Type": "application/json"
-                        }
+                        headers=headers
                     )
                     status_data = status_response.json()
-                    print(f"Bot status: {status_data}")
+                    logger.info(f"Bot status: {status_data}")
 
                     if status_data.get("state") in ["joined_recording", "joined"]:
-                        print("Bot joined successfully")
+                        logger.info("Bot joined successfully")
                         return
                     elif status_data.get("state") == "fatal_error":
-                        print("Bot failed to join. Retrying...")
+                        logger.error("Bot failed to join. Retrying...")
                         break
 
-                    print("Retrying bot status check in 30 seconds...")
+                    logger.info("Retrying bot status check in 30 seconds...")
                     time.sleep(30)
 
-            print("Retrying bot join in 30 seconds...")
+            logger.info("Retrying bot join in 30 seconds...")
             time.sleep(30)
 
 

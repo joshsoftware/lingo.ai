@@ -3,6 +3,9 @@
 import asyncio
 import asyncpg
 import aiohttp
+import logging
+from logging.handlers import RotatingFileHandler
+import os
 
 # --- Configuration ---
 PG_USER = "postgres"
@@ -14,6 +17,18 @@ API_URL = "http://localhost:8001/meetings/"
 SQL_QUERY = 'SELECT "accessToken", "refreshToken", "botName" FROM bot;'
 PG_CONN_STRING = f"postgresql://{PG_USER}:{PG_PASS}@{PG_HOST}:{PG_PORT}/{DB_NAME}"
 
+os.makedirs('logs', exist_ok=True)
+logger = logging.getLogger('my_app_logger')
+logger.setLevel(logging.INFO)  # Or DEBUG, WARNING, ERROR
+log_file = 'logs/app.log'
+handler = RotatingFileHandler(
+    log_file,
+    maxBytes=5 * 1024 * 1024,  # 5 MB
+    backupCount=3              # Keep last 3 log files
+)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 # Fetch access tokens asynchronously
 async def fetch_data():
@@ -30,14 +45,14 @@ async def fetch_data():
             for row in rows
         ]
     except Exception as e:
-        print(f"[ERROR] Database error: {e}")
+        logger.error(f"Database error: {e}")
         return []
 
 
 # Make one request
 async def make_request(session, data):
     headers = {
-        "Authorization": f"Bearer {data["access_token"]}",
+        "Authorization": f"Bearer {data['access_token']}",
         "Content-Type": "application/json",
     }
     body = {"refresh_token": data["refresh_token"], "bot_name": data["bot_name"]}
@@ -47,9 +62,9 @@ async def make_request(session, data):
         ) as response:
             status = response.status
             #  text = await response.text()
-            print(f"[INFO] Token: {data['bot_name']}: -> Status: {status}")
+            logger.info(f"Bot Name: {data['bot_name']} -> Status: {status}")
     except Exception as e:
-        print(f"[ERROR] Token {data['bot_name']}: failed: {e}")
+        logger.error(f"Bot Name: {data['bot_name']}: failed: {e}")
 
 
 # Main async workflow
