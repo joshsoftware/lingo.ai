@@ -81,8 +81,8 @@ const Header = ({ isSignedIn }: HeaderProps) => {
     <>
       <header
         className={cn(
-          "flex justify-between items-center bg-[#1D1D1D]",
-          primaryFont.className
+          "flex justify-between items-center bg-[#1D1D1D]"
+          // ,primaryFont.className
         )}
       >
         <div className="container flex items-center py-3">
@@ -108,7 +108,7 @@ const Header = ({ isSignedIn }: HeaderProps) => {
                       "!bg-[#668D7E] !hover:bg-[#668D7E] text-white text-xs px-3",
                     size: "xs",
                   }),
-                  tertiaryFont.className
+                  // tertiaryFont.className
                 )}
               >
                 Demo
@@ -123,7 +123,7 @@ const Header = ({ isSignedIn }: HeaderProps) => {
                       "!bg-[#668D7E] !hover:bg-[#668D7E] text-white text-xs px-3",
                     size: "xs",
                   }),
-                  tertiaryFont.className
+                  // tertiaryFont.className
                 )}
               >
                 View Records
@@ -137,7 +137,7 @@ const Header = ({ isSignedIn }: HeaderProps) => {
                       "!bg-[#668D7E] !hover:bg-[#668D7E] text-white text-xs px-3",
                     size: "xs",
                   }),
-                  tertiaryFont.className
+                  // tertiaryFont.className
                 )}
                 onClick={toggleModal}
               >
@@ -165,7 +165,7 @@ const Header = ({ isSignedIn }: HeaderProps) => {
                   variant="ghost"
                   className={cn(
                     "text-xs flex w-full items-center",
-                    tertiaryFont.className
+                    // tertiaryFont.className
                   )}
                 >
                   <LogOut className="mr-1" size={16} />
@@ -200,7 +200,7 @@ const Header = ({ isSignedIn }: HeaderProps) => {
                       "!bg-[#668D7E] !hover:bg-[#668D7E] text-white text-xs px-3",
                     size: "xs",
                   }),
-                  tertiaryFont.className
+                  // tertiaryFont.className
                 )}
                 onClick={handleAddBot}
               >
