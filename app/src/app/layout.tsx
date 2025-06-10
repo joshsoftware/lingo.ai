@@ -22,7 +22,7 @@ export default async function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head />
       <body
-        className={`h-screen flex flex-col overflow-y-auto  ${secondaryFont.className}`}
+        className={`h-screen flex flex-col overflow-y-auto `}
       >
         <CookiesProvider>
           <TanstackQueryProvider>

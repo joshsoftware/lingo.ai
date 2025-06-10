@@ -6,11 +6,14 @@ import Features from "./Features";
 import UseCases from "./UseCases";
 import CallToAction from "./CallToAction";
 import Footer from "./Footer";
+import { secondaryFont } from "@/fonts";
 
 const Landing = () => {
   return (
     // <div className="flex flex-col md:flex-row w-full h-full justify-between gap-4 pt-16">
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className={`min-h-screen bg-background flex flex-col 
+    // ${secondaryFont.className}
+    `}>
       <Navigation />
       <Hero />
       <Features />
