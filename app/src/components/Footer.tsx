@@ -7,17 +7,17 @@ const Footer = () => {
             <div className="flex items-center space-x-2 mb-4">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <span className="text-primary-foreground font-bold text-lg">
-                  T
+                  L
                 </span>
               </div>
-              <span className="text-xl font-bold text-white">TheLingo.ai</span>
+              <span className="text-xl font-bold text-white">Lingo.ai</span>
             </div>
             <p className="text-slate-400 mb-4 max-w-md">
               Empowering Indian language speakers to connect with the world
               through AI-powered transcription, translation, and summarization.
             </p>
             <div className="text-sm text-slate-500">
-              © 2024 TheLingo.ai. All rights reserved.
+              © 2024 Lingo.ai. All rights reserved.
             </div>
           </div>
 
