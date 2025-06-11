@@ -5,12 +5,48 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const slides = [
-  { label: "English", bg: "#000000", text: "#FFFFFF" },
-  { label: "Hindi", bg: "#FF5722", text: "#FFFFFF" },
-  { label: "Marathi", bg: "#263238", text: "#FFFFFF" },
-  { label: "Gujarati", bg: "#4CAF50", text: "#FFFFFF" },
-  { label: "Tamil", bg: "#3F51B5", text: "#FFFFFF" },
-  { label: "Bengali", bg: "#FFC107", text: "#000000" },
+  {
+    label: "English",
+    bgLight: "bg-gray-100",
+    textLight: "text-black",
+    bgDark: "bg-gray-800",
+    textDark: "text-white",
+  },
+  {
+    label: "Hindi",
+    bgLight: "bg-orange-200",
+    textLight: "text-black",
+    bgDark: "bg-orange-600",
+    textDark: "text-white",
+  },
+  {
+    label: "Marathi",
+    bgLight: "bg-yellow-200",
+    textLight: "text-black",
+    bgDark: "bg-yellow-700",
+    textDark: "text-white",
+  },
+  {
+    label: "Gujarati",
+    bgLight: "bg-green-200",
+    textLight: "text-black",
+    bgDark: "bg-green-700",
+    textDark: "text-white",
+  },
+  {
+    label: "Tamil",
+    bgLight: "bg-indigo-200",
+    textLight: "text-black",
+    bgDark: "bg-indigo-700",
+    textDark: "text-white",
+  },
+  {
+    label: "Bengali",
+    bgLight: "bg-amber-100",
+    textLight: "text-black",
+    bgDark: "bg-amber-600",
+    textDark: "text-black",
+  },
 ];
 
 export default function Carousel() {
@@ -45,11 +81,22 @@ export default function Carousel() {
       >
         {slides.map((item, index) => (
           <Card key={index} className="min-w-full h-32 p-0 m-0">
-            <CardContent
+            {/* <CardContent
               className="flex items-center justify-center bg-gray-100   w-full h-full p-0"
               style={{ backgroundColor: item.bg, color: item.text }}
             >
               <h2 className="text-2xl   font-bold">{item.label}</h2>
+            </CardContent> */}
+            <CardContent
+              className={cn(
+                "flex items-center justify-center w-full h-full p-0",
+                item.bgLight,
+                item.textLight,
+                `dark:${item.bgDark}`,
+                `dark:${item.textDark}`
+              )}
+            >
+              <h2 className="text-2xl font-bold">{item.label}</h2>
             </CardContent>
           </Card>
         ))}
