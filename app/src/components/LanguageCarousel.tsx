@@ -4,48 +4,86 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// const slides = [
+//   {
+//     label: "English",
+//     bgLight: "bg-gray-100",
+//     textLight: "text-black",
+//     bgDark: "bg-gray-800",
+//     textDark: "text-white",
+//   },
+//   {
+//     label: "Hindi",
+//     bgLight: "bg-orange-200",
+//     textLight: "text-black",
+//     bgDark: "bg-orange-600",
+//     textDark: "text-white",
+//   },
+//   {
+//     label: "Marathi",
+//     bgLight: "bg-yellow-200",
+//     textLight: "text-black",
+//     bgDark: "bg-yellow-700",
+//     textDark: "text-white",
+//   },
+//   {
+//     label: "Gujarati",
+//     bgLight: "bg-green-200",
+//     textLight: "text-black",
+//     bgDark: "bg-green-700",
+//     textDark: "text-white",
+//   },
+//   {
+//     label: "Tamil",
+//     bgLight: "bg-indigo-200",
+//     textLight: "text-black",
+//     bgDark: "bg-indigo-700",
+//     textDark: "text-white",
+//   },
+//   {
+//     label: "Bengali",
+//     bgLight: "bg-amber-100",
+//     textLight: "text-black",
+//     bgDark: "bg-amber-600",
+//     textDark: "text-black",
+//   },
+// ];
 const slides = [
   {
     label: "English",
-    bgLight: "bg-gray-100",
-    textLight: "text-black",
-    bgDark: "bg-gray-800",
-    textDark: "text-white",
+    gradient:
+      "bg-gradient-to-r from-sky-200 to-sky-400 dark:from-sky-600 dark:to-sky-800",
+    text: "text-black dark:text-white",
   },
   {
     label: "Hindi",
-    bgLight: "bg-orange-200",
-    textLight: "text-black",
-    bgDark: "bg-orange-600",
-    textDark: "text-white",
+    gradient:
+      "bg-gradient-to-r from-orange-200 to-orange-400 dark:from-orange-600 dark:to-orange-800",
+    text: "text-black dark:text-white",
   },
   {
     label: "Marathi",
-    bgLight: "bg-yellow-200",
-    textLight: "text-black",
-    bgDark: "bg-yellow-700",
-    textDark: "text-white",
+    gradient:
+      "bg-gradient-to-r from-yellow-200 to-yellow-400 dark:from-yellow-600 dark:to-yellow-800",
+    text: "text-black dark:text-black",
   },
   {
     label: "Gujarati",
-    bgLight: "bg-green-200",
-    textLight: "text-black",
-    bgDark: "bg-green-700",
-    textDark: "text-white",
+    gradient:
+      "bg-gradient-to-r from-green-200 to-green-400 dark:from-green-600 dark:to-green-800",
+    text: "text-black dark:text-white",
   },
   {
     label: "Tamil",
-    bgLight: "bg-indigo-200",
-    textLight: "text-black",
-    bgDark: "bg-indigo-700",
-    textDark: "text-white",
+    gradient:
+      "bg-gradient-to-r from-indigo-200 to-indigo-400 dark:from-indigo-600 dark:to-indigo-800",
+    text: "text-black dark:text-white",
   },
   {
     label: "Bengali",
-    bgLight: "bg-amber-100",
-    textLight: "text-black",
-    bgDark: "bg-amber-600",
-    textDark: "text-black",
+    gradient:
+      "bg-gradient-to-r from-amber-200 to-amber-300 dark:from-amber-500 dark:to-amber-700",
+    text: "text-black dark:text-black",
   },
 ];
 
@@ -90,10 +128,12 @@ export default function Carousel() {
             <CardContent
               className={cn(
                 "flex items-center justify-center w-full h-full p-0",
-                item.bgLight,
-                item.textLight,
-                `dark:${item.bgDark}`,
-                `dark:${item.textDark}`
+                // item.bgLight,
+                // item.textLight,
+                // `dark:${item.bgDark}`,
+                // `dark:${item.textDark}`
+                item.gradient,
+                item.text
               )}
             >
               <h2 className="text-2xl font-bold">{item.label}</h2>
