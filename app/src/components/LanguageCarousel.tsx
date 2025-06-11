@@ -5,27 +5,27 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 const images = [
   {
-    src: "https://placehold.co/800x400/000000/FFFFFF?text=English",
+    src: "https://placehold.co/500x300/000000/FFFFFF?text=English",
     label: "English",
   },
   {
-    src: "https://placehold.co/800x400/FF5722/FFFFFF?text=Hindi",
+    src: "https://placehold.co/500x300/FF5722/FFFFFF?text=Hindi",
     label: "Hindi",
   },
   {
-    src: "https://placehold.co/800x400/263238/FFFFFF?text=Marathi",
+    src: "https://placehold.co/500x300/263238/FFFFFF?text=Marathi",
     label: "Marathi",
   },
   {
-    src: "https://placehold.co/800x400/4CAF50/FFFFFF?text=Gujarati",
+    src: "https://placehold.co/500x300/4CAF50/FFFFFF?text=Gujarati",
     label: "Gujarati",
   },
   {
-    src: "https://placehold.co/800x400/3F51B5/FFFFFF?text=Tamil",
+    src: "https://placehold.co/500x300/3F51B5/FFFFFF?text=Tamil",
     label: "Tamil",
   },
   {
-    src: "https://placehold.co/800x400/FFC107/000000?text=Bengali",
+    src: "https://placehold.co/500x300/FFC107/000000?text=Bengali",
     label: "Bengali",
   },
 ];
@@ -54,7 +54,7 @@ export default function Carousel() {
   };
 
   return (
-    <div className="relative w-full max-w-2xl mx-auto overflow-hidden rounded-xl  border bg-card shadow-md">
+    <div className="relative w-full max-w-xl mx-auto h-72 overflow-hidden rounded-xl  border bg-card shadow-md">
       {/* Slide Container */}
       <div
         className="flex transition-transform duration-700 ease-in-out"
