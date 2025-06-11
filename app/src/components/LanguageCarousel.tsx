@@ -37,19 +37,19 @@ export default function Carousel() {
   };
 
   return (
-    <div className="relative w-full max-w-xl mx-auto h-52 overflow-hidden rounded-xl border bg-card shadow-md">
+    <div className="relative w-full max-w-lg mx-auto h-32 overflow-hidden rounded-xl border bg-card shadow-md">
       {/* Slide Container */}
       <div
         className="flex transition-transform duration-700 ease-in-out"
         style={{ transform: `translateX(-${current * 100}%)` }}
       >
         {slides.map((item, index) => (
-          <Card key={index} className="min-w-full h-52 p-0 m-0">
+          <Card key={index} className="min-w-full h-32 p-0 m-0">
             <CardContent
-              className="flex items-center justify-center w-full h-full p-0"
+              className="flex items-center justify-center bg-gray-100   w-full h-full p-0"
               style={{ backgroundColor: item.bg, color: item.text }}
             >
-              <h2 className="text-2xl font-semibold">{item.label}</h2>
+              <h2 className="text-2xl   font-bold">{item.label}</h2>
             </CardContent>
           </Card>
         ))}
