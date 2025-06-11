@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowDown } from "lucide-react";
 import Link from "next/link";
+import Carousel from "./LanguageCarousel";
 
 const Hero = () => {
   return (
@@ -36,7 +37,9 @@ const Hero = () => {
             <Link href={"/transcriptions"}>Watch Demo</Link>
           </Button>
         </div>
-
+        <div className="mb-6">
+          <Carousel />
+        </div>
         <div className="relative max-w-4xl mx-auto">
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-8 border border-green-200">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
