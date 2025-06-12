@@ -15,9 +15,9 @@ const page = async () => {
 
   return (
     <div className="flex flex-col w-full pt-8">
-      <div className="flex justify-start w-full mb-8">
+      {/* <div className="flex justify-start w-full mb-8">
         <NavigateBack href="/" />
-      </div>
+      </div> */}
       <div className="flex flex-1 justify-center items-start">
         <RecorderCard userId={user.id} />
       </div>

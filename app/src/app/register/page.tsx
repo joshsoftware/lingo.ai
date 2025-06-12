@@ -10,9 +10,9 @@ export const metadata: Metadata = {
 const page = async () => {
   return (
     <div className="flex flex-col w-full pt-8">
-      <div className="flex justify-start w-full mb-8">
+      {/* <div className="flex justify-start w-full mb-8">
         <NavigateBack />
-      </div>
+      </div> */}
       <div className="flex flex-1 justify-center items-center">
         {/* <RegisterForm /> */}
       </div>
