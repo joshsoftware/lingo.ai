@@ -16,13 +16,13 @@ const Landing = () => {
     // ${secondaryFont.className}
     `}
     >
-      <Navigation
+      {/* <Navigation
         navItems={[
           { label: "Features", href: "#features" },
           { label: "Use Cases", href: "#use-cases" },
           { label: "Pricing", href: "#pricing" },
         ]}
-      />
+      /> */}
       <Hero />
       <Features />
       <UseCases />

@@ -14,6 +14,7 @@ import { Modal } from "./ui/modal";
 import { handleSignOut, isSignedIn } from "@/actions/auth";
 import Cookies from "js-cookie";
 import { Popover } from "./ui/popover";
+import Navigation from "./Navigation";
 
 type HeaderProps = {
   isSignedIn: boolean;
@@ -52,7 +53,6 @@ const Header = ({ isSignedIn }: HeaderProps) => {
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
   };
-
   const handleAddBot = async () => {
     try {
       const { data } = await fetchAuthLink();
@@ -76,10 +76,9 @@ const Header = ({ isSignedIn }: HeaderProps) => {
     }
   };
 
-
   return (
     <>
-      <header
+      {/* <header
         className={cn(
           "flex justify-between items-center bg-[#1D1D1D]"
           // ,primaryFont.className
@@ -175,8 +174,17 @@ const Header = ({ isSignedIn }: HeaderProps) => {
             )}
           </div>
         </div>
-      </header>
-
+      </header> */}
+      <Navigation
+        isSignedIn={isSignedIn}
+        {...(!isSignedIn && {
+          navItems: [
+            { label: "Features", href: "#features" },
+            { label: "Use Cases", href: "#use-cases" },
+            { label: "Pricing", href: "#pricing" },
+          ],
+        })}
+      />
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -199,7 +207,7 @@ const Header = ({ isSignedIn }: HeaderProps) => {
                     className:
                       "!bg-[#668D7E] !hover:bg-[#668D7E] text-white text-xs px-3",
                     size: "xs",
-                  }),
+                  })
                   // tertiaryFont.className
                 )}
                 onClick={handleAddBot}
