@@ -159,44 +159,10 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
             <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
               Sample Records
             </Button>
-            {/* {isSignedIn && (
-            <Popover
-              isOpen={popoverOpen}
-              onClose={() => setPopoverOpen(false)}
-              trigger={
-                <div
-                  onClick={() => setPopoverOpen(!popoverOpen)}
-                  className={cn(
-                    "w-8 h-8 flex items-center justify-center rounded-full bg-white  cursor-pointer transition-all duration-200 hover:shadow-md border",
-                    popoverOpen ? "shadow-lg" : ""
-                  )}
-                >
-                  <User className="text-black" size={16} />
-                </div>
-              }
-            >
-              <Button
-                onClick={() => {
-                  //handleLogout
-                }}
-                variant="ghost"
-                className={cn(
-                  "text-xs flex w-full items-center"
-                  // tertiaryFont.className
-                )}
-              >
-                <LogOut className="mr-1" size={16} />
-                Logout
-              </Button>
-            </Popover>
-          )} */}
-            {isSignedIn && (
+
+            {isSignedIn && pathname !== "/" && (
               <DropdownMenu>
                 <DropdownMenuTrigger className="cursor-pointer" asChild>
-                  {/* <Avatar>
-                  <AvatarImage src="https://github.com/shadcn.png" />
-                  <AvatarFallback>CN</AvatarFallback>
-                </Avatar> */}
                   <div
                     onClick={() => setPopoverOpen(!popoverOpen)}
                     className={cn(
