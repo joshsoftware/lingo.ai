@@ -38,7 +38,7 @@ export type ProfileMenuItems = {
   onClick: () => void;
 };
 const Navigation = ({ isSignedIn }: NavigationProps) => {
-  const pathname = usePathname();
+  const pathname = usePathname() as string;
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBotAdded, setIsBotAdded] = useState(false);
@@ -112,7 +112,7 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
     <>
       <nav className="top-0 w-full bg-background/80 backdrop-blur-md border-b border-border z-50">
         <div className="container  mx-auto px-4 py-4 flex items-center justify-between ">
-          {pathname !== "/" && (
+          {!["/", "/new"].includes(pathname) && (
             <div className="absolute left-6">
               <NavigateBack href="/" />
             </div>
