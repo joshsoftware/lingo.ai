@@ -111,22 +111,29 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
   return (
     <>
       <nav className="top-0 w-full bg-background/80 backdrop-blur-md border-b border-border z-50">
-        <div className="container  mx-auto px-4 py-4 flex items-center justify-between ">
-          {!["/", "/new"].includes(pathname) && (
-            <div className="absolute left-6">
-              <NavigateBack href="/" />
+        <div className="mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between">
+          {/* Logo + Back Button */}
+          <div className="flex items-center justify-between w-full md:w-[25%] mb-4 md:mb-0">
+            {/* Back button on md+ screens */}
+            <div className="hidden md:inline-flex md:min-w-[50%] w-0">
+              {!["/", "/new"].includes(pathname) && <NavigateBack href="/" />}
             </div>
-          )}
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">
-                L
+
+            {/* Logo Section */}
+            <div className="flex justify-center items-center space-x-2 w-full md:w-[50%]">
+              <div className="w-8 h-8 min-w-8 min-h-8 bg-primary rounded-lg flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-lg leading-none">
+                  L
+                </span>
+              </div>
+              <span className="text-xl font-bold whitespace-nowrap">
+                Lingo.ai
               </span>
             </div>
-            <span className="text-xl font-bold">Lingo.ai</span>
           </div>
 
-          <div className="hidden md:flex items-center space-x-8">
+          {/* Nav Links */}
+          <div className="hidden md:flex items-center justify-center space-x-8 w-full md:w-[45%]">
             {navItems &&
               navItems.map((item, i) =>
                 item.type === "link" ? (
@@ -148,18 +155,22 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
                 )
               )}
           </div>
-          <div className="flex items-center space-x-4 ">
+
+          {/* Right Section */}
+          <div className="flex items-center justify-start space-x-4 w-full md:w-[30%]">
             {!isSignedIn && pathname !== "/signin" && (
-              <Link href={"/signin"}>
-                <Button variant="ghost" className="hidden md:inline-flex">
-                  Sign In
-                </Button>
-              </Link>
+              <Button
+                variant="ghost"
+                className="hidden md:inline-flex border hover:font-bold w-32"
+              >
+                <Link href={"/signin"}>Sign In</Link>
+              </Button>
             )}
-            <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-            <Link href={"/transcriptions"}>
-              Sample Records
-            </Link>
+            <Button
+              variant={"greenTheme"}
+              className={`${pathname === "/transcriptions" ? "hidden" : ""}`}
+            >
+              <Link href={"/transcriptions"}>Sample Records</Link>
             </Button>
 
             {isSignedIn && pathname !== "/" && (
@@ -183,9 +194,6 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
                       key={index}
                       onClick={onClick}
                       className="cursor-pointer"
-                      // variant={`${
-                      //   label === "Logout" ? "destructive" : "default"
-                      // }`}
                     >
                       {icon}
                       {label}
@@ -197,6 +205,7 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
           </div>
         </div>
       </nav>
+
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
