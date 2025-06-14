@@ -9,6 +9,9 @@ if (!process.env.DATABASE_URL) {
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  max: 10, // max 10 connections
+  idleTimeoutMillis: 30000, // idle connections are closed after 30s
+  connectionTimeoutMillis: 2000, // wait 2s for a connection before failing
 })
 
 export const db = drizzle(pool, { schema })
