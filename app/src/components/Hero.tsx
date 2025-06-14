@@ -3,8 +3,15 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowDown } from "lucide-react";
 import Link from "next/link";
 import Carousel from "./LanguageCarousel";
+import { Modal } from "./ui/modal";
+import { useState } from "react";
 
 const Hero = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const toggleModal = () => {
+    setIsModalOpen(!isModalOpen);
+  };
+
   return (
     <section className="flex w-full pt-24 pb-16 px-4">
       <div className="container mx-auto text-center">
@@ -33,8 +40,13 @@ const Hero = () => {
           >
             <Link href={"/signup"}>Start Free Trial</Link>
           </Button>
-          <Button size="lg" variant="outline" className="px-8 py-6 text-lg">
-            <Link href={"/transcriptions"}>Watch Demo</Link>
+          <Button
+            onClick={toggleModal}
+            size="lg"
+            variant="outline"
+            className="px-8 py-6 text-lg"
+          >
+            Watch Demo
           </Button>
         </div>
         <div className="mb-6">
@@ -65,6 +77,43 @@ const Hero = () => {
           <ArrowDown className="mx-auto h-6 w-6 text-muted-foreground" />
         </div>
       </div>
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Meeting Recorder Bot"
+      >
+        <>
+          {/* Trigger Button */}
+          <button
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+            onClick={() => setIsModalOpen(true)}
+          >
+            ▶️ Watch Demo
+          </button>
+
+          {/* Modal */}
+          {isModalOpen && (
+            <div className="fixed inset-0 bg-black bg-opacity-10 flex items-center justify-center z-50">
+              <div className="bg-white p-4 rounded-lg max-w-5xl w-full relative">
+                {/* Close Button */}
+                <button
+                  className="absolute top-2 right-2 text-gray-500"
+                  onClick={() => setIsModalOpen(false)}
+                >
+                  ✖
+                </button>
+
+                <h2 className="text-xl font-semibold mb-4">Demo Video</h2>
+
+                <video controls className="w-full rounded-md">
+                  <source src="/videos/sample.mp4" type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            </div>
+          )}
+        </>
+      </Modal>
     </section>
   );
 };
