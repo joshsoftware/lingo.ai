@@ -7,6 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { FileAudio } from "lucide-react";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "./ui/table";
 import TranscriptionRow from "./TranscriptionCard";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 
 interface TranscriptionItemProps {
   initialTranscriptionsData: userTranscriptions[];
@@ -75,11 +82,16 @@ const TranscriptionItem = (props: TranscriptionItemProps) => {
   return (
     <div>
       <div className="container mx-auto px-4 pt-4 pb-8 max-w-7xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Audio Recordings</h1>
-          <p className="text-muted-foreground">
-            Manage and play your uploaded audio recordings
-          </p>
+        <div className="overflow-hidden flex w-full max-w-xs min-h-14 ml-auto outline-none">
+          <Select onValueChange={handleFilterChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Filter transcriptions" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="true">Demo Transcriptions</SelectItem>
+              <SelectItem value="user">My Transcriptions</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         {isLoading ? (
           <div className="space-y-4">
@@ -87,46 +99,64 @@ const TranscriptionItem = (props: TranscriptionItemProps) => {
               <TranscriptionSkeleton key={idx} />
             ))}
           </div>
+        ) : filteredTranscriptions.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-gray-500 gap-6 mt-8">
+            <p className="text-2xl">No transcriptions found</p>
+            <button
+              className="mt-4 px-4 py-2 bg-[#668D7E] text-black rounded text-base"
+              onClick={() => (window.location.href = "/new")}
+            >
+              Click here to try new one
+            </button>
+          </div>
         ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileAudio className="h-5 w-5" />
-                All Recordings ({filteredTranscriptions.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12"></TableHead>
-                    <TableHead>File Name</TableHead>
-                    <TableHead>File Size</TableHead>
-                    <TableHead>Language</TableHead>
-                    <TableHead>Duration</TableHead>
-                    <TableHead>Upload Date</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredTranscriptions.map((transcription, idx) => (
-                    <TranscriptionRow
-                      key={idx}
-                      transcription={transcription}
-                      index={idx}
-                      isPlaying={currentPlayingIndex === idx}
-                      onPlayPause={() => handlePlayPause(idx)}
-                      onAudioEnd={handleAudioEnd}
-                      rowRef={
-                        idx === filteredTranscriptions.length - 1
-                          ? lastItemRef
-                          : undefined
-                      }
-                    />
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+          <>
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold mb-2">Audio Recordings</h1>
+              <p className="text-muted-foreground">
+                Manage and play your uploaded audio recordings
+              </p>
+            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileAudio className="h-5 w-5" />
+                  All Recordings ({filteredTranscriptions.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12"></TableHead>
+                      <TableHead>File Name</TableHead>
+                      <TableHead>File Size</TableHead>
+                      <TableHead>Language</TableHead>
+                      <TableHead>Duration</TableHead>
+                      <TableHead>Upload Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredTranscriptions.map((transcription, idx) => (
+                      <TranscriptionRow
+                        key={idx}
+                        transcription={transcription}
+                        index={idx}
+                        isPlaying={currentPlayingIndex === idx}
+                        onPlayPause={() => handlePlayPause(idx)}
+                        onAudioEnd={handleAudioEnd}
+                        rowRef={
+                          idx === filteredTranscriptions.length - 1
+                            ? lastItemRef
+                            : undefined
+                        }
+                      />
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </>
         )}
       </div>
       {isFetchingNextPage &&
