@@ -1,6 +1,5 @@
 import { validateRequest } from "@/auth";
 import DetailedTranscription from "@/components/DetailedTranscription";
-import NavigateBack from "@/components/NavigateBack";
 import { db } from "@/db";
 import { transcriptions } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -39,10 +38,6 @@ const page = async (props: PageProps) => {
   return (
     <div className="flex flex-col w-full h-full pt-8">
       <div className="flex justify-start w-full mb-8">
-        {/* <NavigateBack
-          href="/transcriptions"
-          subHeading={`Transcription for ${transcription[0].documentName}`}
-        /> */}
         <div className="w-full flex justify-center items-center text-2xl font-bold">
           Transcription for {transcription[0].documentName}
         </div>

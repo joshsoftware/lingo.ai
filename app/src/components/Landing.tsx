@@ -1,6 +1,4 @@
 "use client";
-
-import Navigation from "./Navigation";
 import Hero from "./Hero";
 import Features from "./Features";
 import UseCases from "./UseCases";
@@ -10,64 +8,17 @@ import { secondaryFont } from "@/fonts";
 
 const Landing = () => {
   return (
-    // <div className="flex flex-col md:flex-row w-full h-full justify-between gap-4 pt-16">
     <div
       className={`min-h-screen bg-background flex flex-col 
     // ${secondaryFont.className}
     `}
     >
-      {/* <Navigation
-        navItems={[
-          { label: "Features", href: "#features" },
-          { label: "Use Cases", href: "#use-cases" },
-          { label: "Pricing", href: "#pricing" },
-        ]}
-      /> */}
       <Hero />
       <Features />
       <UseCases />
       <CallToAction />
       <Footer />
     </div>
-    // <div className="flex flex-col md:flex-row w-full h-full justify-between gap-4 pt-16">
-    //   <div className="w-full flex flex-col gap-4 justify-center items-start">
-    //     <h1 className={cn(primaryFont.className, "text-3xl text-[#8CB369] ")}>
-    //       Welcome
-    //     </h1>
-    //     <h1 className={cn(primaryFont.className, "text-5xl")}>
-    //       Transform Speech into Action: Translate, Transcribe, and Summarize Effortlessly
-    //     </h1>
-    //     <p>
-    //       Unleash the power of seamless communication with a tool that does it all—accurate transcription, real-time translation, and intelligent summaries in one go.
-    //     </p>
-    //      <div className="w-full flex gap-3">
-    //     <Link
-    //       href={"/new"}
-    //       className={buttonVariants({
-    //         className: "!bg-[#668D7E] !hover:bg-[#668D7E] text-white",
-    //       })}
-    //     >
-    //       Try Now
-    //     </Link>
-
-    //     <Link
-    //       href={"/transcriptions"}
-    //       className={buttonVariants({
-    //         className: "!bg-[#668D7E] !hover:bg-[#668D7E] text-white",
-    //       })}
-    //     >
-    //       View Records
-    //     </Link>
-    //     </div>
-    //   </div>
-    //   <Image
-    //     src={"/landingFrame.svg"}
-    //     className="self-center"
-    //     width={500}
-    //     height={538}
-    //     alt="Josh Logo"
-    //   />
-    // </div>
   );
 };
 
