@@ -5,19 +5,7 @@ import { useTranscriptions } from "@/hooks/useTranscriptions";
 import TranscriptionSkeleton from "./TranscriptionSkeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { FileAudio } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "./ui/table";
-import { Button } from "./ui/button";
-import { Badge } from "./ui/badge";
-import Link from "next/link";
-import { format } from "date-fns";
-import { getAudioDuration } from "@/utils/recording";
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "./ui/table";
 import TranscriptionRow from "./TranscriptionCard";
 
 interface TranscriptionItemProps {
@@ -34,7 +22,6 @@ const TranscriptionItem = (props: TranscriptionItemProps) => {
     null
   );
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [audioDuration, setAudioDuration] = useState<string | null>(null);
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useTranscriptions(
@@ -85,13 +72,6 @@ const TranscriptionItem = (props: TranscriptionItemProps) => {
       (page: { transcriptions: userTranscriptions[] }) => page.transcriptions
     ) || [];
 
-  console.log(
-    "filteredTranscriptions....",
-    data?.pages,
-    data?.pages[0]?.documentName,
-    data?.pages
-  );
-  
   return (
     <div>
       <div className="container mx-auto px-4 pt-4 pb-8 max-w-7xl">
@@ -130,7 +110,7 @@ const TranscriptionItem = (props: TranscriptionItemProps) => {
                 <TableBody>
                   {filteredTranscriptions.map((transcription, idx) => (
                     <TranscriptionRow
-                      key={transcription?.id}
+                      key={idx}
                       transcription={transcription}
                       index={idx}
                       isPlaying={currentPlayingIndex === idx}
