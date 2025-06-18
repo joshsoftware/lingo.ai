@@ -2,11 +2,10 @@
 
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { redirect, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import NavigateBack from "./NavigateBack";
 import { cn } from "@/lib/utils";
-// import { Popover } from "@/components/ui/popover";
 import { LogOut, User, BotMessageSquare } from "lucide-react";
 import {
   DropdownMenu,
@@ -26,7 +25,7 @@ import { Modal } from "./ui/modal";
 type NavItem = {
   label: string;
   href: string;
-  type?: "link" | "anchor"; // default to "anchor"
+  type?: "link" | "anchor";
 };
 
 type NavigationProps = {
@@ -229,7 +228,6 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
                       "!bg-[#668D7E] !hover:bg-[#668D7E] text-white text-xs px-3",
                     size: "xs",
                   })
-                  // tertiaryFont.className
                 )}
                 onClick={() => {
                   handleAddBot();
