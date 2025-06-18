@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FileAudio, Pause, Play } from "lucide-react";
 import Link from "next/link";
-import { getAudioDuration } from "@/utils/recording";
+import { getAudioDuration, getFileSize } from "@/utils/recording";
 import { userTranscriptions } from "@/types/transcriptions";
 
 interface TranscriptionRowProps {
@@ -27,6 +27,7 @@ const TranscriptionRow = ({
   rowRef,
 }: TranscriptionRowProps) => {
   const [audioDuration, setAudioDuration] = useState<string | null>(null);
+  const [fileSize, setFileSize] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -37,7 +38,15 @@ const TranscriptionRow = ({
       }
     };
 
+    const fetchFileSize = async () => {
+      if (transcription?.documentUrl) {
+        const size = await getFileSize(transcription.documentUrl);
+        setFileSize(size);
+      }
+    };
+
     fetchAudioDuration();
+    fetchFileSize();
 
     if (transcription?.documentUrl) {
       const audio = new Audio(transcription.documentUrl);
@@ -91,12 +100,13 @@ const TranscriptionRow = ({
       </td>
       <td className="text-muted-foreground ">
         <div className="ml-4">
-          {transcription?.fileSize ? transcription?.fileSize : "N/A"}
+          {fileSize ? fileSize : "Loading..."}
         </div>
       </td>
       <td>
         <Badge className="ml-4" variant="secondary">
-          {transcription?.language ? transcription?.language : "N/A"}
+          {/* TODO: Add language from microservice */}
+          {"N/A"}
         </Badge>
       </td>
       <td className="font-mono text-sm">

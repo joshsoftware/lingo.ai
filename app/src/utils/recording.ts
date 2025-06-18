@@ -15,3 +15,20 @@ export const getAudioDuration = async (audioUrl: string): Promise<string> => {
     return "Invalid duration";
   }
 };
+
+export const getFileSize = async (fileUrl: string): Promise<string> => {
+  try {
+    const response = await fetch(fileUrl);
+    if (!response.ok) {
+      console.error(`Error fetching file: ${response.status} ${response.statusText}`);
+      return "Invalid size";
+    }
+    const blob = await response.blob();
+    const sizeInBytes = blob.size;
+    const sizeInMB = sizeInBytes / (1024 * 1024);
+    return `${sizeInMB.toFixed(2)} MB`;
+  } catch (error) {
+    console.error("Error fetching file size:", error);
+    return "Invalid size";
+  }
+};
