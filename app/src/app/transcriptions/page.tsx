@@ -32,13 +32,11 @@ const page = async () => {
     .limit(PAGINATION_LIMIT);
 
   return (
-    <div className="flex flex-col w-full h-full pt-8">
-      <div className="flex flex-col items-center overflow-y-auto h-fit w-full">
-        <TranscriptionItem
-          initialTranscriptionsData={userTranscriptions}
-          userId={user?.id || null}
-        />
-      </div>
+    <div>
+      <TranscriptionItem
+        initialTranscriptionsData={userTranscriptions}
+        userId={user?.id || null}
+      />
     </div>
   );
 };
