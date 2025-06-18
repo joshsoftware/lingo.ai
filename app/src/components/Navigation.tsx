@@ -110,16 +110,16 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
   return (
     <>
       <nav className="top-0 w-full bg-background/80 backdrop-blur-md border-b border-border z-50">
-        <div className="mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between">
+        <div className="mx-auto px-4 py-4 flex flex-col  md:flex-row items-center justify-around">
           {/* Logo + Back Button */}
-          <div className="flex items-center justify-between w-full md:w-[25%] mb-4 md:mb-0">
+          <div className="flex items-center justify-between w-full  mb-4 md:mb-0">
             {/* Back button on md+ screens */}
-            <div className="hidden md:inline-flex md:min-w-[50%] w-0">
+            <div className="inline-flex w-[11%] ">
               {!["/", "/new"].includes(pathname) && <NavigateBack href="/" />}
             </div>
 
             {/* Logo Section */}
-            <div className="flex justify-center items-center space-x-2 w-full md:w-[50%]">
+            <div className="flex justify-start items-center space-x-2 w-full ">
               <div className="w-8 h-8 min-w-8 min-h-8 bg-primary rounded-lg flex items-center justify-center">
                 <span className="text-primary-foreground font-bold text-lg leading-none">
                   L
@@ -132,7 +132,7 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
           </div>
 
           {/* Nav Links */}
-          <div className="hidden md:flex items-center justify-center space-x-8 w-full md:w-[45%]">
+          <div className="hidden md:flex items-center justify-center space-x-8 w-full ">
             {navItems &&
               navItems.map((item, i) =>
                 item.type === "link" ? (
@@ -156,7 +156,7 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
           </div>
 
           {/* Right Section */}
-          <div className="flex items-center justify-start space-x-4 w-full md:w-[30%]">
+          <div className="flex items-center justify-end space-x-4 w-full ">
             {!isSignedIn && pathname !== "/signin" && (
               <Button
                 variant="ghost"
