@@ -1,4 +1,3 @@
-import NavigateBack from "@/components/NavigateBack";
 import TranscriptionItem from "@/components/TranscriptionItem";
 import { PAGINATION_LIMIT } from "@/constants/pagination";
 import { db } from "@/db";
@@ -33,17 +32,12 @@ const page = async () => {
     .limit(PAGINATION_LIMIT);
 
   return (
-    <div className="flex flex-col w-full h-full pt-8">
-      {/* <div className="flex justify-start w-full mb-8">
-        <NavigateBack subHeading="Transcriptions" />
-      </div> */}
-      <div className="flex flex-col items-center overflow-y-auto h-fit w-full">
+      <div >
         <TranscriptionItem
           initialTranscriptionsData={userTranscriptions}
           userId={user?.id || null}
         />
       </div>
-    </div>
   );
 };
 
