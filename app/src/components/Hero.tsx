@@ -106,7 +106,7 @@ const Hero = () => {
                 <h2 className="text-xl font-semibold mb-4">Demo Video</h2>
 
                 <video controls className="w-full rounded-md">
-                  <source src="/videos/sample.mp4" type="video/mp4" />
+                  <source src="/videos/lingoAI.mp4" type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
               </div>
