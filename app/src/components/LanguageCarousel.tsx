@@ -1,47 +1,10 @@
+"use client";
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const slides = [
-  {
-    label: "English",
-    gradient:
-      "bg-gradient-to-r from-sky-200 to-sky-400 dark:from-sky-600 dark:to-sky-800",
-    text: "text-black dark:text-white",
-  },
-  {
-    label: "Hindi",
-    gradient:
-      "bg-gradient-to-r from-orange-200 to-orange-400 dark:from-orange-600 dark:to-orange-800",
-    text: "text-black dark:text-white",
-  },
-  {
-    label: "Marathi",
-    gradient:
-      "bg-gradient-to-r from-yellow-200 to-yellow-400 dark:from-yellow-600 dark:to-yellow-800",
-    text: "text-black dark:text-black",
-  },
-  {
-    label: "Gujarati",
-    gradient:
-      "bg-gradient-to-r from-green-200 to-green-400 dark:from-green-600 dark:to-green-800",
-    text: "text-black dark:text-white",
-  },
-  {
-    label: "Tamil",
-    gradient:
-      "bg-gradient-to-r from-indigo-200 to-indigo-400 dark:from-indigo-600 dark:to-indigo-800",
-    text: "text-black dark:text-white",
-  },
-  {
-    label: "Bengali",
-    gradient:
-      "bg-gradient-to-r from-amber-200 to-amber-300 dark:from-amber-500 dark:to-amber-700",
-    text: "text-black dark:text-black",
-  },
-];
+import { slides } from "@/constants/homePage";
 
 export default function Carousel() {
   const [current, setCurrent] = useState(0);
