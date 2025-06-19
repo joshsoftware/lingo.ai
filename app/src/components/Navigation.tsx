@@ -156,7 +156,7 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
           </div>
 
           {/* Right Section */}
-          <div className="flex items-center justify-end space-x-4 w-full ">
+          <div className="flex items-center justify-end space-x-4 w-full mr-20 ">
             {!isSignedIn && pathname !== "/signin" && (
               <Button
                 variant="ghost"
@@ -178,11 +178,11 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
                   <div
                     onClick={() => setPopoverOpen(!popoverOpen)}
                     className={cn(
-                      "w-8 h-8 flex items-center justify-center rounded-full bg-white  cursor-pointer transition-all duration-200 hover:shadow-md border",
+                      "w-8 h-8 flex items-center justify-center border-[#668D7E] text-[#668D7E] rounded-full bg-white hover:text-white hover:bg-[#668D7E]  cursor-pointer transition-all duration-200 hover:shadow-md border",
                       popoverOpen ? "shadow-lg" : ""
                     )}
                   >
-                    <User className="text-black" size={16} />
+                    <User className=" " size={16} />
                   </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent sideOffset={10}>
@@ -192,7 +192,7 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
                     <DropdownMenuItem
                       key={index}
                       onClick={onClick}
-                      className="cursor-pointer"
+                      className="cursor-pointer hover:!text-black hover:font-bold hover:!bg-[#668D7E]/30"
                     >
                       {icon}
                       {label}
