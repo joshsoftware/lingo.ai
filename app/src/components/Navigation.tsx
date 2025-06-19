@@ -29,6 +29,7 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { Modal } from "./ui/modal";
+import ProfileInformation from "./ProfileInformation";
 
 type NavItem = {
   label: string;
@@ -255,6 +256,13 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
         </div>
       </nav>
 
+      <Modal
+        isOpen={uiState.isProfileModalOpen}
+        onClose={() => updateUIState({ isProfileModalOpen: false })}
+        title="Profile"
+      >
+        <ProfileInformation />
+      </Modal>
       <Modal
         isOpen={uiState.isModalOpen}
         onClose={() => updateUIState({ isModalOpen: false })}
