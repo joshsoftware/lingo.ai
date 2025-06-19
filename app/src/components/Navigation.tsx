@@ -11,10 +11,8 @@ import {
   User,
   BotMessageSquare,
   Languages,
-  Archive,
-  BookOpen,
-  ClipboardList,
   Files,
+  User2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -31,6 +29,7 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { Modal } from "./ui/modal";
+
 type NavItem = {
   label: string;
   href: string;
@@ -40,22 +39,38 @@ type NavItem = {
 type NavigationProps = {
   isSignedIn?: boolean;
 };
+
 export type ProfileMenuItems = {
   icon: React.ReactElement<any, any>;
   label: string;
   onClick: () => void;
 };
+export type StateType = {
+  popoverOpen: boolean;
+  isModalOpen: boolean;
+  isBotAdded: boolean;
+  isProfileModalOpen: boolean;
+};
 const Navigation = ({ isSignedIn }: NavigationProps) => {
   const pathname = usePathname() as string;
-  const [popoverOpen, setPopoverOpen] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isBotAdded, setIsBotAdded] = useState(false);
+
+  const [uiState, setUIState] = useState<StateType>({
+    popoverOpen: false,
+    isModalOpen: false,
+    isBotAdded: false,
+    isProfileModalOpen: false,
+  });
+
+  const updateUIState = (updates: Partial<typeof uiState>) =>
+    setUIState((prev) => ({ ...prev, ...updates }));
+
   useEffect(() => {
-    // Read the isBotAdded cookie when the component mounts
-    const botAdded = Cookies.get("isBotAdded") === "true"; // Cookies store the flag as a string
-    setIsBotAdded(botAdded);
+    const botAdded = Cookies.get("isBotAdded") === "true";
+    updateUIState({ isBotAdded: botAdded });
   }, []);
+
   const router = useRouter();
+
   const {
     refetch: fetchAuthLink,
     data: authData,
@@ -68,26 +83,36 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
       );
       return response.data;
     },
-    enabled: false, // disable auto-fetch
+    enabled: false,
   });
 
-  const toggleModal = () => {
-    setIsModalOpen(!isModalOpen);
+  const toggleModal = (stateKey: keyof StateType) => {
+    updateUIState({ [`${stateKey}`]: !uiState[stateKey] });
   };
+
   const handleLogout = async () => {
     try {
       await handleSignOut();
-      // redirect("/");
       router.push("/");
     } catch (error) {
       console.error("Logout failed:", error);
     }
   };
+
   const profileMenuItems: ProfileMenuItems[] = [
+    {
+      icon: <User2 className="h-[1.2rem] w-[1.2rem] mr-2" />,
+      label: "Profile",
+      onClick: () => {
+        toggleModal("isProfileModalOpen");
+      },
+    },
     {
       icon: <BotMessageSquare className="h-[1.2rem] w-[1.2rem] mr-2" />,
       label: "Lingo.ai",
-      onClick: toggleModal,
+      onClick: () => {
+        toggleModal("isModalOpen");
+      },
     },
     {
       icon: <LogOut className="h-[1.2rem] w-[1.2rem] mr-2" />,
@@ -95,6 +120,7 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
       onClick: handleLogout,
     },
   ];
+
   const navItems: NavItem[] | undefined = useMemo(() => {
     if (pathname === "/") {
       return [
@@ -105,29 +131,27 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
     }
     return undefined;
   }, [pathname]);
+
   const handleAddBot = async () => {
     try {
       const { data } = await fetchAuthLink();
       if (data?.auth_url) {
         window.location.href = data.auth_url;
-      } else {
       }
     } catch (error) {
       console.error("Add Bot Error:", error);
     }
   };
+
   return (
     <>
       <nav className="top-0 w-full bg-background/80 backdrop-blur-md border-b border-border z-50">
-        <div className="mx-auto px-4 py-4 flex flex-col  md:flex-row items-center justify-around">
-          {/* Logo + Back Button */}
-          <div className="flex items-center justify-between w-full  mb-4 md:mb-0">
-            {/* Back button on md+ screens */}
+        <div className="mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-around">
+          <div className="flex items-center justify-between w-full mb-4 md:mb-0">
             <div className="inline-flex w-[11%] ">
               {!["/", "/new"].includes(pathname) && <NavigateBack href="/" />}
             </div>
 
-            {/* Logo Section */}
             <div className="flex justify-start items-center space-x-2 w-full ">
               <div className="w-8 h-8 min-w-8 min-h-8 bg-primary rounded-lg flex items-center justify-center">
                 <span className="text-primary-foreground font-bold text-lg leading-none">
@@ -140,7 +164,6 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
             </div>
           </div>
 
-          {/* Nav Links */}
           <div className="hidden md:flex items-center justify-center space-x-8 w-full ">
             {navItems &&
               navItems.map((item, i) =>
@@ -164,7 +187,6 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
               )}
           </div>
 
-          {/* Right Section */}
           <div className="flex items-center justify-end space-x-4 w-full mr-20 ">
             {!isSignedIn && pathname !== "/signin" && (
               <Button
@@ -174,6 +196,7 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
                 <Link href={"/signin"}>Sign In</Link>
               </Button>
             )}
+
             {isSignedIn && (
               <Button
                 variant={"greenTheme"}
@@ -188,6 +211,7 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
                 </Link>
               </Button>
             )}
+
             <Button
               variant={"greenTheme"}
               className={`${pathname === "/transcriptions" ? "hidden" : ""}`}
@@ -200,13 +224,15 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
               <DropdownMenu>
                 <DropdownMenuTrigger className="cursor-pointer" asChild>
                   <div
-                    onClick={() => setPopoverOpen(!popoverOpen)}
+                    onClick={() =>
+                      updateUIState({ popoverOpen: !uiState.popoverOpen })
+                    }
                     className={cn(
-                      "w-8 h-8 flex items-center justify-center border-[#668D7E] text-[#668D7E] rounded-full bg-white hover:text-white hover:bg-[#668D7E]  cursor-pointer transition-all duration-200 hover:shadow-md border",
-                      popoverOpen ? "shadow-lg" : ""
+                      "w-8 h-8 flex items-center justify-center border-[#668D7E] text-[#668D7E] rounded-full bg-white hover:text-white hover:bg-[#668D7E] cursor-pointer transition-all duration-200 hover:shadow-md border",
+                      uiState.popoverOpen ? "shadow-lg" : ""
                     )}
                   >
-                    <User className=" " size={16} />
+                    <User size={16} />
                   </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent sideOffset={10}>
@@ -230,19 +256,20 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
       </nav>
 
       <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={uiState.isModalOpen}
+        onClose={() => updateUIState({ isModalOpen: false })}
         title="Meeting Recorder Bot"
       >
-        {isBotAdded ? (
-          <>
-            <p>Meeting Recorder Bot is already added !</p>
-          </>
+        {uiState.isBotAdded ? (
+          <p>Meeting Recorder Bot is already added!</p>
         ) : (
           <>
             <p>Do you want to add a bot for meeting Summarization?</p>
             <div className="mt-4 flex justify-end gap-2">
-              <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
+              <Button
+                variant="secondary"
+                onClick={() => updateUIState({ isModalOpen: false })}
+              >
                 Cancel
               </Button>
               <Button
@@ -253,9 +280,7 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
                     size: "xs",
                   })
                 )}
-                onClick={() => {
-                  handleAddBot();
-                }}
+                onClick={handleAddBot}
               >
                 Add Bot
               </Button>
