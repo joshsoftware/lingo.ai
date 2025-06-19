@@ -6,7 +6,16 @@ import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import NavigateBack from "./NavigateBack";
 import { cn } from "@/lib/utils";
-import { LogOut, User, BotMessageSquare } from "lucide-react";
+import {
+  LogOut,
+  User,
+  BotMessageSquare,
+  Languages,
+  Archive,
+  BookOpen,
+  ClipboardList,
+  Files,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -165,10 +174,25 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
                 <Link href={"/signin"}>Sign In</Link>
               </Button>
             )}
+            {isSignedIn && (
+              <Button
+                variant={"greenTheme"}
+                className={`${pathname === "/new" ? "hidden" : ""}`}
+              >
+                <Link
+                  href={"/new"}
+                  className="flex justify-center items-center"
+                >
+                  <Languages className="mr-2 w-4 h-4" />
+                  <span className="text-md">Translate</span>
+                </Link>
+              </Button>
+            )}
             <Button
               variant={"greenTheme"}
               className={`${pathname === "/transcriptions" ? "hidden" : ""}`}
             >
+              <Files className="mr-2 w-4 h-4" />
               <Link href={"/transcriptions"}>Sample Records</Link>
             </Button>
 

@@ -49,9 +49,9 @@ const Hero = () => {
             Watch Demo
           </Button>
         </div>
-        <div className="mb-6">
+        {/* <div className="mb-6">
           <Carousel />
-        </div>
+        </div> */}
         <div className="relative max-w-4xl mx-auto">
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-8 border border-green-200">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
