@@ -68,7 +68,7 @@ async def upload_audio(body: Body):
         logger.info("summary done")
         result = generate_timestamp_jon(translation,summary)
         logger.info(result)
-
+        result["language"] = translation.get("language", "unknown")
         return JSONResponse(content=result, status_code=200)
 
     except Exception as e:

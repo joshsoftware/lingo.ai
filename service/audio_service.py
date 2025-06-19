@@ -113,7 +113,11 @@ def translate_with_whisper_timestamped(audioPath):
             trust_whisper_timestamps=False,
             **translate_options
         )
-        return result
+        return {
+            "segments": result["segments"],
+            "text": result["text"],
+            "language": result.get("language", "unknown")
+        }
     except HTTPException:
         raise
     except Exception as e:
