@@ -13,6 +13,7 @@ import {
   Languages,
   Files,
   User2,
+  Layers,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -110,6 +111,13 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
     {
       icon: <BotMessageSquare className="h-[1.2rem] w-[1.2rem] mr-2" />,
       label: "Lingo.ai",
+      onClick: () => {
+        toggleModal("isModalOpen");
+      },
+    },
+    {
+      icon: <Layers className="h-[1.2rem] w-[1.2rem] mr-2" />,
+      label: "Update",
       onClick: () => {
         toggleModal("isModalOpen");
       },
