@@ -37,11 +37,6 @@ const page = async (props: PageProps) => {
 
   return (
     <div className="flex flex-col w-full h-full pt-8">
-      <div className="flex justify-start w-full mb-8">
-        <div className="w-full flex justify-center items-center text-2xl font-bold">
-          Transcription for {transcription[0].documentName}
-        </div>
-      </div>
       <div className="flex flex-1 xl:overflow-y-auto">
         {transcription.length > 0 && (
           <DetailedTranscription transcription={transcription[0]} />
