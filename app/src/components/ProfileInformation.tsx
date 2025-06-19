@@ -17,9 +17,9 @@ const ProfileInformation = () => {
 
       // Example of setting real data
       setProfileData({
-        name: "John Doe",
-        email: "john@example.com",
-        initials: "JD",
+        name: "The Lingo.Ai",
+        email: "thelingo.ai@lingo.com",
+        initials: "TL",
         sampleCount: 12,
         totalRecords: 48,
       });
