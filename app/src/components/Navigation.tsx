@@ -120,7 +120,7 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
       icon: <Layers className="h-[1.2rem] w-[1.2rem] mr-2" />,
       label: "Update",
       onClick: () => {
-        toggleModal("isModalOpen");
+        // toggleModal("isModalOpen");
       },
     },
     {
