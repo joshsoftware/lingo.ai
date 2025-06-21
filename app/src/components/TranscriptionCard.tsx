@@ -1,24 +1,33 @@
 "use client";
-import { TranscriptionsType } from "@/db/schema";
-import { format } from "date-fns";
-import { useEffect, useRef, useState, forwardRef } from "react";
-import { Button } from "./ui/button";
-import Link from "next/link";
-import { PauseCircleIcon, PlayCircleIcon } from "lucide-react";
-import { getAudioDuration } from "@/utils/recording";
 
-interface TranscriptionCardProps {
-  transcription: Pick<TranscriptionsType, "id" | "documentName" | "createdAt" | "documentUrl">;
+import { useEffect, useRef, useState } from "react";
+import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { FileAudio, Pause, Play } from "lucide-react";
+import Link from "next/link";
+import { getAudioDuration, getFileSize } from "@/utils/recording";
+import { userTranscriptions } from "@/types/transcriptions";
+
+interface TranscriptionRowProps {
+  transcription: userTranscriptions;
   index: number;
   isPlaying: boolean;
   onPlayPause: () => void;
   onAudioEnd: () => void;
+  rowRef?: (node: HTMLTableRowElement | null) => void;
 }
 
-const TranscriptionCard = forwardRef<HTMLDivElement, TranscriptionCardProps>((props, ref) => {
-  const { transcription, index, isPlaying, onPlayPause, onAudioEnd } = props;
-
+const TranscriptionRow = ({
+  transcription,
+  index,
+  isPlaying,
+  onPlayPause,
+  onAudioEnd,
+  rowRef,
+}: TranscriptionRowProps) => {
   const [audioDuration, setAudioDuration] = useState<string | null>(null);
+  const [fileSize, setFileSize] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -29,86 +38,87 @@ const TranscriptionCard = forwardRef<HTMLDivElement, TranscriptionCardProps>((pr
       }
     };
 
-    fetchAudioDuration();
+    const fetchFileSize = async () => {
+      if (transcription?.documentUrl) {
+        const size = await getFileSize(transcription.documentUrl);
+        setFileSize(size);
+      }
+    };
 
-    // Create audio element and set ref
+    fetchAudioDuration();
+    fetchFileSize();
+
     if (transcription?.documentUrl) {
       const audio = new Audio(transcription.documentUrl);
       audioRef.current = audio;
 
-      // Add event listener for 'ended' event
       audio.addEventListener("ended", () => {
         if (audioRef.current) {
           audioRef.current.pause();
-          onAudioEnd(); // Call the onAudioEnd prop
+          onAudioEnd();
         }
       });
+
+      if (isPlaying) {
+        audio.play();
+      } else {
+        audio.pause();
+      }
     }
 
-    // Cleanup function to stop audio playback when component unmounts
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
       }
     };
-  }, [transcription?.documentUrl, onAudioEnd]);
-
-  useEffect(() => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.play();
-      } else {
-        audioRef.current.pause();
-      }
-    }
-  }, [isPlaying]);
+  }, [transcription?.documentUrl, onAudioEnd, isPlaying]);
 
   return (
-    <div
-      key={index}
-      className="flex flex-col md:flex-row gap-4 w-full h-full bg-[#F9F9F9] p-2 px-8 rounded-xl justify-between items-center"
-      ref={ref}
-    >
-      <Link
-        className="flex-1 h-fit w-full"
-        href={`/transcriptions/${transcription?.id}`}
-      >
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <h1 className="w-full md:w-1/3 overflow-hidden text-ellipsis whitespace-nowrap">
-            {index + 1} {transcription?.documentName}
-          </h1>
-          <h1 className="w-full md:w-1/3 overflow-hidden text-ellipsis whitespace-nowrap">
-            {transcription?.createdAt
-              ? format(
-                  new Date(transcription.createdAt),
-                  "dd MMM yyyy | hh:mm a",
-                )
-              : "N/A"}
-          </h1>
-          <h1 className="w-full md:w-1/3 overflow-hidden text-ellipsis whitespace-nowrap">
-            {audioDuration ? `Duration: ${audioDuration}` : "Loading..."}
-          </h1>
-        </div>
-      </Link>
-      <div className="flex flex-col gap-2 justify-center items-center w-full h-full md:w-auto z-10">
+    <tr className="border-b border-gray-200 mt-4" ref={rowRef}>
+      <td className="py-3 px-2">
         <Button
-          className="flex gap-2 bg-[#668D7E] hover:bg-[#668D7E] text-white"
+          variant="ghost"
+          size="sm"
           onClick={onPlayPause}
-          disabled={!audioDuration}
+          className="h-8 w-8 p-0"
         >
           {isPlaying ? (
-            <PauseCircleIcon className="w-6 h-6" />
+            <Pause className="h-4 w-4 text-green-500" />
           ) : (
-            <PlayCircleIcon className="w-6 h-6" />
+            <Play className="h-4 w-4 text-green-500" />
           )}
-          {isPlaying ? "Pause Audio" : "Play Audio"}
         </Button>
-      </div>
-    </div>
+      </td>
+      <td>
+        <Link href={`/transcriptions/${transcription?.id}`}>
+          <div className="flex items-center gap-2">
+            <FileAudio className="h-4 w-4 text-muted-foreground" />
+            <span className="font-medium">{transcription?.documentName}</span>
+          </div>
+        </Link>
+      </td>
+      <td className="text-muted-foreground ">
+        <div className="ml-4">
+          {fileSize ? fileSize : "Loading..."}
+        </div>
+      </td>
+      <td>
+        <Badge className="ml-4" variant="secondary">
+          {/* TODO: Add language from microservice */}
+          {"N/A"}
+        </Badge>
+      </td>
+      <td className="font-mono text-sm">
+        {audioDuration ? `Duration: ${audioDuration}` : "Loading..."}
+      </td>
+      <td className="text-muted-foreground ">
+        {transcription?.createdAt
+          ? format(new Date(transcription.createdAt), "dd MMM yyyy | hh:mm a")
+          : "N/A"}
+      </td>
+    </tr>
   );
-});
+};
 
-TranscriptionCard.displayName = "TranscriptionCard";
-
-export default TranscriptionCard;
+export default TranscriptionRow;

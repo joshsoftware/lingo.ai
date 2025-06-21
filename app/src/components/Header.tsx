@@ -14,6 +14,7 @@ import { Modal } from "./ui/modal";
 import { handleSignOut, isSignedIn } from "@/actions/auth";
 import Cookies from "js-cookie";
 import { Popover } from "./ui/popover";
+import Navigation from "./Navigation";
 
 type HeaderProps = {
   isSignedIn: boolean;
@@ -52,7 +53,6 @@ const Header = ({ isSignedIn }: HeaderProps) => {
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
   };
-
   const handleAddBot = async () => {
     try {
       const { data } = await fetchAuthLink();
@@ -76,107 +76,18 @@ const Header = ({ isSignedIn }: HeaderProps) => {
     }
   };
 
-
   return (
     <>
-      <header
-        className={cn(
-          "flex justify-between items-center bg-[#1D1D1D]",
-          primaryFont.className
-        )}
-      >
-        <div className="container flex items-center py-3">
-          <Link href={"/"} className="text-3xl text-white">
-            LingoAI
-          </Link>
-          <div className="flex justify-center items-center w-full">
-            <Image
-              src={"/JoshLogo.svg"}
-              className="self-center"
-              width={131}
-              height={100}
-              alt="Josh Logo"
-            />
-          </div>
-          <div className="flex gap-2 min-w-fit justify-end">
-            {pathName !== "/" && pathName !== "/new" && isSignedIn && (
-              <Link
-                href={"/new"}
-                className={cn(
-                  buttonVariants({
-                    className:
-                      "!bg-[#668D7E] !hover:bg-[#668D7E] text-white text-xs px-3",
-                    size: "xs",
-                  }),
-                  tertiaryFont.className
-                )}
-              >
-                Demo
-              </Link>
-            )}
-            {pathName !== "/" && pathName !== "/transcriptions" && (
-              <Link
-                href={"/transcriptions"}
-                className={cn(
-                  buttonVariants({
-                    className:
-                      "!bg-[#668D7E] !hover:bg-[#668D7E] text-white text-xs px-3",
-                    size: "xs",
-                  }),
-                  tertiaryFont.className
-                )}
-              >
-                View Records
-              </Link>
-            )}
-            {isSignedIn && (
-              <Button
-                className={cn(
-                  buttonVariants({
-                    className:
-                      "!bg-[#668D7E] !hover:bg-[#668D7E] text-white text-xs px-3",
-                    size: "xs",
-                  }),
-                  tertiaryFont.className
-                )}
-                onClick={toggleModal}
-              >
-                <BotIcon />
-              </Button>
-            )}
-            {isSignedIn && (
-              <Popover
-                isOpen={popoverOpen}
-                onClose={() => setPopoverOpen(false)}
-                trigger={
-                  <div
-                    onClick={() => setPopoverOpen(!popoverOpen)}
-                    className={cn(
-                      "w-8 h-8 flex items-center justify-center rounded-full bg-white  cursor-pointer transition-all duration-200 hover:shadow-md border",
-                      popoverOpen ? "shadow-lg" : ""
-                    )}
-                  >
-                    <User className="text-black" size={16} />
-                  </div>
-                }
-              >
-                <Button
-                  onClick={handleLogout}
-                  variant="ghost"
-                  className={cn(
-                    "text-xs flex w-full items-center",
-                    tertiaryFont.className
-                  )}
-                >
-                  <LogOut className="mr-1" size={16} />
-                  Logout
-                </Button>
-              </Popover>
-            )}
-          </div>
-        </div>
-      </header>
-
+      <Navigation
+        isSignedIn={isSignedIn}
+        {...(!isSignedIn && {
+          navItems: [
+            { label: "Features", href: "#features" },
+            { label: "Use Cases", href: "#use-cases" },
+            { label: "Pricing", href: "#pricing" },
+          ],
+        })}
+      />
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -199,8 +110,7 @@ const Header = ({ isSignedIn }: HeaderProps) => {
                     className:
                       "!bg-[#668D7E] !hover:bg-[#668D7E] text-white text-xs px-3",
                     size: "xs",
-                  }),
-                  tertiaryFont.className
+                  })
                 )}
                 onClick={handleAddBot}
               >
