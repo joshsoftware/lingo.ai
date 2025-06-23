@@ -118,7 +118,7 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
     },
     {
       icon: <Layers className="h-[1.2rem] w-[1.2rem] mr-2" />,
-      label: "Update",
+      label: "Upgrade plan",
       onClick: () => {
         // toggleModal("isModalOpen");
       },
@@ -244,14 +244,16 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
                     <User size={16} />
                   </div>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent sideOffset={10}>
+                <DropdownMenuContent sideOffset={10} className="w-40">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   {profileMenuItems.map(({ icon, label, onClick }, index) => (
                     <DropdownMenuItem
                       key={index}
                       onClick={onClick}
-                      className="cursor-pointer hover:!text-black hover:font-bold hover:!bg-[#668D7E]/30"
+                      className={`cursor-pointer hover:!text-black hover:font-bold hover:!bg-[#668D7E]/30 ${
+                        label === "Upgrade plan" && " cursor-not-allowed"
+                      }`}
                     >
                       {icon}
                       {label}
