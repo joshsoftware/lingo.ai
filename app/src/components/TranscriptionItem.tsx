@@ -82,20 +82,22 @@ const TranscriptionItem = (props: TranscriptionItemProps) => {
   return (
     <div>
       <div className="container mx-auto px-4 pt-4 pb-8 max-w-7xl">
-        <div className="overflow-clip flex w-full max-w-xs  ml-auto">
-          <Select
-            value={defaultTranscriptionFilter}
-            onValueChange={handleFilterChange}
-          >
-            <SelectTrigger className="focus:outline-none focus:ring-0 focus:ring-offset-0">
-              <SelectValue placeholder="Filter transcriptions" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="user">My records</SelectItem>
-              <SelectItem value="true">Sample records</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        {userId && (
+          <div className="overflow-clip flex w-full max-w-xs  ml-auto">
+            <Select
+              value={defaultTranscriptionFilter}
+              onValueChange={handleFilterChange}
+            >
+              <SelectTrigger className="focus:outline-none focus:ring-0 focus:ring-offset-0">
+                <SelectValue placeholder="Filter transcriptions" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="user">My records</SelectItem>
+                <SelectItem value="true">Sample records</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         {isLoading ? (
           <div className="space-y-4">
             {Array.from({ length: 2 }).map((_, idx) => (
