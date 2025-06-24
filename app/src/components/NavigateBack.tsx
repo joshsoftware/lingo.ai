@@ -6,11 +6,10 @@ import { ArrowLeftIcon } from "lucide-react";
 
 interface NavigateBackProps {
   href?: string;
-  subHeading?: string;
 }
 
 const NavigateBack = (props: NavigateBackProps) => {
-  const { href, subHeading } = props;
+  const { href } = props;
   const router = useRouter();
   const pathname = usePathname();
   const handleBack = () => {
@@ -26,11 +25,6 @@ const NavigateBack = (props: NavigateBackProps) => {
       <Button className="flex gap-4" variant={"ghost"} onClick={handleBack}>
         <ArrowLeftIcon className="w-6 h-6" />
       </Button>
-      {subHeading && (
-        <div className="w-full flex justify-center items-center text-2xl font-bold">
-          {subHeading}
-        </div>
-      )}
     </div>
   );
 };
