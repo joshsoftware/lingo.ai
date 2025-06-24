@@ -55,6 +55,8 @@ export type StateType = {
 };
 const Navigation = ({ isSignedIn }: NavigationProps) => {
   const pathname = usePathname() as string;
+  const router = useRouter();
+  const [hasMounted, setHasMounted] = useState(false);
 
   const [uiState, setUIState] = useState<StateType>({
     popoverOpen: false,
@@ -69,10 +71,15 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
   useEffect(() => {
     const botAdded = Cookies.get("isBotAdded") === "true";
     updateUIState({ isBotAdded: botAdded });
+    if (pathname === "/" && isSignedIn) {
+      router.push("/new");
+    }
+    setHasMounted(true);
   }, []);
-
-  const router = useRouter();
-
+  const recordsLabel = useMemo(() => {
+    if (!hasMounted) return "Records";
+    return isSignedIn ? "View Records" : "Sample Records";
+  }, [isSignedIn, hasMounted]);
   const {
     refetch: fetchAuthLink,
     data: authData,
@@ -111,7 +118,7 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
     },
     {
       icon: <BotMessageSquare className="h-[1.2rem] w-[1.2rem] mr-2" />,
-      label: "Lingo.ai",
+      label: "Lingo bot",
       onClick: () => {
         toggleModal("isModalOpen");
       },
@@ -226,7 +233,7 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
               className={`${pathname === "/transcriptions" ? "hidden" : ""}`}
             >
               <Files className="mr-2 w-4 h-4" />
-              <Link href={"/transcriptions"}>Sample Records</Link>
+              <Link href={"/transcriptions"}>{recordsLabel}</Link>
             </Button>
 
             {isSignedIn && pathname !== "/" && (
