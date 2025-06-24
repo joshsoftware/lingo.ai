@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { supportEmail } from "@/constants/homePage";
+import Link from "next/link";
 
 const CallToAction = () => {
   return (
@@ -20,9 +22,22 @@ const CallToAction = () => {
               size="lg"
               className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-6 text-lg"
             >
-              Start Free 14-Day Trial
+              <Link href={"/signup"}>Start Free Trial</Link>
             </Button>
-            <Button size="lg" variant="outline" className="px-8 py-6 text-lg">
+            <Button
+              size="lg"
+              variant="outline"
+              className="px-8 py-6 text-lg"
+              onClick={() => {
+                const to = supportEmail;
+                const subject = "Request to Schedule a Demo";
+                const body = `Hello Lingo.ai Support Team,%0D%0A%0D%0AI hope you’re doing well.%0D%0A%0D%0AI’d like to schedule a demo to explore how your solution can help address our specific needs and challenges.%0D%0A%0D%0AThank you,%0D%0A[Your Name]`;
+                const mailtoLink = `mailto:${to}?subject=${encodeURIComponent(
+                  subject
+                )}&body=${body}`;
+                window.location.href = mailtoLink;
+              }}
+            >
               Schedule a Demo
             </Button>
           </div>
