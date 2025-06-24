@@ -62,7 +62,7 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
     isModalOpen: false,
     isBotAdded: false,
     isProfileModalOpen: false,
-    recordsLabel: "Sample",
+    recordsLabel: "Sample Records",
   });
 
   const updateUIState = (updates: Partial<typeof uiState>) =>
@@ -72,7 +72,7 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
     const botAdded = Cookies.get("isBotAdded") === "true";
     updateUIState({
       isBotAdded: botAdded,
-      recordsLabel: isSignedIn ? "View" : "Sample",
+      recordsLabel: isSignedIn ? "View Records" : "Sample Records",
     });
     if (pathname === "/" && isSignedIn) {
       router.push("/new");
@@ -102,7 +102,7 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
       await handleSignOut();
       updateUIState({
         isBotAdded: false,
-        recordsLabel: "Sample",
+        recordsLabel: "Sample Records",
       });
       router.push("/");
     } catch (error) {
@@ -128,8 +128,29 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
     {
       icon: <Layers className="h-[1.2rem] w-[1.2rem] mr-2" />,
       label: "Upgrade plan",
+      // onClick: () => {
+      //   const subject = encodeURIComponent("Upgrade plan");
+      //   const body = encodeURIComponent("I would like to upgrade the plan.");
+      //   window.location.href = `mailto:support@lingo.ai?subject=${subject}&body=${body}`;
+      // },
       onClick: () => {
-        // toggleModal("isModalOpen");
+        const to = "support@lingo.ai";
+        const subject = "Upgrade Request – Lingo.ai Subscription";
+        const body = `Hello Lingo.ai Team,
+
+I would like to upgrade my current subscription plan. Please let me know the available options and the next steps.
+
+Best regards,
+[Your Name]`;
+
+        // const mailtoLink = `mailto:support@lingo.ai?subject=${encodeURIComponent(
+        //   subject
+        // )}&body=${encodeURIComponent(body)}`;
+        // window.location.href = mailtoLink;
+        const mailtoLink = `mailto:${to}?subject=${encodeURIComponent(
+          subject
+        )}&body=${body}`;
+        window.location.href = mailtoLink;
       },
     },
     {
@@ -229,16 +250,12 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
                 </Link>
               </Button>
             )}
-
-            <Button
-              variant={"greenTheme"}
-              className={`${pathname === "/transcriptions" ? "hidden" : ""}`}
-            >
-              <Files className="mr-2 w-4 h-4" />
-              <Link href={"/transcriptions"}>
-                {uiState.recordsLabel} Records
-              </Link>
-            </Button>
+            {pathname !== "/transcriptions" && (
+              <Button variant={"greenTheme"}>
+                <Files className="mr-2 w-4 h-4" />
+                <Link href={"/transcriptions"}>{uiState.recordsLabel}</Link>
+              </Button>
+            )}
 
             {isSignedIn && pathname !== "/" && (
               <DropdownMenu>
