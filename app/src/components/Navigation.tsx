@@ -52,17 +52,17 @@ export type StateType = {
   isModalOpen: boolean;
   isBotAdded: boolean;
   isProfileModalOpen: boolean;
+  recordsLabel: string;
 };
 const Navigation = ({ isSignedIn }: NavigationProps) => {
   const pathname = usePathname() as string;
   const router = useRouter();
-  const [hasMounted, setHasMounted] = useState(false);
-
   const [uiState, setUIState] = useState<StateType>({
     popoverOpen: false,
     isModalOpen: false,
     isBotAdded: false,
     isProfileModalOpen: false,
+    recordsLabel: "Sample",
   });
 
   const updateUIState = (updates: Partial<typeof uiState>) =>
@@ -70,16 +70,14 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
 
   useEffect(() => {
     const botAdded = Cookies.get("isBotAdded") === "true";
-    updateUIState({ isBotAdded: botAdded });
+    updateUIState({
+      isBotAdded: botAdded,
+      recordsLabel: isSignedIn ? "View" : "Sample",
+    });
     if (pathname === "/" && isSignedIn) {
       router.push("/new");
     }
-    setHasMounted(true);
-  }, []);
-  const recordsLabel = useMemo(() => {
-    if (!hasMounted) return "Records";
-    return isSignedIn ? "View Records" : "Sample Records";
-  }, [isSignedIn, hasMounted]);
+  }, [isSignedIn]);
   const {
     refetch: fetchAuthLink,
     data: authData,
@@ -102,6 +100,10 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
   const handleLogout = async () => {
     try {
       await handleSignOut();
+      updateUIState({
+        isBotAdded: false,
+        recordsLabel: "Sample",
+      });
       router.push("/");
     } catch (error) {
       console.error("Logout failed:", error);
@@ -233,7 +235,9 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
               className={`${pathname === "/transcriptions" ? "hidden" : ""}`}
             >
               <Files className="mr-2 w-4 h-4" />
-              <Link href={"/transcriptions"}>{recordsLabel}</Link>
+              <Link href={"/transcriptions"}>
+                {uiState.recordsLabel} Records
+              </Link>
             </Button>
 
             {isSignedIn && pathname !== "/" && (
