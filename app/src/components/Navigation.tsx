@@ -264,9 +264,7 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
                     <DropdownMenuItem
                       key={index}
                       onClick={onClick}
-                      className={`cursor-pointer hover:!text-black hover:font-bold hover:!bg-[#668D7E]/30 ${
-                        label === "Upgrade plan" && " cursor-not-allowed"
-                      }`}
+                      className={`cursor-pointer hover:!text-black hover:font-bold hover:!bg-[#668D7E]/30`}
                     >
                       {icon}
                       {label}
