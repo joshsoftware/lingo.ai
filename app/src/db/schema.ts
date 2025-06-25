@@ -1,5 +1,13 @@
 import { segment } from "@/types/transcriptions";
-import { timestamp, pgTable, text, uuid, boolean, integer, jsonb } from "drizzle-orm/pg-core";
+import {
+  timestamp,
+  pgTable,
+  text,
+  uuid,
+  boolean,
+  integer,
+  jsonb,
+} from "drizzle-orm/pg-core";
 
 export const transcriptions = pgTable("transcriptions", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -14,7 +22,7 @@ export const transcriptions = pgTable("transcriptions", {
   documentName: text("documentName").notNull(),
   isDefault: boolean("isDefault").notNull().default(false),
   audioDuration: integer("audioDuration"),
-  userName: text("user_name")
+  userName: text("user_name"),
 });
 
 export const registrations = pgTable("registrations", {
@@ -32,6 +40,9 @@ export const userTable = pgTable("user", {
   password_hash: text("password_hash").notNull(),
   name: text("name"),
   contactNumber: text("contactNumber"),
+  subscriptionId: text("subscriptionId")
+    .notNull()
+    .references(() => subscriptionTable.id),
   role: text("role"),
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
 });
@@ -59,8 +70,19 @@ export const sessionTable = pgTable("session", {
     .references(() => userTable.id),
   expiresAt: timestamp("expires_at", {
     withTimezone: true,
-    mode: "date"
+    mode: "date",
   }).notNull(),
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
+});
+
+export const subscriptionTable = pgTable("subscriptions", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  name: text("name").notNull().unique(), // FREE, BASIC, ENTERPRISE
+  recordingCount: integer("recordingCount").notNull(),
+  fileSizeLimitMB: integer("fileSizeLimitMB").notNull(), // Store all sizes in MB
+  durationDays: integer("durationDays").notNull(), // Validity in days
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
 });
 
