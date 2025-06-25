@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { transcriptions } from "@/db/schema";
+import { transcriptions, subscriptionTable, userTable } from "@/db/schema";
 import { validateRequest } from "@/auth";
-import { sql } from "drizzle-orm";
-import { eq, and } from "drizzle-orm";
+import { sql, eq } from "drizzle-orm";
 
 export async function GET() {
   const { user } = await validateRequest();
-  //   console.log("user is", user);
+
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -19,19 +18,44 @@ export async function GET() {
     .select({ count: sql<number>`COUNT(*)` })
     .from(transcriptions)
     .where(eq(transcriptions.userID, userId));
-  //   console.log("totalResult is ", totalResult);
+
+  const totalRecords = totalResult[0]?.count ?? 0;
+
   // Count demo/sample recordings (isDefault = true)
   const sampleResult = await db
     .select({ count: sql<number>`COUNT(*)` })
     .from(transcriptions)
     .where(eq(transcriptions.isDefault, true));
-  //   console.log("sampleResult", sampleResult);
-  // Add user info for profile UI (optional)
-  const email = user?.username;
+
+  const sampleCount = sampleResult[0]?.count ?? 0;
+
+  const [subscriptionInfo] = await db
+    .select({
+      name: subscriptionTable.name,
+      recordingCount: subscriptionTable.recordingCount,
+      fileSizeLimitMB: subscriptionTable.fileSizeLimitMB,
+      durationDays: subscriptionTable.durationDays,
+    })
+    .from(subscriptionTable)
+    .innerJoin(userTable, eq(userTable.subscriptionId, subscriptionTable.id))
+    .where(eq(userTable.id, userId));
+  if (!subscriptionInfo) {
+    return NextResponse.json(
+      { error: "Subscription not found for user" },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json({
-    email,
-    sampleCount: sampleResult[0]?.count ?? 0,
-    totalRecords: totalResult[0]?.count ?? 0,
+    email: user.username,
+    sampleCount,
+    totalRecords,
+    subscription: {
+      name: subscriptionInfo.name,
+      limit: subscriptionInfo.recordingCount,
+      remaining: Math.max(subscriptionInfo.recordingCount - totalRecords, 0),
+      fileSizeLimitMB: subscriptionInfo.fileSizeLimitMB,
+      durationDays: subscriptionInfo.durationDays,
+    },
   });
 }
