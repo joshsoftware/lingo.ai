@@ -31,6 +31,7 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { Modal } from "./ui/modal";
 import ProfileInformation from "./ProfileInformation";
+import { supportEmail } from "@/constants/homePage";
 
 type NavItem = {
   label: string;
@@ -52,15 +53,17 @@ export type StateType = {
   isModalOpen: boolean;
   isBotAdded: boolean;
   isProfileModalOpen: boolean;
+  recordsLabel: string;
 };
 const Navigation = ({ isSignedIn }: NavigationProps) => {
   const pathname = usePathname() as string;
-
+  const router = useRouter();
   const [uiState, setUIState] = useState<StateType>({
     popoverOpen: false,
     isModalOpen: false,
     isBotAdded: false,
     isProfileModalOpen: false,
+    recordsLabel: "Sample Records",
   });
 
   const updateUIState = (updates: Partial<typeof uiState>) =>
@@ -68,11 +71,14 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
 
   useEffect(() => {
     const botAdded = Cookies.get("isBotAdded") === "true";
-    updateUIState({ isBotAdded: botAdded });
-  }, []);
-
-  const router = useRouter();
-
+    updateUIState({
+      isBotAdded: botAdded,
+      recordsLabel: isSignedIn ? "View Records" : "Sample Records",
+    });
+    if (pathname === "/" && isSignedIn) {
+      router.push("/new");
+    }
+  }, [isSignedIn]);
   const {
     refetch: fetchAuthLink,
     data: authData,
@@ -95,6 +101,10 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
   const handleLogout = async () => {
     try {
       await handleSignOut();
+      updateUIState({
+        isBotAdded: false,
+        recordsLabel: "Sample Records",
+      });
       router.push("/");
     } catch (error) {
       console.error("Logout failed:", error);
@@ -111,16 +121,22 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
     },
     {
       icon: <BotMessageSquare className="h-[1.2rem] w-[1.2rem] mr-2" />,
-      label: "Lingo.ai",
+      label: "Lingo bot",
       onClick: () => {
         toggleModal("isModalOpen");
       },
     },
     {
       icon: <Layers className="h-[1.2rem] w-[1.2rem] mr-2" />,
-      label: "Update",
+      label: "Upgrade plan",
       onClick: () => {
-        // toggleModal("isModalOpen");
+        const to = supportEmail;
+        const subject = "Request to Upgrade My Lingo.ai Subscription Plan";
+        const body = `Hello Lingo.ai Support Team,%0D%0A%0D%0AI would like to upgrade my current subscription plan. Please let me know the available options and the process to proceed.%0D%0A%0D%0AThank you,%0D%0A[Your Name]`;
+        const mailtoLink = `mailto:${to}?subject=${encodeURIComponent(
+          subject
+        )}&body=${body}`;
+        window.location.href = mailtoLink;
       },
     },
     {
@@ -220,14 +236,12 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
                 </Link>
               </Button>
             )}
-
-            <Button
-              variant={"greenTheme"}
-              className={`${pathname === "/transcriptions" ? "hidden" : ""}`}
-            >
-              <Files className="mr-2 w-4 h-4" />
-              <Link href={"/transcriptions"}>Sample Records</Link>
-            </Button>
+            {pathname !== "/transcriptions" && (
+              <Button variant={"greenTheme"}>
+                <Files className="mr-2 w-4 h-4" />
+                <Link href={"/transcriptions"}>{uiState.recordsLabel}</Link>
+              </Button>
+            )}
 
             {isSignedIn && pathname !== "/" && (
               <DropdownMenu>
@@ -244,14 +258,14 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
                     <User size={16} />
                   </div>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent sideOffset={10}>
+                <DropdownMenuContent sideOffset={10} className="w-40">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   {profileMenuItems.map(({ icon, label, onClick }, index) => (
                     <DropdownMenuItem
                       key={index}
                       onClick={onClick}
-                      className="cursor-pointer hover:!text-black hover:font-bold hover:!bg-[#668D7E]/30"
+                      className={`cursor-pointer hover:!text-black hover:font-bold hover:!bg-[#668D7E]/30`}
                     >
                       {icon}
                       {label}

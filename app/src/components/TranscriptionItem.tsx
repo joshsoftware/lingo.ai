@@ -24,7 +24,7 @@ const TranscriptionItem = (props: TranscriptionItemProps) => {
   const { initialTranscriptionsData, userId } = props;
 
   const [defaultTranscriptionFilter, setDefaultTranscriptionFilter] =
-    useState<string>("true");
+    useState<string>(userId ? "user" : "true");
   const [currentPlayingIndex, setCurrentPlayingIndex] = useState<number | null>(
     null
   );
@@ -82,16 +82,21 @@ const TranscriptionItem = (props: TranscriptionItemProps) => {
   return (
     <div>
       <div className="container mx-auto px-4 pt-4 pb-8 max-w-7xl">
-        <div className="overflow-hidden flex w-full max-w-xs min-h-14 ml-auto outline-none">
-          <Select onValueChange={handleFilterChange}>
-            <SelectTrigger>
-              <SelectValue placeholder="Filter transcriptions" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="true">Demo Transcriptions</SelectItem>
-              <SelectItem value="user">My Transcriptions</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="overflow-clip flex w-full max-w-xs  ml-auto">
+          {userId && (
+            <Select
+              value={defaultTranscriptionFilter}
+              onValueChange={handleFilterChange}
+            >
+              <SelectTrigger className="focus:outline-none focus:ring-0 focus:ring-offset-0">
+                <SelectValue placeholder="Filter transcriptions" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="user">My records</SelectItem>
+                <SelectItem value="true">Sample records</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
         </div>
         {isLoading ? (
           <div className="space-y-4">

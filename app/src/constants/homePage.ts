@@ -156,3 +156,4 @@ export const slides = [
     text: "text-black dark:text-black",
   },
 ];
+export const supportEmail = "innovationlab@joshsoftware.com";

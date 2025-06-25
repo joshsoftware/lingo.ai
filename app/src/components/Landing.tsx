@@ -9,9 +9,7 @@ import { secondaryFont } from "@/fonts";
 const Landing = () => {
   return (
     <div
-      className={`min-h-screen bg-background flex flex-col 
-    // ${secondaryFont.className}
-    `}
+      className={`min-h-screen bg-background flex flex-col ${secondaryFont.className}`}
     >
       <Hero />
       <Features />
