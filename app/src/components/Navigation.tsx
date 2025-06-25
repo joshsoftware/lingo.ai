@@ -31,6 +31,7 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { Modal } from "./ui/modal";
 import ProfileInformation from "./ProfileInformation";
+import { supportEmail } from "@/constants/homePage";
 
 type NavItem = {
   label: string;
@@ -129,7 +130,7 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
       icon: <Layers className="h-[1.2rem] w-[1.2rem] mr-2" />,
       label: "Upgrade plan",
       onClick: () => {
-        const to = "support@lingo.ai";
+        const to = supportEmail;
         const subject = "Request to Upgrade My Lingo.ai Subscription Plan";
         const body = `Hello Lingo.ai Support Team,%0D%0A%0D%0AI would like to upgrade my current subscription plan. Please let me know the available options and the process to proceed.%0D%0A%0D%0AThank you,%0D%0A[Your Name]`;
         const mailtoLink = `mailto:${to}?subject=${encodeURIComponent(

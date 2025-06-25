@@ -2,28 +2,28 @@ import Link from "next/link";
 
 const Footer = () => {
   return (
-    <footer id="pricing" className="bg-slate-900 text-slate-300 py-12 px-4">
+    <footer id="pricing" className="bg-slate-900 text-slate-300 py-2 px-4">
       <div className="container mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+            <div className="flex items-center space-x-2 mb-2">
+              {/* <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <span className="text-primary-foreground font-bold text-lg">
                   L
                 </span>
               </div>
-              <span className="text-xl font-bold text-white">Lingo.ai</span>
+              <span className="text-xl font-bold text-white">Lingo.ai</span> */}
             </div>
-            <p className="text-slate-400 mb-4 max-w-md">
+            {/* <p className="text-slate-400 mb-4 max-w-md">
               Empowering Indian language speakers to connect with the world
               through AI-powered transcription, translation, and summarization.
-            </p>
+            </p> */}
             <div className="text-sm text-slate-500">
               © 2024 Lingo.ai. All rights reserved.
             </div>
           </div>
 
-          <div>
+          {/* <div>
             <h3 className="font-semibold text-white mb-4">Product</h3>
             <ul className="space-y-2 text-sm">
               <li>
@@ -47,9 +47,9 @@ const Footer = () => {
                 </Link>
               </li>
             </ul>
-          </div>
+          </div> */}
 
-          <div>
+          {/* <div>
             <h3 className="font-semibold text-white mb-4">Support</h3>
             <ul className="space-y-2 text-sm">
               <li>
@@ -73,7 +73,7 @@ const Footer = () => {
                 </Link>
               </li>
             </ul>
-          </div>
+          </div> */}
         </div>
 
         <div className="border-t border-slate-800 mt-8 pt-8 text-center text-sm text-slate-500">

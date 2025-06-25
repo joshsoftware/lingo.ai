@@ -74,7 +74,9 @@ const Hero = () => {
         </div>
 
         <div className="mt-12 animate-bounce">
+          <Link href="#features">
           <ArrowDown className="mx-auto h-6 w-6 text-muted-foreground" />
+          </Link>
         </div>
       </div>
       <Modal
