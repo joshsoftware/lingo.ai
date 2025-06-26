@@ -1,6 +1,6 @@
 import { lucia } from "@/auth";
 import { db } from "@/db";
-import { registrations, userTable } from "@/db/schema";
+import { registrations, userTable, subscriptionTable } from "@/db/schema";
 import { signupUserSchema } from "@/Validators/register";
 import { hash } from "@node-rs/argon2";
 import { eq } from "drizzle-orm";
@@ -11,61 +11,71 @@ import { z } from "zod";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+    const { password, userEmail, userName, contact } =
+      signupUserSchema.parse(body);
 
-    const { password, userEmail, userName, contact } = signupUserSchema.parse(body);
-
-    // check if user already exists
-    const user = await db
-      .select({
-        id: userTable.id,
-      })
+    // Check if user already exists
+    const existingUser = await db
+      .select({ id: userTable.id })
       .from(userTable)
       .where(eq(userTable.username, userEmail));
 
-    if (user.length > 0)
-      return new Response("User already exists", {
-        status: 409,
-      });
+    if (existingUser.length > 0) {
+      return new Response("User already exists", { status: 409 });
+    }
 
-    // register user
-
-    // generate id from hash
+    // Hash password
     const passwordHash = await hash(password, {
-      // recommended minimum parameters
       memoryCost: 19456,
       timeCost: 2,
       outputLen: 32,
-      parallelism: 1
+      parallelism: 1,
     });
 
-    const userId = generateIdFromEntropySize(10); // 16 characters long
+    // Generate user ID
+    const userId = generateIdFromEntropySize(10);
 
-    const response = await db
+    // ✅ Get FREE subscription ID
+    const [freeSubscription] = await db
+      .select({ id: subscriptionTable.id })
+      .from(subscriptionTable)
+      .where(eq(subscriptionTable.name, "FREE"));
+
+    if (!freeSubscription) {
+      return new Response("Default subscription not found", { status: 500 });
+    }
+    // Insert user with subscriptionId
+    const insertedUser = await db
       .insert(userTable)
       .values({
         id: userId,
-        username:userEmail,
+        username: userEmail,
         password_hash: passwordHash,
         name: userName || "",
         contactNumber: contact || "",
+        subscriptionId: freeSubscription.id, // 👈 Set default FREE subscription
       })
       .returning();
 
-    if (response) {
-      const session = await lucia.createSession(userId, {});
-      const sessionCookie = lucia.createSessionCookie(session.id);
-      (await cookies()).set(sessionCookie.name, sessionCookie.value, sessionCookie.attributes);
+    // Create session & set cookie
+    const session = await lucia.createSession(userId, {});
+    const sessionCookie = lucia.createSessionCookie(session.id);
+    (await cookies()).set(
+      sessionCookie.name,
+      sessionCookie.value,
+      sessionCookie.attributes
+    );
 
-      return new Response(JSON.stringify({ userId: response[0].id }), {
-        status: 201,
-      });
-    }
+    return new Response(JSON.stringify({ userId: insertedUser[0].id }), {
+      status: 201,
+    });
   } catch (error) {
-    console.log(error);
+    console.error("Registration Error:", error);
 
     if (error instanceof z.ZodError) {
       return new Response(error.message, { status: 422 });
     }
+
     return new Response("Failed to Register User", { status: 500 });
   }
 }
