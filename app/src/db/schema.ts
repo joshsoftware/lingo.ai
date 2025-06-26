@@ -1,3 +1,4 @@
+import { ROLES } from "@/constants/roles";
 import { segment } from "@/types/transcriptions";
 import {
   timestamp,
@@ -43,7 +44,7 @@ export const userTable = pgTable("user", {
   subscriptionId: text("subscriptionId")
     .notNull()
     .references(() => subscriptionTable.id),
-  role: text("role"),
+  role: text("role").notNull().default(ROLES.USER),
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
 });
 
@@ -83,6 +84,7 @@ export const subscriptionTable = pgTable("subscriptions", {
   recordingCount: integer("recordingCount").notNull(),
   fileSizeLimitMB: integer("fileSizeLimitMB").notNull(), // Store all sizes in MB
   durationDays: integer("durationDays").notNull(), // Validity in days
+  price: integer("price").notNull().default(0),
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
 });
 
