@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { SigninUserRequest, SignupUserRequest } from "@/Validators/register";
 import { useState } from "react";
 import Cookies from "js-cookie";
+import { ROLES } from "@/constants/roles";
 
 export const useUser = () => {
   const router = useRouter();
@@ -76,7 +77,7 @@ export const useUser = () => {
 
       // Wait for the toast to be shown a bit before redirect
       setTimeout(() => {
-        router.push("/new"); // Navigate to /new
+        router.push(res.data.role === ROLES.USER ? "/new" : "/admin/users"); // Navigate to /new if role is USER else navigate to admin route
         router.refresh(); // Force a layout/server refresh
       }, 100); // Adjust timing if needed
     },
