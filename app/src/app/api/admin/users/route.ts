@@ -33,7 +33,12 @@ export const GET = withAdmin(async function (req: NextRequest) {
       name: userTable.name,
       contactNumber: userTable.contactNumber,
       role: userTable.role,
-      subscriptionName: subscriptionTable.name,
+      subscription: {
+        name: subscriptionTable.name,
+        recordingCount: subscriptionTable.recordingCount,
+        fileSizeLimitMB: subscriptionTable.fileSizeLimitMB,
+        durationDays: subscriptionTable.durationDays,
+      },
     })
     .from(userTable)
     .leftJoin(
