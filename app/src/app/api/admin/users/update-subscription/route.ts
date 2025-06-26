@@ -11,10 +11,18 @@ export const PATCH = withAdmin(async function (req: NextRequest) {
     return NextResponse.json({ error: "Missing parameters" }, { status: 400 });
   }
 
-  await db
+  const [updatedUser] = await db
     .update(userTable)
     .set({ subscriptionId })
-    .where(eq(userTable.id, userId));
+    .where(eq(userTable.id, userId))
+    .returning();
 
-  return NextResponse.json({ success: true });
+  if (!updatedUser) {
+    return NextResponse.json(
+      { error: "User not found or not updated" },
+      { status: 404 }
+    );
+  }
+
+  return NextResponse.json({ user: updatedUser });
 });
