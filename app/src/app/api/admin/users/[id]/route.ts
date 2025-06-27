@@ -1,7 +1,7 @@
 import { db } from "@/db";
-import { subscriptionTable, userTable } from "@/db/schema";
+import { subscriptionTable, transcriptions, userTable } from "@/db/schema";
 import { withAdmin } from "@/lib/withAdmin";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { ROLES } from "@/constants/roles";
 
@@ -11,7 +11,9 @@ export const GET = withAdmin(async function (
   { params }: { params: { id: string } }
 ) {
   const { id } = params;
-  const user = await db
+
+  // Fetch user with subscription info
+  const [user] = await db
     .select({
       id: userTable.id,
       username: userTable.username,
@@ -30,16 +32,28 @@ export const GET = withAdmin(async function (
       subscriptionTable,
       eq(userTable.subscriptionId, subscriptionTable.id)
     )
-    .where(eq(userTable.id, id))
-    .then((res) => res[0]);
+    .where(eq(userTable.id, id));
 
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  return NextResponse.json(user);
-});
+  // Count user’s personal (non-default) transcriptions
+  const [{ count: usedCount }] = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(transcriptions)
+    .where(eq(transcriptions.userID, id));
 
+  // Calculate remaining recordings
+  const limit = user.subscription?.recordingCount ?? 0;
+  const remaining = Math.max(limit - usedCount, 0);
+
+  return NextResponse.json({
+    ...user,
+    recordingsUsed: usedCount,
+    recordingsRemaining: remaining,
+  });
+});
 // PATCH /api/admin/users/:id
 export const PATCH = withAdmin(async function (
   req: NextRequest,
