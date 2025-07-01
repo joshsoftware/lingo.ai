@@ -1,17 +1,17 @@
-// lib/withAdmin.ts
 import { validateRequest } from "@/auth";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export function withAdmin<T extends (...args: any[]) => Promise<Response>>(
-  handler: T
-) {
-  return async (...args: Parameters<T>): Promise<Response> => {
+export function withAdmin<
+  T extends (req: NextRequest, ctx: { params: any }) => Promise<Response>
+>(handler: T) {
+  return async (req: NextRequest, context: { params: any }) => {
     const { user } = await validateRequest();
 
     if (!user || user.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    return handler(...args);
+    return handler(req, context); // ✅ Pass context (params) to your handler
   };
 }
