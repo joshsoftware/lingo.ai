@@ -3,9 +3,15 @@ import { useEffect, useState } from "react";
 import { API } from "@/lib/axios";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Check, Loader2, RefreshCcw } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 
-const EditSubscription = ({ userId ,setIsModalOpen}: { userId: string | null, setIsModalOpen: any }) => {
+const EditSubscription = ({
+  userId,
+  setIsModalOpen,
+}: {
+  userId: string | null;
+  setIsModalOpen: any;
+}) => {
   const router = useRouter();
   const [profileData, setProfileData] = useState({
     username: "",
@@ -22,7 +28,7 @@ const EditSubscription = ({ userId ,setIsModalOpen}: { userId: string | null, se
     recordingsUsed: 0,
     recordingsRemaining: 0,
   });
-const [hasChanged,setHasChanged] = useState(false)
+  const [hasChanged, setHasChanged] = useState(false);
   const [subscriptions, setSubscriptions] = useState<
     {
       id: string;
@@ -100,17 +106,6 @@ const [hasChanged,setHasChanged] = useState(false)
     if (!selected) return;
 
     setSelectedSubscriptionId(subscriptionId);
-
-    // setProfileData((prev) => ({
-    //   ...prev,
-    //   subscription: {
-    //     id: selected.id,
-    //     name: selected.name,
-    //     recordingCount: selected.recordingCount,
-    //     fileSizeLimitMB: selected.fileSizeLimitMB,
-    //     durationDays: selected.durationDays,
-    //   },
-    // }));
   };
 
   const handleUpdate = async () => {
@@ -119,7 +114,7 @@ const [hasChanged,setHasChanged] = useState(false)
       await API.patch(`/admin/users/${userId}`, {
         subscriptionId: selectedSubscriptionId,
       });
-toast.success("Subscription updated successfully");
+      toast.success("Subscription updated successfully");
       router.push("/admin/users");
       setIsModalOpen(null);
       // alert("Subscription updated successfully");
@@ -130,9 +125,9 @@ toast.success("Subscription updated successfully");
       setUpdating(false);
     }
   };
-useEffect(()=>{
-  setHasChanged(selectedSubscriptionId !== subscription.id);
-},[selectedSubscriptionId])
+  useEffect(() => {
+    setHasChanged(selectedSubscriptionId !== subscription.id);
+  }, [selectedSubscriptionId]);
 
   return (
     <div className="flex flex-col items-center text-center space-y-6 p-6">
@@ -147,7 +142,9 @@ useEffect(()=>{
 
       {/* Basic Info */}
       <div className="space-y-1">
-        <p className="text-lg font-semibold">{loading ? "..." : name || "N/A"}</p>
+        <p className="text-lg font-semibold">
+          {loading ? "..." : name || "N/A"}
+        </p>
         <p className="text-sm text-gray-600">{username || "N/A"}</p>
         <p className="text-sm text-gray-600">{contactNumber || "N/A"}</p>
         <p className="text-xs text-gray-500 italic">{role || "N/A"}</p>
@@ -158,40 +155,41 @@ useEffect(()=>{
 
       {/* Subscription Plan Selector */}
       <div className="w-full max-w-xs bg-[#668D7E]/10 text-[#668D7E] rounded-lg px-4 py-3 text-sm">
-  <div className="flex items-center justify-between gap-2">
-    <span className="text-xs font-medium whitespace-nowrap">Subscription Plan:</span>
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs font-medium whitespace-nowrap">
+            Subscription Plan:
+          </span>
 
-    <div className="relative flex items-center gap-2">
-      <select
-        value={selectedSubscriptionId}
-        onChange={(e) => handleSubscriptionChange(e.target.value)}
-        className="px-2 py-1 bg-white border border-[#668D7E] text-[#3B6253] rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-[#668D7E]/30"
-      >
-        {subscriptions.map((sub) => (
-          <option key={sub.id} value={sub.id}>
-            {sub.name}
-          </option>
-        ))}
-      </select>
+          <div className="relative flex items-center gap-2">
+            <select
+              value={selectedSubscriptionId}
+              onChange={(e) => handleSubscriptionChange(e.target.value)}
+              className="px-2 py-1 bg-white border border-[#668D7E] text-[#3B6253] rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-[#668D7E]/30"
+            >
+              {subscriptions.map((sub) => (
+                <option key={sub.id} value={sub.id}>
+                  {sub.name}
+                </option>
+              ))}
+            </select>
 
-      {hasChanged && (
-        <button
-          onClick={handleUpdate}
-          disabled={updating}
-          className="bg-[#3B6253]/80 hover:bg-[#2e4e42] text-white p-[6px] rounded-full transition"
-          title="Update Subscription"
-        >
-          {updating ? (
-            <Loader2 className="h-3 w-3 animate-spin" />
-          ) : (
-            <Check className="h-3 w-3" />
-          )}
-        </button>
-      )}
-    </div>
-  </div>
-</div>
-
+            {hasChanged && (
+              <button
+                onClick={handleUpdate}
+                disabled={updating}
+                className="bg-[#3B6253]/80 hover:bg-[#2e4e42] text-white p-[6px] rounded-full transition"
+                title="Update Subscription"
+              >
+                {updating ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Check className="h-3 w-3" />
+                )}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Plan Details */}
       {!loading && (

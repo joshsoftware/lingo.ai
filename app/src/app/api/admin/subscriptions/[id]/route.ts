@@ -42,18 +42,37 @@ export const PATCH = withAdmin(async function (
     );
   }
 
-  const [updated] = await db
-    .update(subscriptionTable)
-    .set(data)
-    .where(eq(subscriptionTable.id, id))
-    .returning();
+  try {
+    const [updated] = await db
+      .update(subscriptionTable)
+      .set(data)
+      .where(eq(subscriptionTable.id, id))
+      .returning();
 
-  if (!updated) {
+    if (!updated) {
+      return NextResponse.json(
+        { error: "Subscription not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(updated);
+  } catch (error: any) {
+    // Handle unique constraint error (PostgreSQL code 23505)
+    if (error.code === "23505") {
+      if (error.constraint === "subscriptions_name_unique") {
+        return NextResponse.json(
+          { error: "Subscription name already exists" },
+          { status: 409 }
+        );
+      }
+    }
+
+    // Generic DB error fallback
+    console.error("DB Error:", error);
     return NextResponse.json(
-      { error: "Subscription not found" },
-      { status: 404 }
+      { error: "An unexpected error occurred" },
+      { status: 500 }
     );
   }
-
-  return NextResponse.json(updated);
 });
