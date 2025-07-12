@@ -8,6 +8,7 @@ import datetime
 import requests
 from app.helper.generate_presigned_url import generate_presigned_url, extract_file_url
 from app.helper.save_transaction import save_transcription
+from app.helper.google_auth import google_auth_helper
 from app.log_config import logger
 import redis
 from uuid import uuid4
@@ -31,23 +32,26 @@ class LingoRequest(BaseModel):
     key: str
 
 class ScheduleMeeting(BaseModel):
-    refresh_token: str
+    user_id: str
     bot_name: str
 
+class WatchCalendarRequest(BaseModel):
+    user_id: str
 
-@router.get("/")
-def get_meetings(body: ScheduleMeeting, token: str = Depends(OAUTH2_SCHEME)):
-    logger.info("Received request to fetch and schedule meetings")
-    creds = Credentials(
-        token=token,
-        refresh_token=body.refresh_token,
-        token_uri=TOKEN_URI,
-        client_id=CLIENT_ID,
-        client_secret=CLIENT_SECRET
-    )
 
-    logger.info(creds)
-    service = build('calendar', 'v3', credentials=creds)
+@router.post("/")
+async def get_meetings(body: ScheduleMeeting):
+    logger.info(f"Received request to fetch and schedule meetings for user {body.user_id}")
+    
+    # Get valid credentials (with automatic token refresh)
+    creds = await google_auth_helper.get_valid_credentials(body.user_id)
+    if not creds:
+        raise HTTPException(
+            status_code=401, 
+            detail="No valid tokens found. Please re-authenticate with Google."
+        )
+    
+    service = google_auth_helper.build_calendar_service(creds)
 
     now = datetime.datetime.utcnow().isoformat() + 'Z'
     one_week_later = (datetime.datetime.utcnow() + datetime.timedelta(days=7)).isoformat() + 'Z'
@@ -151,15 +155,16 @@ def call_to_lingo(request: LingoRequest):
     
 
 @router.post("/watch-calendar")
-def watch_calendar(token: str = Depends(OAUTH2_SCHEME), refresh_token: str = Body(..., embed=True)):
-    creds = Credentials(
-    token=token,
-    refresh_token=refresh_token,
-    token_uri=TOKEN_URI,
-    client_id=CLIENT_ID,
-    client_secret=CLIENT_SECRET
-)
-    service = build('calendar', 'v3', credentials=creds)
+async def watch_calendar(request: WatchCalendarRequest):
+    # Get valid credentials (with automatic token refresh)
+    creds = await google_auth_helper.get_valid_credentials(request.user_id)
+    if not creds:
+        raise HTTPException(
+            status_code=401, 
+            detail="No valid tokens found. Please re-authenticate with Google."
+        )
+    
+    service = google_auth_helper.build_calendar_service(creds)
     # Unique channel ID for this watch session
     channel_id = str(uuid4())
     # Expire after 7 days (Google's max for watch)
@@ -176,7 +181,7 @@ def watch_calendar(token: str = Depends(OAUTH2_SCHEME), refresh_token: str = Bod
     }
     response = service.events().watch(calendarId='primary', body=body).execute()
     try: 
-        redis_client.set(channel_id, token)
+        redis_client.set(channel_id, request.user_id)
 
     except Exception as e:
         logger.info(e)
@@ -207,15 +212,16 @@ async def calendar_webhook(
 
     
     for i in range(20):
-        token = redis_client.get(str(x_goog_channel_id))
-        if token: break
+        user_id = redis_client.get(str(x_goog_channel_id))
+        if user_id: break
 
-    if token:
+    if user_id:
         logger.info("Calling /meetings/ endpoint via requests")
         try:
-            response = requests.get(
+            response = requests.post(
                 "http://localhost:8001/meetings/",
-                headers={"Authorization": f"Bearer {token}"}
+                headers={"Content-Type": "application/json"},
+                json={"user_id": user_id, "bot_name": "Webhook Bot"}
             )
 
             if response.status_code == 200:
