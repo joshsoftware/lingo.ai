@@ -13,3 +13,5 @@ OAUTH2_SCHEME = OAuth2AuthorizationCodeBearer(
 )
 USER_ID = "huvcypmasa5xwgyf"
 WEBHOOK_ADDR = "https://7d7d-202-149-221-42.ngrok-free.app/meetings/webhook/calendar"
+
+MEETINGS_API_URL = os.getenv("MEETINGS_API_URL", "http://localhost:8001")

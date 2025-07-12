@@ -88,7 +88,7 @@ async def get_meetings(body: ScheduleMeeting):
             # Schedule the bot by calling the existing API
             try:
                     response = requests.post(
-                        "http://localhost:8001/scheduler/schedule-join-bot",
+                        f"{config.MEETINGS_API_URL}/meetings/",
                         headers={"Content-Type": "application/json"},
                         json={
                             "meeting_url": meeting_url,
@@ -219,7 +219,7 @@ async def calendar_webhook(
         logger.info("Calling /meetings/ endpoint via requests")
         try:
             response = requests.post(
-                "http://localhost:8001/meetings/",
+                f"{config.MEETINGS_API_URL}/meetings/",
                 headers={"Content-Type": "application/json"},
                 json={"user_id": user_id, "bot_name": "Webhook Bot"}
             )
