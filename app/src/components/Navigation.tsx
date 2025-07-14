@@ -66,7 +66,6 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
     isProfileModalOpen: false,
     recordsLabel: "Sample Records",
   });
-  const [activeSection, setActiveSection] = useState<string>("features");
 
   const updateUIState = (updates: Partial<typeof uiState>) =>
     setUIState((prev) => ({ ...prev, ...updates }));
