@@ -1,29 +1,30 @@
 import { z } from "zod";
+import { validationMessages as msg } from "@/constants/validationMessages";
 
 export const signupUserSchema = z.object({
   userEmail: z.string()
-    .min(1, { message: "Email is required" })
-    .email({ message: "Please enter a valid email address" }),
+    .min(1, { message: msg.email.required })
+    .email({ message: msg.email.invalid }),
   password: z.string()
-    .min(1, { message: "Password is required" })
-    .min(8, { message: "Password must be at least 8 characters long" })
-    .max(16, { message: "Password must be at most 16 characters long" }),
+    .min(1, { message: msg.password.required })
+    .min(8, { message: msg.password.min })
+    .max(16, { message: msg.password.max }),
   userName: z.string()
-    .min(1, { message: "Name is required" })
-    .min(2, { message: "Name should be at least 2 characters long" }),
+    .min(1, { message: msg.name.required })
+    .min(2, { message: msg.name.min }),
   contact: z.string()
-    .min(1, { message: "Contact number is required" })
-    .regex(/^\d{10}$/, { message: "Contact number must be exactly 10 digits" })
+    .min(1, { message: msg.contact.required })
+    .regex(/^\d{10}$/, { message: msg.contact.invalid }),
 });
 
 export const signinUserSchema = z.object({
   userEmail: z.string()
-    .min(1, { message: "Email is required" })
-    .email({ message: "Please enter a valid email address" }),
+    .min(1, { message: msg.email.required })
+    .email({ message: msg.email.invalid }),
   password: z.string()
-    .min(1, { message: "Password is required" })
-    .min(8, { message: "Password must be at least 8 characters long" })
-    .max(16, { message: "Password must be at most 16 characters long" }),
+    .min(1, { message: msg.password.required })
+    .min(8, { message: msg.password.min })
+    .max(16, { message: msg.password.max }),
 });
 
 export type SignupUserRequest = z.infer<typeof signupUserSchema>;
