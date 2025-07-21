@@ -32,7 +32,7 @@ const UserForm = (props: UserFormProps) => {
   const form = useForm<SignupUserRequest | SigninUserRequest>({
     resolver: zodResolver(isSignup ? signupUserSchema : signinUserSchema),
     defaultValues: isSignup ? { password: "", userEmail: "", userName: "", contact: "" } : { password: "", userEmail: "" },
-    mode: "onChange",
+    mode: "all",
   });
 
   const onSubmit = (data: SignupUserRequest | SigninUserRequest) =>
