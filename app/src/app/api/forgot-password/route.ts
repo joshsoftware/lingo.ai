@@ -17,20 +17,21 @@ export async function POST(req: NextRequest) {
     // Check if user exists
     const [user] = await db.select().from(userTable).where(eq(userTable.username, userEmail));
     if (!user) {
-      return NextResponse.json({ success: false, error: "not_found" }, { status: 404 });
+      return NextResponse.json({ success: false, error: "Email not found. Please sign up first." }, { status: 404 });
     }
 
     // Generate a secure token
     const token = randomBytes(32).toString("hex");
     const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRY_MINUTES * 60 * 1000);
 
-    // Remove any existing tokens for this email
-    await db.delete(passwordResetTokens).where(eq(passwordResetTokens.userEmail, userEmail));
-    // Store the new token
+    // Upsert the token for this email
     await db.insert(passwordResetTokens).values({
       userEmail: userEmail,
       token,
       expiresAt,
+    }).onConflictDoUpdate({
+      target: passwordResetTokens.userEmail,
+      set: { token, expiresAt },
     });
 
     // Send email
@@ -43,7 +44,12 @@ export async function POST(req: NextRequest) {
         pass: process.env.SMTP_PASS,
       },
     });
-    const appUrl = process.env.APP_URL || "http://localhost:3000";
+
+    if (!process.env.APP_URL) {
+      return NextResponse.json({ success: false, error: "APP_URL not set" }, { status: 422 });
+    }
+
+    const appUrl = process.env.APP_URL
     const resetLink = `${appUrl}/reset-password?token=${token}&email=${encodeURIComponent(userEmail)}`;
     await transporter.sendMail({
       from: process.env.SMTP_FROM || process.env.SMTP_USER,

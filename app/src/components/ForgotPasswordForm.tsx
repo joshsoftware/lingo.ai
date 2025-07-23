@@ -6,6 +6,8 @@ import { CheckCircle, AlertCircle } from 'lucide-react';
 import { forgotPasswordSchema, ForgotPasswordRequest } from "@/Validators/resetPassword";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import axios from 'axios'
+
 import {
   Form,
   FormField,
@@ -31,22 +33,26 @@ export default function ForgotPasswordForm() {
   const handleSubmit = async (data: ForgotPasswordRequest) => {
     setIsLoading(true);
     try {
-      const res = await fetch("/api/forgot-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: data.userEmail }),
+      const res = await axios.post('/api/forgot-password', {
+        email: data.userEmail,
       });
-      if (res.status === 404) {
-        toast.error("Email not found. Please sign up first.");
-        setTimeout(() => router.push("/signup"), 2000);
-        return;
-      }
-      if (!res.ok) throw new Error("Failed to send reset link");
       toast.success("A reset link has been sent to your email.");
       setTimeout(() => router.push("/signin"), 2000);
-    } catch (err) {
-      form.setError("userEmail", { message: "Something went wrong. Please try again later." });
-      toast.error("Something went wrong. Please try again later.");
+    } catch (error: any) {
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        const message = error.response?.data?.error || "Something went wrong.";
+        if (status === 404) {
+          toast.error(message || "Email not found. Please sign up first.");
+          setTimeout(() => router.push("/signup"), 1000);
+          return;
+        }
+        form.setError("userEmail", { message });
+        toast.error(message);
+      } else {
+        form.setError("userEmail", { message: "Unexpected error occurred." });
+        toast.error("Unexpected error occurred.");
+      }
     } finally {
       setIsLoading(false);
     }

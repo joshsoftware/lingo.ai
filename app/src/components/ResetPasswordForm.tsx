@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { resetPasswordSchema, ResetPasswordRequest } from "@/Validators/resetPassword";
 import { useForm } from "react-hook-form";
@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import axios from "axios";
 
 interface ResetPasswordFormProps {
   token: string;
@@ -35,27 +36,29 @@ export default function ResetPasswordForm({ token, email }: ResetPasswordFormPro
   const handleSubmit = async (data: ResetPasswordRequest) => {
     setLoading(true);
     try {
-      const res = await fetch("/api/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, email, password: data.password, confirmPassword: data.confirmPassword }),
+      const res = await axios.post('/api/reset-password', {
+        token,
+        email,
+        password: data.password,
+        confirmPassword: data.confirmPassword,
       });
-      if (!res.ok) throw new Error("Invalid or expired token");
       toast.success("Your password has been reset. You can now sign in with your new password.");
       setTimeout(() => {
         router.push("/signin");
-      }, 2000);
-    } catch (err) {
-      form.setError("password", { message: "Invalid or expired token, or server error." });
-      toast.error("Invalid or expired token, or server error.");
+      }, 1000);
+    } catch (error: any) {
+      if (axios.isAxiosError(error)) {
+        const message = error.response?.data?.error || "Invalid or expired token, or server error.";
+        form.setError("password", { message });
+        toast.error(message);
+      } else {
+        form.setError("password", { message: "Unexpected error occurred." });
+        toast.error("Unexpected error occurred.");
+      }
     } finally {
       setLoading(false);
     }
   };
-
-  if (!token || !email) {
-    return <div className="flex items-center justify-center min-h-screen text-red-600 font-bold">Invalid reset link.</div>;
-  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background">
