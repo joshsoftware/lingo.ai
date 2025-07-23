@@ -88,7 +88,7 @@ export const subscriptionTable = pgTable("subscriptions", {
 
 export const passwordResetTokens = pgTable("password_reset_tokens", {
   id: uuid("id").primaryKey().defaultRandom(),
-  userEmail: text("user_email").notNull(),
+  userEmail: text("user_email").notNull().unique(),
   token: text("token").notNull(),
   expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
