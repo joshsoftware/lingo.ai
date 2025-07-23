@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { passwordResetTokens, userTable } from "@/db/schema";
-import { eq, and, lt } from "drizzle-orm";
+import { eq, and, gt } from "drizzle-orm";
 import { hash } from "@node-rs/argon2";
 import { resetPasswordSchema } from "@/Validators/resetPassword";
 import { lucia } from "@/auth";
@@ -16,11 +16,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Missing fields" }, { status: 400 });
     }
     // Find the token
+    const now = new Date()
     const [reset] = await db.select().from(passwordResetTokens).where(
       and(
         eq(passwordResetTokens.token, token),
         eq(passwordResetTokens.userEmail, email),
-        lt(passwordResetTokens.expiresAt, new Date(Date.now() + 1000 * 60 * 60 * 24)) // not expired
+        gt(passwordResetTokens.expiresAt, now) // not expired
       )
     );
     if (!reset) {
