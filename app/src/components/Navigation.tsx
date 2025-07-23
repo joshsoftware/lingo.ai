@@ -32,7 +32,6 @@ import axios from "axios";
 import { Modal } from "./ui/modal";
 import ProfileInformation from "./ProfileInformation";
 import { supportEmail } from "@/constants/homePage";
-import { useRef, useCallback } from "react";
 
 type NavItem = {
   label: string;
