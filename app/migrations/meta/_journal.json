@@ -78,13 +78,6 @@
       "when": 1750831412800,
       "tag": "0010_brainy_pixie",
       "breakpoints": true
-    },
-    {
-      "idx": 11,
-      "version": "7",
-      "when": 1752318324647,
-      "tag": "0011_secret_arachne",
-      "breakpoints": true
     }
   ]
 }
