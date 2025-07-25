@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     const [reset] = await db.select().from(passwordResetTokens).where(
       and(
         eq(passwordResetTokens.token, token),
-        eq(passwordResetTokens.userEmail, email),
+        eq(passwordResetTokens.username, email),
         gt(passwordResetTokens.expiresAt, now) // not expired
       )
     );
