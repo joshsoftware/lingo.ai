@@ -20,17 +20,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Email not found. Please sign up first." }, { status: 404 });
     }
 
-    // Generate a secure token
+    // Generate a securusernamee token
     const token = randomBytes(32).toString("hex");
     const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRY_MINUTES * 60 * 1000);
 
     // Upsert the token for this email
     await db.insert(passwordResetTokens).values({
-      userEmail: userEmail,
+      username: userEmail,
       token,
       expiresAt,
     }).onConflictDoUpdate({
-      target: passwordResetTokens.userEmail,
+      target: passwordResetTokens.username,
       set: { token, expiresAt },
     });
 
