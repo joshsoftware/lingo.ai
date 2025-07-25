@@ -10,7 +10,7 @@ import { cookies } from "next/headers";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { token, password, confirmPassword } = resetPasswordSchema.parse({ ...body, confirmPassword: body.confirmPassword ?? body.password });
+    const { token, password, confirmPassword } = resetPasswordSchema.parse({ ...body, confirmPassword: body.confirmPassword });
     const email = body.email;
     if (!token || !email || !password) {
       return NextResponse.json({ success: false, error: "Missing fields" }, { status: 400 });
