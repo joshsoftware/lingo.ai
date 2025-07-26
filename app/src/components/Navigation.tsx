@@ -217,11 +217,12 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
           <div className="flex items-center justify-end space-x-4 w-full mr-20 ">
             {!isSignedIn && pathname !== "/signin" && (
               <Button
-                variant="ghost"
-                className="hidden md:inline-flex border hover:font-bold w-32"
-              >
-                <Link href={"/signin"}>Sign In</Link>
-              </Button>
+              variant="ghost"
+              className="hidden md:inline-flex border hover:font-bold w-32"
+              onClick={() => router.push("/signin")}
+            >
+              Sign In
+            </Button>
             )}
 
             {isSignedIn && (
