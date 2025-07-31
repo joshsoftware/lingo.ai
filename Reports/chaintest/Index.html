@@ -1,0 +1,465 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+  <title>LingoAI Automation Report</title>
+    <link id="style" href="resources/chaintest-pkg.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+  <style></style>
+</head>
+
+<body data-bs-theme="dark">
+  <nav class="navbar border-bottom">
+    <div class="container d-flex justify-content-between">
+      <div>
+        <a class="navbar-brand" href="#">ChainTest</a>
+        <span class="ms-3 fs-6">Lingo AI</span>
+      </div>
+      <div>
+        <span class="badge badge-outline text-lg"><i class="bi bi-hourglass me-1"></i> 2m 25s</span>
+        <span class="badge badge-outline text-lg"><i class="bi bi-clock me-1 text-success"></i> 2025-07-31 12:30:43 pm</span>
+        <span class="badge badge-outline text-lg me-3"><i class="bi bi-clock me-1 text-danger"></i> 2025-07-31 12:33:09 pm</span>
+          <button role="button" id="sys-info" class="btn btn-outline-primary smaller" title="View System Info">
+            <i class="bi bi-pc-display-horizontal"></i></button>
+        <button role="button" id="shortcuts" class="btn btn-outline-primary smaller" title="Shortcuts">
+          <i class="bi bi-info-circle"></i></button>
+      </div>
+    </div>
+  </nav>
+
+  <div id="summary" class="container-fluid bg-body-tertiary">
+    <!-- dashboard section -->
+    <div id="dashboard" class="py-5">
+      <div class="container">
+        <div class="row">
+          <div class="col-4">
+            <div class="card card-custom" style="height: 175px">
+              <div class="card-header">
+                Suites
+              </div>
+              <div class="card-body d-flex justify-content-center" style="height: 90px;">
+                <div class="chart-view center" style="margin-left: -1rem;">
+                  <canvas id="stats1"></canvas>
+                </div>
+              </div>
+              <div class="card-footer small">
+                <span id="sp1">1</span> Passed,
+                <span id="sf1">0</span> Failed,
+                <span id="ss1">0</span> Skipped
+              </div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="card card-custom" style="height: 175px">
+              <div class="card-header">
+                Classes
+              </div>
+              <div class="card-body d-flex justify-content-center" style="height: 90px;">
+                <div class="chart-view center" style="margin-left: -1rem;">
+                  <canvas id="stats2"></canvas>
+                </div>
+              </div>
+              <div class="card-footer small">
+                <span id="sp2">2</span> Passed,
+                <span id="sf2">0</span> Failed,
+                <span id="ss2">0</span> Skipped
+              </div>
+            </div>
+          </div>
+            <div class="col-4">
+              <div class="card card-custom" style="height: 175px">
+                <div class="card-header">
+                  Methods
+                </div>
+                <div class="card-body d-flex justify-content-center" style="height: 90px;">
+                  <div class="chart-view center" style="margin-left: -1rem;">
+                    <canvas id="stats3"></canvas>
+                  </div>
+                </div>
+                <div class="card-footer small">
+                  <span id="sp3">7</span> Passed,
+                  <span id="sf3">0</span> Failed,
+                  <span id="ss3">0</span> Skipped
+                </div>
+              </div>
+            </div>
+        </div>
+      </div>
+    </div>
+    <!-- /dashboard section -->
+
+    <!-- tag section -->
+    <!-- /tag section -->
+  </div>
+
+  <div class="container-fluid">
+    <div class="py-3 mb-5">
+      <div class="container d-flex justify-content-between">
+        <div class="input-group">
+          <input type="text" id="q" class="form-control border" placeholder="Search..." aria-label="Search...">
+          <button class="btn border btn-sm text-success status-filter" id="passed" type="button">Passed</button>
+          <button class="btn border btn-sm text-warning status-filter" id="skipped" type="button">Skipped</button>
+          <button class="btn border btn-sm text-danger status-filter" id="failed" type="button">Failed</button>
+          <button id="clear-filters" class="btn border btn-sm"><i class="bi bi-x-lg me-1"></i>Clear all filters</button>
+          <button type="button" id="summary-toggle" class="btn border btn-sm"><i class="bi bi-toggle-on me-1"></i> Toggle Summary Section</button>
+        </div>
+      </div>
+    </div>
+      <div class="test-container passed">
+        <div class="container">
+          <div class="row">
+            <div class="col-4">
+              <h6 class="mb-3 testname fs-6 passed">Suite</h6>
+              <div class="small">
+                <span class="badge badge-outline"><i class="bi bi-hourglass me-1"></i> 2m 25s</span>
+                <span class="badge text-bg-info"><i class="bi bi-clock me-1"></i>
+                  2025-07-31 12:30:44 pm</span>
+                <span class="badge text-bg-warning"><i class="bi bi-clock me-1"></i>
+                  2025-07-31 12:33:09 pm</span>
+              </div>
+              
+            </div>
+            <div class="col-8">
+                <div class="card mb-3 result passed">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                      <div>
+                          <i class="bi bi-check-circle-fill text-success"></i>
+                        <span class="fs-6 ms-2">testcases.LingoAILogin</span>
+                      </div>
+                      <div>
+                        <span class="badge text-dark bg-light">1m 52s</span>
+                      </div>
+                    </div>
+                    
+  <div class="mt-3 border-top">
+    <div class="leaf passed pb-1 logs-toggle">
+      <div class="d-flex justify-content-between mt-3">
+        <div>
+            <i class="bi bi-check-circle-fill text-success"></i>
+          <span class="fs-6 ms-2">testMP3FileUpload <i role="button" class="bi bi-caret-down-fill text-muted small"></i></span>
+        </div>
+        <div>
+          <span class="badge text-dark bg-light">18s</span>
+        </div>
+      </div>
+      <p class="desc">Validate E2E after Uploading MP3 File<br>[ritesh.ranjan@joshsoftware.com, Josh@123]</p>
+        <div class="mt-3 logs d-none">
+          <pre class="pb-0">
+LOG INFO: ENTERING USER EMAIL
+LOG INFO: ENTERING USER PASSWORD
+LOG INFO: ENTERING USER SIGNIN
+LOG INFO: CHOSEN FILE TO UPLOAD ===>  MP3 
+LOG INFO: CLICKING ON TRANSCRIBE
+          </pre>
+        </div>
+    </div>
+    <div class="leaf passed pb-1 logs-toggle">
+      <div class="d-flex justify-content-between mt-3">
+        <div>
+            <i class="bi bi-check-circle-fill text-success"></i>
+          <span class="fs-6 ms-2">validateMP3Upload <i role="button" class="bi bi-caret-down-fill text-muted small"></i></span>
+        </div>
+        <div>
+          <span class="badge text-dark bg-light">3s</span>
+        </div>
+      </div>
+      <p class="desc">Validate E2E after uploading MP4</p>
+        <div class="mt-3 logs d-none">
+          <pre class="pb-0">
+Log:PASS - Test PASS testMP3FileUpload
+Log:PASS - Test Pass validateMP3Upload
+          </pre>
+        </div>
+    </div>
+    <div class="leaf passed pb-1 logs-toggle">
+      <div class="d-flex justify-content-between mt-3">
+        <div>
+            <i class="bi bi-check-circle-fill text-success"></i>
+          <span class="fs-6 ms-2">playAudioFile <i role="button" class="bi bi-caret-down-fill text-muted small"></i></span>
+        </div>
+        <div>
+          <span class="badge text-dark bg-light">7s</span>
+        </div>
+      </div>
+      <p class="desc">Play Audio And Validate Transcribe</p>
+        <div class="mt-3 logs d-none">
+          <pre class="pb-0">
+Log:PASS - Test PASS validateMP3Upload
+Log:PASS - Test Pass playAudioFile
+          </pre>
+        </div>
+    </div>
+  </div>
+
+                  </div>
+                </div>
+                <div class="card mb-3 result passed">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                      <div>
+                          <i class="bi bi-check-circle-fill text-success"></i>
+                        <span class="fs-6 ms-2">testcases.ProfileIcon</span>
+                      </div>
+                      <div>
+                        <span class="badge text-dark bg-light">32s</span>
+                      </div>
+                    </div>
+                    
+  <div class="mt-3 border-top">
+    <div class="leaf passed pb-1 logs-toggle">
+      <div class="d-flex justify-content-between mt-3">
+        <div>
+            <i class="bi bi-check-circle-fill text-success"></i>
+          <span class="fs-6 ms-2">testProfileDropdownOptions <i role="button" class="bi bi-caret-down-fill text-muted small"></i></span>
+        </div>
+        <div>
+          <span class="badge text-dark bg-light">4s</span>
+        </div>
+      </div>
+      <p class="desc">Profile Icon Click and Validate Profile Options<br>[ritesh.ranjan@joshsoftware.com, Josh@123]</p>
+        <div class="mt-3 logs d-none">
+          <pre class="pb-0">
+Log:PASS - Test PASS playAudioFile
+LOG INFO: CLOSING BROWSER
+LOG INFO: BROWSER CLOSED
+ *** Instantiating Browser *** 
+LOG INFO: Chrome Browser Initialized 
+LOG INFO: Launching Lingo AI URL
+Log:PASS - Test Pass testProfileDropdownOptions
+LOG INFO: ENTERING USER EMAIL
+LOG INFO: ENTERING USER PASSWORD
+LOG INFO: ENTERING USER SIGNIN
+ Expected Profile option List loaded 
+ Clicked On Profile icon 
+Account Text Label Is Displayed 
+ Profile Separator Is Displayed 
+Profile List Option Matching Succesful
+          </pre>
+        </div>
+    </div>
+    <div class="leaf passed pb-1 logs-toggle">
+      <div class="d-flex justify-content-between mt-3">
+        <div>
+            <i class="bi bi-check-circle-fill text-success"></i>
+          <span class="fs-6 ms-2">clickProfileOptions <i role="button" class="bi bi-caret-down-fill text-muted small"></i></span>
+        </div>
+        <div>
+          <span class="badge text-dark bg-light">3s</span>
+        </div>
+      </div>
+      <p class="desc">[ritesh.ranjan@joshsoftware.com, Josh@123]</p>
+        <div class="mt-3 logs d-none">
+          <pre class="pb-0">
+Log:PASS - Test PASS testProfileDropdownOptions
+Log:PASS - Test Pass clickProfileOptions
+Clicked on Profile Option From DD
+Verifiication for Profile Container visibility
+Verifiication for Profile Heading visibility
+Verifiication of Profile Email Successful
+Verifiication for Profile Email Initials visibility
+Verifiication for Profile Transcribe Option
+          </pre>
+        </div>
+    </div>
+    <div class="leaf passed pb-1 logs-toggle">
+      <div class="d-flex justify-content-between mt-3">
+        <div>
+            <i class="bi bi-check-circle-fill text-success"></i>
+          <span class="fs-6 ms-2">testLingoBot <i role="button" class="bi bi-caret-down-fill text-muted small"></i></span>
+        </div>
+        <div>
+          <span class="badge text-dark bg-light">13s</span>
+        </div>
+      </div>
+      <p class="desc"></p>
+        <div class="mt-3 logs d-none">
+          <pre class="pb-0">
+Log:PASS - Test PASS clickProfileOptions
+Log:PASS - Test Pass testLingoBot
+Clicked Profile Icon
+Clicked Lingo Bot From DD
+Lingo Bot Container Visibility Checked
+Lingo Bot Container Heading Visibility Checked
+Lingo Bot Container Sub-Heading Visibility Checked
+Lingo Bot Cancel Button Clicked
+Checked Invisibility after Lingo Bot Container Cancel 
+          </pre>
+        </div>
+    </div>
+    <div class="leaf passed pb-1 logs-toggle">
+      <div class="d-flex justify-content-between mt-3">
+        <div>
+            <i class="bi bi-check-circle-fill text-success"></i>
+          <span class="fs-6 ms-2">testLogout <i role="button" class="bi bi-caret-down-fill text-muted small"></i></span>
+        </div>
+        <div>
+          <span class="badge text-dark bg-light">4s</span>
+        </div>
+      </div>
+      <p class="desc"></p>
+        <div class="mt-3 logs d-none">
+          <pre class="pb-0">
+Log:PASS - Test PASS testLingoBot
+Log:PASS - Test Pass testLogout
+Clicked Profile Icon
+ Clicked On Logout 
+ Logout Assertion Successful
+          </pre>
+        </div>
+    </div>
+  </div>
+
+                  </div>
+                </div>
+            </div>
+          </div>
+        </div>
+          <div class="border-bottom py-5"></div>
+      </div>
+  </div>
+
+  <script>
+    const stats1Annotation = {'total': 1, 'passed': 1};
+    const stats1 = [
+      { result: 'Passed', count: 1, bg: 'rgb(140, 197, 83)' },
+      { result: 'Failed', count: 0, bg: 'rgb(233,80,113)' },
+      { result: 'Skipped', count: 0, bg: 'rgb(13, 202, 240)' }
+    ];
+      const stats2Annotation = {'total': 2, 'passed': 2};
+      const stats2 = [
+        { result: 'Passed', count: 2, bg: 'rgb(140, 197, 83)' },
+        { result: 'Failed', count: 0, bg: 'rgb(233,80,113)' },
+        { result: 'Skipped', count: 0, bg: 'rgb(13, 202, 240)' }
+      ];
+      const stats3Annotation = {'total': 7, 'passed': 7};
+      const stats3 = [
+        { result: 'Passed', count: 7, bg: 'rgb(140, 197, 83)' },
+        { result: 'Failed', count: 0, bg: 'rgb(233,80,113)' },
+        { result: 'Skipped', count: 0, bg: 'rgb(13, 202, 240)' }
+      ];
+     
+  </script>
+    <script src="resources/chaintest-pkg.js"></script>
+
+    <div id="sys-info-modal" class="modal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h6 class="modal-title">System</h6>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+              onclick="toggleSysInfo(false)"></button>
+          </div>
+          <div class="modal-body">
+            <table class="table">
+              <tbody>
+                  <tr>
+                    <td>java.version</td>
+                    <td>21.0.5</td>
+                  </tr>
+                  <tr>
+                    <td>java.vm.name</td>
+                    <td>OpenJDK 64-Bit Server VM</td>
+                  </tr>
+                  <tr>
+                    <td>java.vm.vendor</td>
+                    <td>Eclipse Adoptium</td>
+                  </tr>
+                  <tr>
+                    <td>java.class.version</td>
+                    <td>65.0</td>
+                  </tr>
+                  <tr>
+                    <td>java.runtime.name</td>
+                    <td>OpenJDK Runtime Environment</td>
+                  </tr>
+                  <tr>
+                    <td>os.name</td>
+                    <td>Linux</td>
+                  </tr>
+                  <tr>
+                    <td>os.arch</td>
+                    <td>amd64</td>
+                  </tr>
+                  <tr>
+                    <td>os.version</td>
+                    <td>6.8.0-64-generic</td>
+                  </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+              onclick="toggleSysInfo(false)">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <div id="info-modal" class="modal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h6 class="modal-title">ChainTest Simple Generator - Shortcuts</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+            onclick="toggleInfoModal(false)"></button>
+        </div>
+        <div class="modal-body">
+          <table class="table">
+            <tbody>
+                <tr>
+                  <td>p</td>
+                  <td>Toggle passed tests</td>
+                </tr>
+                <tr>
+                  <td>s</td>
+                  <td>Toggle skipped tests</td>
+                </tr>
+                <tr>
+                  <td>esc</td>
+                  <td>Reset all filters</td>
+                </tr>
+                <tr>
+                  <td>L</td>
+                  <td>Toggle theme (light/dark)</td>
+                </tr>
+                <tr>
+                  <td>f</td>
+                  <td>Toggle failed tests</td>
+                </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+            onclick="toggleInfoModal(false)">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="attachment-modal" class="modal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h6 class="modal-title">Attachment</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+            onclick="toggleAttachmentModal(false)"></button>
+        </div>
+        <div class="modal-body">
+          <img src="" />
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+            onclick="toggleAttachmentModal(false)">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+
+</html>

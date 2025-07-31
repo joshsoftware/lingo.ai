@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testng-results ignored="0" total="7" passed="7" failed="0" skipped="0">
+  <reporter-output>
+  </reporter-output>
+  <suite started-at="2025-07-31T12:30:44 IST" name="Suite" finished-at="2025-07-31T12:33:09 IST" duration-ms="145327">
+    <groups>
+    </groups>
+    <test started-at="2025-07-31T12:30:44 IST" name="Test" finished-at="2025-07-31T12:33:09 IST" duration-ms="145327">
+      <class name="testcases.ProfileIcon">
+        <test-method is-config="true" signature="startBrowser()[pri:0, instance:testcases.ProfileIcon@6bf08014]" started-at="2025-07-31T12:32:37 IST" name="startBrowser" finished-at="2025-07-31T12:32:42 IST" duration-ms="5777" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- startBrowser -->
+        <test-method signature="testProfileDropdownOptions(java.lang.String,java.lang.String)[pri:1, instance:testcases.ProfileIcon@6bf08014]" started-at="2025-07-31T12:32:43 IST" name="testProfileDropdownOptions" description="Profile Icon Click and Validate Profile Options" data-provider="LoginCredsData" finished-at="2025-07-31T12:32:47 IST" duration-ms="4936" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[ritesh.ranjan@joshsoftware.com]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA[Josh@123]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testProfileDropdownOptions -->
+        <test-method signature="clickProfileOptions(java.lang.String,java.lang.String)[pri:2, instance:testcases.ProfileIcon@6bf08014]" started-at="2025-07-31T12:32:47 IST" name="clickProfileOptions" data-provider="LoginCredsData" finished-at="2025-07-31T12:32:51 IST" depends-on-methods="testcases.ProfileIcon.testProfileDropdownOptions" duration-ms="3879" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[ritesh.ranjan@joshsoftware.com]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA[Josh@123]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- clickProfileOptions -->
+        <test-method signature="testLingoBot()[pri:3, instance:testcases.ProfileIcon@6bf08014]" started-at="2025-07-31T12:32:51 IST" name="testLingoBot" finished-at="2025-07-31T12:33:05 IST" depends-on-methods="testcases.ProfileIcon.testProfileDropdownOptions" duration-ms="13338" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testLingoBot -->
+        <test-method signature="testLogout()[pri:3, instance:testcases.ProfileIcon@6bf08014]" started-at="2025-07-31T12:33:05 IST" name="testLogout" finished-at="2025-07-31T12:33:09 IST" depends-on-methods="testcases.ProfileIcon.testProfileDropdownOptions" duration-ms="4295" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testLogout -->
+        <test-method is-config="true" signature="tearDown()[pri:0, instance:testcases.ProfileIcon@6bf08014]" started-at="2025-07-31T12:33:09 IST" name="tearDown" finished-at="2025-07-31T12:33:09 IST" duration-ms="70" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- tearDown -->
+      </class> <!-- testcases.ProfileIcon -->
+      <class name="testcases.LingoAILogin">
+        <test-method is-config="true" signature="startBrowser()[pri:0, instance:testcases.LingoAILogin@5c45d770]" started-at="2025-07-31T12:30:44 IST" name="startBrowser" finished-at="2025-07-31T12:32:07 IST" duration-ms="83249" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- startBrowser -->
+        <test-method signature="testMP3FileUpload(java.lang.String,java.lang.String)[pri:1, instance:testcases.LingoAILogin@5c45d770]" started-at="2025-07-31T12:32:07 IST" name="testMP3FileUpload" description="Validate E2E after Uploading MP3 File" data-provider="LoginCredsData" finished-at="2025-07-31T12:32:25 IST" duration-ms="18142" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[ritesh.ranjan@joshsoftware.com]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA[Josh@123]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testMP3FileUpload -->
+        <test-method signature="validateMP3Upload()[pri:2, instance:testcases.LingoAILogin@5c45d770]" started-at="2025-07-31T12:32:25 IST" name="validateMP3Upload" description="Validate E2E after uploading MP4" finished-at="2025-07-31T12:32:29 IST" depends-on-methods="testcases.LingoAILogin.testMP3FileUpload" duration-ms="3311" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- validateMP3Upload -->
+        <test-method signature="playAudioFile()[pri:3, instance:testcases.LingoAILogin@5c45d770]" started-at="2025-07-31T12:32:29 IST" name="playAudioFile" description="Play Audio And Validate Transcribe" finished-at="2025-07-31T12:32:37 IST" duration-ms="7861" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- playAudioFile -->
+        <test-method is-config="true" signature="tearDown()[pri:0, instance:testcases.LingoAILogin@5c45d770]" started-at="2025-07-31T12:32:37 IST" name="tearDown" finished-at="2025-07-31T12:32:37 IST" duration-ms="81" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- tearDown -->
+      </class> <!-- testcases.LingoAILogin -->
+    </test> <!-- Test -->
+  </suite> <!-- Suite -->
+</testng-results>

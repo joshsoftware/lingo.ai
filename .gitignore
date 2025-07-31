@@ -167,3 +167,5 @@ cython_debug/
 /service/models
 
 secrets/
+# Ignore build output
+target/

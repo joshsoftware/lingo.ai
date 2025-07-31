@@ -107,3 +107,88 @@ For Next UI: _sudo service lingo-ui restart_
 
 For Next UI: _journalctl -u lingo-ui_
 
+# Lingo AI Automation
+
+This repository contains the automated test suite for **Lingo AI**, developed using Selenium WebDriver and TestNG. The project follows the **Page Object Model (POM)** design pattern for scalability and maintainability. This suite also contains Cross Browser Testing.
+
+### Browsers Used
+Chrome, Firefox, Edge
+By default the test execution is carried on "Chrome" Browser
+
+---
+
+## Tech Stack
+
+| Tool/Technology | Purpose |
+|-----------------|---------|
+| **Selenium WebDriver** | Browser automation |
+| **TestNG** | Test execution and assertions |
+| **Maven** | Build management and dependency handling |
+| **POM (Page Object Model)** | Test structure design |
+| **Chaintest Report** | Customized test reporting |
+| **TestNG Listeners** | Custom event handling during test execution |
+| **ChainTestLog** | Logging test execution |
+
+---
+
+## Project Structure
+
+LingoAI-Automation/
+│
+├── src/
+│ ├── main/
+│ │ ├── java/
+│ │ │ ├── base/ # Browser initialization (Base Class)
+│ │ │ ├── pages/ # Page classes following POM
+│ │ │ ├── utils/ # Reusable methods (Utility Class)
+│ │ │ └── listeners/ # TestNG Listeners, ChainTestLog
+│ │
+│ ├── test/
+│ │ ├── java/
+│ │ │ ├── tests/ # Test cases using TestNG
+│ │ │ └── dataprovider/ # Excel-based Data Providers
+│
+├── test-output/ # TestNG reports and logs
+├── pom.xml # Maven configuration
+└── README.md # Project documentation
+
+yaml
+Copy
+Edit
+
+---
+
+## Key Features
+
+- **Browser Initialization** handled in a dedicated `BaseClass`.
+- **Reusable Utility Methods** for common operations (clicking, waits, dropdowns).
+- **Page Object Model** for separating locators and actions from test logic.
+- **Excel Data Providers** to feed test methods with dynamic data.
+- **Custom Listeners** to enhance logs and reporting using `ChainTestLog`.
+- **Chaintest Report** for visually rich test reporting.
+
+---
+
+## How to Run
+
+### Prerequisites:
+- Java (JDK 11 or above)
+- Maven
+- ChromeDriver (or other compatible WebDriver)
+
+### Steps:
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/lingo-ai-automation.git
+   cd lingo-ai-automation
+Run tests using Maven: mvn clean test
+
+Default Reports will be available under the test-output directory.
+
+### Reporting
+Chaintest Report: Offers detailed results including screenshots, execution time, and logs.
+
+ChainTestLog: Logs significant test events for debugging and traceability.
+
+### Data-Driven Testing
+TestNG's @DataProvider is used to fetch test data from Excel sheets. This enables parameterized testing with varied datasets.
