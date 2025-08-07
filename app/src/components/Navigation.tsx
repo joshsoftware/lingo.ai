@@ -178,14 +178,16 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
             </div>
 
             <div className="flex justify-start items-center space-x-2 w-full ">
-              <div className="w-8 h-8 min-w-8 min-h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg leading-none">
-                  L
+              <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer">
+                <div className="w-8 h-8 min-w-8 min-h-8 bg-primary rounded-lg flex items-center justify-center">
+                  <span className="text-primary-foreground font-bold text-lg leading-none">
+                    L
+                  </span>
+                </div>
+                <span className="text-xl font-bold whitespace-nowrap">
+                  Lingo.ai
                 </span>
-              </div>
-              <span className="text-xl font-bold whitespace-nowrap">
-                Lingo.ai
-              </span>
+              </Link>
             </div>
           </div>
 
