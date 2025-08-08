@@ -69,14 +69,9 @@ const RecorderCard = (props: RecorderCardProps) => {
       onSuccess: (res, req_data) => {
         setStatus(`Transcription complete`);
         
-        // Client-side debug logs you can see in browser console
-        console.log("🎯 FRONTEND: Full transcription response:", res);
-        console.log("🎯 FRONTEND: Detected language:", res.detected_language);
-        
-        // Show detected language in toast for immediate feedback
-        toast.success(`Transcription complete for ${file?.name}${res.detected_language ? ` | Language: ${res.detected_language}` : ''}`);
+        toast.success(`Transcription complete for ${file?.name}`);
 
-        const saveData = {
+        saveTranscribe({
           documentUrl: req_data.documentUrl,
           userID: userId,
           documentName: req_data.documentName,
@@ -84,11 +79,7 @@ const RecorderCard = (props: RecorderCardProps) => {
           translation: res.translation,
           segments: res.segments,
           detectedLanguage: res.detected_language,
-        };
-        
-        console.log("🎯 FRONTEND: Data being sent to save API:", saveData);
-        
-        saveTranscribe(saveData);
+        });
       },
       onError: (error) => {
         // reset all
@@ -170,9 +161,7 @@ const RecorderCard = (props: RecorderCardProps) => {
         return response.data[0] as TranscriptionsType;
       },
       onSuccess: async (res) => {
-        console.log("🎯 FRONTEND: Save API response:", res);
-        console.log("🎯 FRONTEND: Saved transcription detectedLanguage:", res.detectedLanguage);
-        
+
         if (res.id) {
           setFile(null);
           setAudioURL("");

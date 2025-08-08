@@ -16,9 +16,7 @@ export async function POST(req: Request) {
       detectedLanguage
     }: TranscriptionsPayload = body;
 
-    // Debug log to see what detectedLanguage value we're receiving
-    console.log("Save API - Received detectedLanguage:", detectedLanguage);
-    console.log("Save API - Complete body:", body);
+
 
     const userResponse = await db
       .select({

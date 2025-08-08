@@ -114,18 +114,12 @@ def translate_with_whisper_timestamped(audioPath):
             **translate_options
         )
         
-        # Debug: Print the full result to see what's available
-        logger.info(f"Full whisper result keys: {list(result.keys())}")
-        
-        # Extract detected language - try multiple possible fields
+        # Extract detected language
         detected_language = (
             result.get('language') or 
             result.get('detected_language') or 
             'unknown'
         )
-        logger.info(f"Detected language: {detected_language}")
-        logger.info(f"Language field from whisper: {result.get('language')}")
-        logger.info(f"Full result language info: {result.get('language', 'NOT_FOUND')}")
         
         # Check if language_probs exists
         if 'language_probs' in result:

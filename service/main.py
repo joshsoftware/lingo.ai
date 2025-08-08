@@ -51,7 +51,6 @@ async def upload_audio(body: Body):
         
         # Extract detected language
         detected_language = translation.get("detected_language", "unknown")
-        logger.info(f"Detected language in main.py: {detected_language}")
         
         logger.info("translation done")
         summary = summarize_using_ollama(translation["text"])
@@ -61,7 +60,7 @@ async def upload_audio(body: Body):
         # Pass the translation object and detected_language to generate_timestamp_json
         result = generate_timestamp_json(translation, summary, detected_language)
         
-        logger.info(f"Final result: {result}")
+
         return JSONResponse(content=result, status_code=200)
 
     except Exception as e:
@@ -82,7 +81,6 @@ async def upload_audio(body: Body):
 
         logger.info("summary done")
         result = generate_timestamp_jon(translation,summary,detected_language)
-        logger.info(result)
 
         return JSONResponse(content=result, status_code=200)
 

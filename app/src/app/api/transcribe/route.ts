@@ -16,9 +16,7 @@ export async function POST(req: Request) {
       audio_file_link: documentUrl,
     });
 
-    // Debug logs for detected language flow
-    console.log("Transcription API response:", data);
-    console.log("Detected language from microservice:", data?.detected_language);
+
 
     if(transcriptionStatus !== 200){
       return new Response("Internal server error", { status: 500 });
