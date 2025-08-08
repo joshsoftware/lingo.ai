@@ -15,6 +15,7 @@ import { Key, useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import Markdown from "react-markdown";
 import { LanguageDisplay } from "./LanguageDisplay";
+import { getAudioDuration } from "@/utils/recording";
 
 const AudioResults = ({ transcription }: { transcription: any }) => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -41,17 +42,32 @@ const AudioResults = ({ transcription }: { transcription: any }) => {
     participants: [],
   };
 
-  // Audio playback setup
+
   useEffect(() => {
     if (audioFile.url) {
       const audio = new Audio(audioFile.url);
+      audio.crossOrigin = "anonymous"; 
       audioRef.current = audio;
 
-      audio.addEventListener("loadedmetadata", () => {
-        const mins = Math.floor(audio.duration / 60);
-        const secs = Math.floor(audio.duration % 60);
-        setAudioDuration(`${mins}:${secs.toString().padStart(2, "0")}`);
-      });
+     
+      const fetchDuration = async () => {
+        try {
+          const duration = await getAudioDuration(audioFile.url);
+          setAudioDuration(duration);
+        } catch (error) {
+          console.error("Failed to get audio duration:", error);
+          
+          if (transcription.audioDuration && transcription.audioDuration > 0) {
+            const minutes = Math.floor(transcription.audioDuration / 60);
+            const seconds = transcription.audioDuration % 60;
+            setAudioDuration(`${minutes}:${seconds < 10 ? "0" : ""}${seconds}`);
+          } else {
+            setAudioDuration("--:--");
+          }
+        }
+      };
+
+      fetchDuration();
 
       audio.addEventListener("timeupdate", () => {
         setCurrentTime(audio.currentTime || 0);

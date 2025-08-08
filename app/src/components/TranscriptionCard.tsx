@@ -34,8 +34,17 @@ const TranscriptionRow = ({
   useEffect(() => {
     const fetchAudioDuration = async () => {
       if (transcription?.documentUrl) {
-        const duration = await getAudioDuration(transcription.documentUrl);
-        setAudioDuration(duration);
+      
+        if (transcription.audioDuration && transcription.audioDuration > 0) {
+          const minutes = Math.floor(transcription.audioDuration / 60);
+          const seconds = transcription.audioDuration % 60;
+          const formattedDuration = `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+          setAudioDuration(formattedDuration);
+        } else {
+         
+          const duration = await getAudioDuration(transcription.documentUrl);
+          setAudioDuration(duration);
+        }
       }
     };
 
