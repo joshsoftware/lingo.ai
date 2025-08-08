@@ -52,6 +52,11 @@ const DetailedTranscription = ({
       audioRef.current.addEventListener("timeupdate", () => {
         setCurrentTime(audioRef.current?.currentTime || 0);
       });
+      
+      audioRef.current.addEventListener("ended", () => {
+        setIsPlaying(false);
+        setCurrentTime(0);
+      });
     }
 
     // Cleanup function to stop audio playback when component unmounts
@@ -84,7 +89,7 @@ const DetailedTranscription = ({
         }
       }
     },
-    [isPlaying]
+    []
   );
 
   return (

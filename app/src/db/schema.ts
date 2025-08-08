@@ -17,6 +17,7 @@ export const transcriptions = pgTable("transcriptions", {
   translation: text("translation").notNull(),
   summary: text("summary").notNull(),
   segments: jsonb("segments").notNull().$type<segment[]>().default([]),
+  detectedLanguage: text("detected_language"),
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
   documentUrl: text("documentUrl").notNull(),
   documentName: text("documentName").notNull(),

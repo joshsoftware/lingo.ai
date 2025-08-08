@@ -8,6 +8,7 @@ import { FileAudio, Pause, Play } from "lucide-react";
 import Link from "next/link";
 import { getAudioDuration, getFileSize } from "@/utils/recording";
 import { userTranscriptions } from "@/types/transcriptions";
+import { LanguageDisplay } from "./LanguageDisplay";
 
 interface TranscriptionRowProps {
   transcription: userTranscriptions;
@@ -104,10 +105,9 @@ const TranscriptionRow = ({
         </div>
       </td>
       <td>
-        <Badge className="ml-4" variant="secondary">
-          {/* TODO: Add language from microservice */}
-          {"N/A"}
-        </Badge>
+        <div className="ml-4">
+          <LanguageDisplay languageCode={transcription?.detectedLanguage || undefined} />
+        </div>
       </td>
       <td className="font-mono text-sm">
         {audioDuration ? `Duration: ${audioDuration}` : "Loading..."}

@@ -14,6 +14,7 @@ import {
 import { Key, useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import Markdown from "react-markdown";
+import { LanguageDisplay } from "./LanguageDisplay";
 
 const AudioResults = ({ transcription }: { transcription: any }) => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -24,7 +25,7 @@ const AudioResults = ({ transcription }: { transcription: any }) => {
     name: transcription.documentName,
     duration: audioDuration ?? "Loading...",
     uploadDate: format(new Date(transcription.createdAt), "dd MMM yyyy"),
-    originalLanguage: "NA", // Update as needed
+    originalLanguage: transcription.detectedLanguage || null,
     url: transcription.documentUrl,
   };
 
@@ -32,11 +33,7 @@ const AudioResults = ({ transcription }: { transcription: any }) => {
     text: transcription.translation,
     confidence: 95, // Or pull dynamically if available
   };
-  if (audioRef.current) {
-    audioRef.current.addEventListener("timeupdate", () => {
-      setCurrentTime(audioRef.current?.currentTime || 0);
-    });
-  }
+
 
   const summary = {
     keyPoints: transcription.summary?.split("\n") || [],
@@ -56,6 +53,15 @@ const AudioResults = ({ transcription }: { transcription: any }) => {
         setAudioDuration(`${mins}:${secs.toString().padStart(2, "0")}`);
       });
 
+      audio.addEventListener("timeupdate", () => {
+        setCurrentTime(audio.currentTime || 0);
+      });
+
+      audio.addEventListener("ended", () => {
+        setIsPlaying(false);
+        setCurrentTime(0);
+      });
+
       return () => {
         audio.pause();
         audioRef.current = null;
@@ -72,7 +78,7 @@ const AudioResults = ({ transcription }: { transcription: any }) => {
         }
       }
     },
-    [isPlaying]
+    []
   );
   const handlePlayPause = () => {
     if (!audioRef.current) return;
@@ -127,7 +133,7 @@ const AudioResults = ({ transcription }: { transcription: any }) => {
                 <p className="text-sm font-medium text-muted-foreground">
                   Original Language
                 </p>
-                <Badge variant="secondary">{audioFile.originalLanguage}</Badge>
+                <LanguageDisplay languageCode={audioFile.originalLanguage} />
               </div>
             </div>
             <div className="mt-4">

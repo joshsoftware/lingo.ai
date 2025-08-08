@@ -1,0 +1,1 @@
+ALTER TABLE "transcriptions" ADD COLUMN "detected_language" text;

@@ -12,8 +12,13 @@ export async function POST(req: Request) {
       summary,
       translation,
       audioDuration,
-      segments
+      segments,
+      detectedLanguage
     }: TranscriptionsPayload = body;
+
+    // Debug log to see what detectedLanguage value we're receiving
+    console.log("Save API - Received detectedLanguage:", detectedLanguage);
+    console.log("Save API - Complete body:", body);
 
     const userResponse = await db
       .select({
@@ -36,7 +41,8 @@ export async function POST(req: Request) {
       translation,
       audioDuration,
       userName: userResponse[0].userName,
-      segments
+      segments,
+      detectedLanguage
     }).returning();
 
     return new Response(JSON.stringify(response), { status: 200 });
