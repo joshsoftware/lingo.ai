@@ -298,12 +298,19 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
           <>
             <p>Do you want to add a bot for meeting Summarization?</p>
             <div className="mt-4 flex justify-end gap-2">
-              <Button
-                variant="secondary"
+            <Button
+                className={cn(
+                  buttonVariants({
+                    className:
+                      "!bg-secondary !hover:bg-secondary text-black text-xs px-4",
+                    size: "xs",
+                  })
+                )}
                 onClick={() => updateUIState({ isModalOpen: false })}
               >
                 Cancel
               </Button>
+
               <Button
                 className={cn(
                   buttonVariants({
