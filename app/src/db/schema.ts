@@ -86,5 +86,13 @@ export const subscriptionTable = pgTable("subscriptions", {
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
 });
 
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  username: text("username").notNull().unique(),
+  token: text("token").notNull(),
+  expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
+});
+
 export type TranscriptionsPayload = typeof transcriptions.$inferInsert;
 export type TranscriptionsType = typeof transcriptions.$inferSelect;

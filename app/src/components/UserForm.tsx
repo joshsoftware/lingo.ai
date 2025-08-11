@@ -132,6 +132,11 @@ const UserForm = (props: UserFormProps) => {
               )}
             />
           </div>
+          {!isSignup && (
+            <div className="w-full max-w-sm flex justify-end mb-2">
+              <Link href="/forgot-password" className="text-xs text-[#668D7E] hover:underline font-semibold">Forgot Password?</Link>
+            </div>
+          )}
         
           <Button
             isLoading={disableSubmit || isPending}
