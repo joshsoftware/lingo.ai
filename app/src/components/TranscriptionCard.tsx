@@ -31,6 +31,14 @@ const TranscriptionRow = ({
   const [fileSize, setFileSize] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+
+  const getProxyUrl = (audioUrl: string): string => {
+    if (audioUrl.includes('.s3.') || audioUrl.includes('s3.amazonaws.com')) {
+      return `/api/proxy?url=${encodeURIComponent(audioUrl)}`;
+    }
+    return audioUrl;
+  };
+
   useEffect(() => {
     const fetchAudioDuration = async () => {
       if (transcription?.documentUrl) {
@@ -46,26 +54,26 @@ const TranscriptionRow = ({
       }
     };
 
+    const setupAudio = () => {
+      if (transcription?.documentUrl) {
+        
+        const proxyUrl = getProxyUrl(transcription.documentUrl);
+        
+        const audio = new Audio(proxyUrl);
+        audioRef.current = audio;
+
+        audio.addEventListener("ended", () => {
+          if (audioRef.current) {
+            audioRef.current.pause();
+            onAudioEnd();
+          }
+        });
+      }
+    };
+
     fetchAudioDuration();
     fetchFileSize();
-
-    if (transcription?.documentUrl) {
-      const audio = new Audio(transcription.documentUrl);
-      audioRef.current = audio;
-
-      audio.addEventListener("ended", () => {
-        if (audioRef.current) {
-          audioRef.current.pause();
-          onAudioEnd();
-        }
-      });
-
-      if (isPlaying) {
-        audio.play();
-      } else {
-        audio.pause();
-      }
-    }
+    setupAudio();
 
     return () => {
       if (audioRef.current) {
@@ -73,7 +81,17 @@ const TranscriptionRow = ({
         audioRef.current = null;
       }
     };
-  }, [transcription?.documentUrl, onAudioEnd, isPlaying]);
+  }, [transcription?.documentUrl, onAudioEnd]);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.play();
+      } else {
+        audioRef.current.pause();
+      }
+    }
+  }, [isPlaying]);
 
   return (
     <tr className="border-b border-gray-200 mt-4" ref={rowRef}>

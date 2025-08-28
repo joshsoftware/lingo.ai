@@ -123,7 +123,7 @@ def translate_with_whisper_timestamped(audioPath):
         
         # Check if language_probs exists
         if 'language_probs' in result:
-            logger.info(f"Language probabilities: {result['language_probs']}")
+            logger.info("Language probabilities: %s", result['language_probs'])
         
         return {
             "text": result.get("text", ""),

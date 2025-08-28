@@ -21,6 +21,7 @@ const AudioResults = ({ transcription }: { transcription: any }) => {
   const [audioDuration, setAudioDuration] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
+  
   const audioFile = {
     name: transcription.documentName,
     duration: audioDuration ?? "Loading...",
@@ -34,17 +35,27 @@ const AudioResults = ({ transcription }: { transcription: any }) => {
     confidence: 95, // Or pull dynamically if available
   };
 
-
   const summary = {
     keyPoints: transcription.summary?.split("\n") || [],
     actionItems: [],
     participants: [],
   };
 
-  // Audio playback setup
+
+  const getProxyUrl = (audioUrl: string): string => {
+    if (audioUrl.includes('.s3.') || audioUrl.includes('s3.amazonaws.com')) {
+      return `/api/proxy?url=${encodeURIComponent(audioUrl)}`;
+    }
+    return audioUrl;
+  };
+
+
   useEffect(() => {
     if (audioFile.url) {
-      const audio = new Audio(audioFile.url);
+
+      const proxyUrl = getProxyUrl(audioFile.url);
+      
+      const audio = new Audio(proxyUrl);
       audioRef.current = audio;
 
       audio.addEventListener("loadedmetadata", () => {
