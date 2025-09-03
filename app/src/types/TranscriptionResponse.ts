@@ -5,4 +5,5 @@ export type TranscriptionResponse = {
   translation: string;
   summary: string;
   segments: segment[];
+  detected_language: string;
 };

@@ -11,6 +11,7 @@ import {
   SendIcon,
   UploadIcon,
 } from "lucide-react";
+
 import { useDropzone } from "react-dropzone";
 import { useRef, useState, useEffect } from "react";
 import Image from "next/image";
@@ -87,6 +88,10 @@ const RecorderCard = (props: RecorderCardProps) => {
     noDrag: true,
   });
 
+
+
+
+
   const { mutate: sendTranscribeRequest, isPending: isTranscribing } =
     useMutation({
       mutationKey: ["transcribe"],
@@ -101,6 +106,7 @@ const RecorderCard = (props: RecorderCardProps) => {
       },
       onSuccess: (res, req_data) => {
         setStatus(`Transcription complete`);
+        
         toast.success(`Transcription complete for ${file?.name}`);
 
         saveTranscribe({
@@ -110,6 +116,7 @@ const RecorderCard = (props: RecorderCardProps) => {
           summary: res.summary,
           translation: res.translation,
           segments: res.segments,
+          detectedLanguage: res.detected_language,
         });
       },
       onError: (error) => {
@@ -192,6 +199,7 @@ const RecorderCard = (props: RecorderCardProps) => {
         return response.data[0] as TranscriptionsType;
       },
       onSuccess: async (res) => {
+
         if (res.id) {
           setFile(null);
           setAudioURL("");

@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { transcriptions } from "@/db/schema";
 import { desc } from "drizzle-orm";
 import { validateRequest } from "@/auth";
+import { LanguageDisplay } from '@/components/LanguageDisplay';
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -26,10 +27,13 @@ const page = async () => {
       documentUrl: transcriptions.documentUrl,
       isDefault: transcriptions.isDefault,
       audioDuration: transcriptions.audioDuration,
+      detectedLanguage: transcriptions.detectedLanguage,
     })
     .from(transcriptions)
     .orderBy(desc(transcriptions.createdAt))
     .limit(PAGINATION_LIMIT);
+
+
 
   return (
     <div>

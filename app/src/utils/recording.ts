@@ -1,9 +1,21 @@
+
+const getProxyUrl = (audioUrl: string): string => {
+  if (audioUrl.includes('.s3.') || audioUrl.includes('s3.amazonaws.com')) {
+    const url = new URL(audioUrl);
+    const key = url.pathname.substring(1);
+    return `/api/proxy?url=${encodeURIComponent(audioUrl)}`;
+  }
+  return audioUrl;
+};
+
 export const getAudioDuration = async (audioUrl: string): Promise<string> => {
   try {
     const AudioContext =
       window.AudioContext || (window as any).webkitAudioContext;
     const audioContext = new AudioContext();
-    const response = await fetch(audioUrl);
+    
+    const proxyUrl = getProxyUrl(audioUrl);
+    const response = await fetch(proxyUrl);
     const arrayBuffer = await response.arrayBuffer();
     const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
     const duration = audioBuffer.duration;
@@ -18,7 +30,8 @@ export const getAudioDuration = async (audioUrl: string): Promise<string> => {
 
 export const getFileSize = async (fileUrl: string): Promise<string> => {
   try {
-    const response = await fetch(fileUrl);
+    const proxyUrl = getProxyUrl(fileUrl);
+    const response = await fetch(proxyUrl);
     if (!response.ok) {
       console.error(`Error fetching file: ${response.status} ${response.statusText}`);
       return "Invalid size";

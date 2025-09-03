@@ -9,7 +9,7 @@ from summarizer import summarize_using_openai
 from summarizer import summarize_using_ollama
 from pydantic import BaseModel
 import traceback
-from util import generate_timestamp_jon
+from util import generate_timestamp_json
 from fastapi_versionizer.versionizer import Versionizer, api_version
 
 app = FastAPI()
@@ -30,6 +30,16 @@ def root_route():
 class Body(BaseModel):
     audio_file_link: str
 
+def generate_timestamp_json(translation, summary, detected_language=None):
+    """Generate the final JSON response with all required fields"""
+    return {
+        "message": "File processed successfully!",
+        "translation": translation.get("text", ""),
+        "summary": summary,
+        "segments": translation.get("segments", []),
+        "detected_language": detected_language or translation.get("detected_language", "unknown")
+    }
+
 @api_version(1)
 @app.post("/upload-audio")
 async def upload_audio(body: Body):
@@ -37,15 +47,19 @@ async def upload_audio(body: Body):
         if body.audio_file_link == "":
             return JSONResponse(status_code=400, content={"message":"Invalid file link"})
 
-        # Remove file extension check since frontend handles this
         translation = translate_with_whisper_timestamped(body.audio_file_link)
-
+        
+        # Extract detected language
+        detected_language = translation.get("detected_language", "unknown")
+        
         logger.info("translation done")
         summary = summarize_using_ollama(translation["text"])
 
         logger.info("summary done")
-        result = generate_timestamp_jon(translation,summary)
-        logger.info(result)
+        
+        # Pass the translation object and detected_language to generate_timestamp_json
+        result = generate_timestamp_json(translation, summary, detected_language)
+        
 
         return JSONResponse(content=result, status_code=200)
 
@@ -61,13 +75,12 @@ async def upload_audio(body: Body):
 
         # Remove file extension check since frontend handles this
         translation = translate_with_whisper_timestamped(body.audio_file_link)
-
+        detected_language = translation.get('detected_language', 'unknown')
         logger.info("translation done")
         summary = summarize_using_ollama(translation["text"])
 
         logger.info("summary done")
-        result = generate_timestamp_jon(translation,summary)
-        logger.info(result)
+        result = generate_timestamp_json(translation,summary,detected_language)
 
         return JSONResponse(content=result, status_code=200)
 

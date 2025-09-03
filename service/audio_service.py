@@ -107,13 +107,31 @@ def translate_with_whisper_timestamped(audioPath):
         translate_options = dict(task="translate", **options)
         result = whisper_ts.transcribe_timestamped(
             model,
-            audioPath,
+            audioPath,            
             condition_on_previous_text=False,
             vad=False,
             trust_whisper_timestamps=False,
             **translate_options
         )
-        return result
+        
+        # Extract detected language
+        detected_language = (
+            result.get('language') or 
+            result.get('detected_language') or 
+            'unknown'
+        )
+        
+        # Check if language_probs exists
+        if 'language_probs' in result:
+            logger.info("Language probabilities: %s", result['language_probs'])
+        
+        return {
+            "text": result.get("text", ""),
+            "segments": result.get("segments", []),
+            "detected_language": detected_language,
+            "transcription_result": result
+        }
+        
     except HTTPException:
         raise
     except Exception as e:

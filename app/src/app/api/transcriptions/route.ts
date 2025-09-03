@@ -34,6 +34,7 @@ export async function GET(req: NextRequest) {
         documentUrl: transcriptions.documentUrl,
         isDefault: transcriptions.isDefault,
         audioDuration: transcriptions.audioDuration,
+        detectedLanguage: transcriptions.detectedLanguage, // Add this
       })
       .from(transcriptions)
       .where(

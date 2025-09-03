@@ -78,6 +78,13 @@
       "when": 1750831412800,
       "tag": "0010_brainy_pixie",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1754562354517,
+      "tag": "0011_lucky_genesis",
+      "breakpoints": true
     }
   ]
 }

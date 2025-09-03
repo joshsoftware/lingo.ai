@@ -12,8 +12,11 @@ export async function POST(req: Request) {
       summary,
       translation,
       audioDuration,
-      segments
+      segments,
+      detectedLanguage
     }: TranscriptionsPayload = body;
+
+
 
     const userResponse = await db
       .select({
@@ -36,7 +39,8 @@ export async function POST(req: Request) {
       translation,
       audioDuration,
       userName: userResponse[0].userName,
-      segments
+      segments,
+      detectedLanguage
     }).returning();
 
     return new Response(JSON.stringify(response), { status: 200 });
