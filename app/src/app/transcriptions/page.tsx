@@ -33,8 +33,7 @@ const page = async () => {
     .orderBy(desc(transcriptions.createdAt))
     .limit(PAGINATION_LIMIT);
 
-  // Debug log to see what's in the database
-  console.log("User transcriptions from DB:", userTranscriptions);
+
 
   return (
     <div>
