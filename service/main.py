@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from audio_service import translate_with_whisper
 from audio_service import translate_with_whisper_timestamped
+from intent import find_intent_using_openai
 from summarizer import summarize_using_openai
 from summarizer import summarize_using_ollama
 from pydantic import BaseModel
@@ -81,3 +82,22 @@ versions = Versionizer(
     latest_prefix='/latest',
     sort_routes=True
 ).versionize()
+
+@app.post("/audio-intent")
+async def audio_intent(body: Body):
+    try:
+        if body.audio_file_link == "":
+            return JSONResponse(status_code=400, content={"message":"Invalid file link"})
+
+        translation = translate_with_whisper_timestamped(body.audio_file_link)
+
+        logger.info("translation done")
+        intent = find_intent_using_openai(translation["text"])
+
+        logger.info("intent find done")
+
+        return JSONResponse(content=intent, status_code=200)
+
+    except Exception as e:
+        logger.info(traceback.format_exc())
+        return JSONResponse(content={"message": str(e)}, status_code=500)
