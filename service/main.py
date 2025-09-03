@@ -1,16 +1,18 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.responses import JSONResponse
 from logger import logger
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from audio_service import translate_with_whisper
-from audio_service import translate_with_whisper_timestamped
+from audio_service import translate_with_whisper_timestamped, translate_with_whisper_from_upload
+from intent import find_intent_using_openai, find_intent_using_regex
 from summarizer import summarize_using_openai
 from summarizer import summarize_using_ollama
 from pydantic import BaseModel
 import traceback
 from util import generate_timestamp_json
 from fastapi_versionizer.versionizer import Versionizer, api_version
+import json
 
 app = FastAPI()
 
@@ -94,3 +96,36 @@ versions = Versionizer(
     latest_prefix='/latest',
     sort_routes=True
 ).versionize()
+
+@app.post("/voice/transcribe-intent")
+async def transcribe_intent(audio: UploadFile = File(...), session_id: str = Form(...)):
+    try:
+        if not audio:
+            return JSONResponse(status_code=400, content={"message":"No audio file provided"})
+
+        translation_text = translate_with_whisper_from_upload(audio)
+        logger.info("translation done")
+
+        intent = find_intent_using_regex(translation_text)
+        logger.info("intent find done")
+
+        try:
+            if isinstance(intent, dict):
+                intent_dict = intent
+            else:
+                intent_dict = json.loads(intent)
+        except json.JSONDecodeError:
+            logger.warning(f"Intent detection returned non-JSON response: {intent}")
+            result = {"error": intent, "session_id": session_id, "translation": translation_text}
+            return JSONResponse(content=result, status_code=200)
+        
+        result = {
+            "session_id": session_id,
+            "translation": translation_text,
+            "intent_data": intent_dict
+        }
+        return JSONResponse(content=result, status_code=200)
+
+    except Exception as e:
+        logger.info(traceback.format_exc())
+        return JSONResponse(content={"message": str(e)}, status_code=500)
