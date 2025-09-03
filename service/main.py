@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from audio_service import translate_with_whisper
 from audio_service import translate_with_whisper_timestamped, translate_with_whisper_from_upload
-from intent import find_intent_using_openai
+from intent import find_intent_using_openai, find_intent_using_regex
 from summarizer import summarize_using_openai
 from summarizer import summarize_using_ollama
 from pydantic import BaseModel
@@ -93,11 +93,14 @@ async def transcribe_intent(audio: UploadFile = File(...), session_id: str = For
         translation_text = translate_with_whisper_from_upload(audio)
         logger.info("translation done")
 
-        intent = find_intent_using_openai(translation_text)
+        intent = find_intent_using_regex(translation_text)
         logger.info("intent find done")
 
         try:
-            intent_dict = json.loads(intent)
+            if isinstance(intent, dict):
+                intent_dict = intent
+            else:
+                intent_dict = json.loads(intent)
         except json.JSONDecodeError:
             logger.warning(f"Intent detection returned non-JSON response: {intent}")
             result = {"error": intent, "session_id": session_id, "translation": translation_text}
