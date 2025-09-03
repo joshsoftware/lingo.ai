@@ -18,13 +18,22 @@ class IntentDetector:
     """
 
     def __init__(self):
-        """Initialize the IntentDetector with OpenAI model and prompt template."""
-        self._model = ChatOpenAI(
-            model_name=open_ai_model_name,
-            temperature=open_ai_temperature
-        )
-        self._prompt_template = get_intent_template()
-        self._llm_chain = RunnableSequence(self._prompt_template, self._model)
+        """Initialize the IntentDetector lazily - models will be loaded on first use."""
+        self._model = None
+        self._prompt_template = None
+        self._llm_chain = None
+
+    def _initialize_models(self):
+        """Initialize the OpenAI model and prompt template if not already initialized."""
+        if self._model is None:
+            logger.info("Initializing OpenAI model for intent detection...")
+            self._model = ChatOpenAI(
+                model_name=open_ai_model_name,
+                temperature=open_ai_temperature
+            )
+            self._prompt_template = get_intent_template()
+            self._llm_chain = RunnableSequence(self._prompt_template, self._model)
+            logger.info("OpenAI model initialization completed.")
 
     def detect_intent(self, text: str) -> str:
         """
@@ -39,6 +48,9 @@ class IntentDetector:
         if not text or len(text.strip()) == 0:
             return "The transcribed text is empty. Please provide valid input."
 
+        # Initialize models lazily on first use
+        self._initialize_models()
+
         logger.info("Intent detection started")
 
         try:
@@ -50,7 +62,8 @@ class IntentDetector:
             return "An error occurred while finding the intent."
 
 
-_intent_detector = IntentDetector()
+# Global instance for lazy initialization
+_intent_detector = None
 
 
 def find_intent_using_openai(text: str) -> str:
@@ -63,6 +76,9 @@ def find_intent_using_openai(text: str) -> str:
     Returns:
         JSON: The detected intent JSON.
     """
+    global _intent_detector
+    if _intent_detector is None:
+        _intent_detector = IntentDetector()
     return _intent_detector.detect_intent(text)
 
 
