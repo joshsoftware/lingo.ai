@@ -54,11 +54,16 @@ const UserForm = (props: UserFormProps) => {
             <FormField
               control={form.control}
               name="userName"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <FormItem>
                   <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input {...field} type="text" placeholder="Enter your Name" />
+                    <Input 
+                      {...field} 
+                      type="text" 
+                      placeholder="Enter your Name" 
+                      hasError={!!fieldState.error}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -69,11 +74,16 @@ const UserForm = (props: UserFormProps) => {
             <FormField
               control={form.control}
               name="contact"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <FormItem>
                   <FormLabel>Contact</FormLabel>
                   <FormControl>
-                    <Input {...field} type="contact" placeholder="Enter Contact number" />
+                    <Input 
+                      {...field} 
+                      type="tel" 
+                      placeholder="Enter Contact number" 
+                      hasError={!!fieldState.error}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -86,11 +96,16 @@ const UserForm = (props: UserFormProps) => {
             <FormField
               control={form.control}
               name="userEmail"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter your Email" />
+                    <Input 
+                      {...field} 
+                      type="email"
+                      placeholder="Enter your Email" 
+                      hasError={!!fieldState.error}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -101,17 +116,27 @@ const UserForm = (props: UserFormProps) => {
             <FormField
               control={form.control}
               name="password"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input {...field} type="password" placeholder="Enter your Pasword" />
+                    <Input 
+                      {...field} 
+                      type="password" 
+                      placeholder="Enter your Password" 
+                      hasError={!!fieldState.error}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
+          {!isSignup && (
+            <div className="w-full max-w-sm flex justify-end mb-2">
+              <Link href="/forgot-password" className="text-xs text-[#668D7E] hover:underline font-semibold">Forgot Password?</Link>
+            </div>
+          )}
         
           <Button
             isLoading={disableSubmit || isPending}
@@ -136,7 +161,7 @@ const UserForm = (props: UserFormProps) => {
             }
             ))}
         >
-          {isSignup ? "Already have an Acount? Sign In" : "Don't have an Account ? Sign Up "}
+          {isSignup ? "Already have an Account? Sign In" : "Don't have an Account? Sign Up"}
         </Link>
 
         </div>
