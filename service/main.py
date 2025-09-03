@@ -9,7 +9,7 @@ from summarizer import summarize_using_openai
 from summarizer import summarize_using_ollama
 from pydantic import BaseModel
 import traceback
-from util import generate_timestamp_jon
+from util import generate_timestamp_json
 from fastapi_versionizer.versionizer import Versionizer, api_version
 
 app = FastAPI()
@@ -80,7 +80,7 @@ async def upload_audio(body: Body):
         summary = summarize_using_ollama(translation["text"])
 
         logger.info("summary done")
-        result = generate_timestamp_jon(translation,summary,detected_language)
+        result = generate_timestamp_json(translation,summary,detected_language)
 
         return JSONResponse(content=result, status_code=200)
 

@@ -1,6 +1,6 @@
 import json
 
-def generate_timestamp_jon(translation,summary,detected_language):
+def generate_timestamp_json(translation,summary,detected_language):
     segs = []
     seg = {}
     segments = translation["segments"]
