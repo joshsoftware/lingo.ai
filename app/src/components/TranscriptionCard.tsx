@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { FileAudio, Pause, Play } from "lucide-react";
 import Link from "next/link";
 import { useAudioMetadata } from "@/hooks/useAudioMetadata";
+import { getProxyUrl } from "@/utils/urlUtils";
 import { userTranscriptions } from "@/types/transcriptions";
 import { LanguageDisplay } from "./LanguageDisplay";
 
@@ -34,13 +35,6 @@ const TranscriptionRow = ({
 
   useEffect(() => {
     if (transcription?.documentUrl) {
-      const getProxyUrl = (audioUrl: string): string => {
-        if (audioUrl.includes('.s3.') || audioUrl.includes('s3.amazonaws.com')) {
-          return `/api/proxy?url=${encodeURIComponent(audioUrl)}`;
-        }
-        return audioUrl;
-      };
-
       const proxyUrl = getProxyUrl(transcription.documentUrl);
       const audio = new Audio(proxyUrl);
       audio.crossOrigin = "anonymous";

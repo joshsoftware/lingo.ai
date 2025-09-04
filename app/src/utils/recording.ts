@@ -1,13 +1,5 @@
 
-// Legacy functions - consider using useAudioMetadata hook instead for better caching
-// These are kept for backward compatibility
-
-const getProxyUrl = (audioUrl: string): string => {
-  if (audioUrl.includes('.s3.') || audioUrl.includes('s3.amazonaws.com')) {
-    return `/api/proxy?url=${encodeURIComponent(audioUrl)}`;
-  }
-  return audioUrl;
-};
+import { getProxyUrl } from './urlUtils';
 
 export const getAudioDuration = async (audioUrl: string): Promise<string> => {
   try {
@@ -51,7 +43,7 @@ export const getAudioDuration = async (audioUrl: string): Promise<string> => {
       return await fetchAudioDurationFallback(audioUrl);
     } catch (fallbackError) {
       console.error("All fallback methods failed:", fallbackError);
-      return "Unable to determine duration";
+      return "--:--";
     }
   }
 };

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-
+import { getProxyUrl } from '@/utils/urlUtils';
 
 const audioMetadataCache = new Map<string, {
   duration: string;
@@ -15,13 +15,6 @@ interface AudioMetadata {
   isLoading: boolean;
   error: string | null;
 }
-
-const getProxyUrl = (audioUrl: string): string => {
-  if (audioUrl.includes('.s3.') || audioUrl.includes('s3.amazonaws.com')) {
-    return `/api/proxy?url=${encodeURIComponent(audioUrl)}`;
-  }
-  return audioUrl;
-};
 
 const getCachedMetadata = (url: string) => {
   const cached = audioMetadataCache.get(url);
@@ -85,7 +78,7 @@ const getAudioDuration = async (audioUrl: string): Promise<string> => {
       return await fetchAudioDurationFallback(audioUrl);
     } catch (fallbackError) {
       console.error("All fallback methods failed:", fallbackError);
-      return "Unable to determine duration";
+      return "--:--";
     }
   }
 };

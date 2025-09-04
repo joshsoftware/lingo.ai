@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import Markdown from "react-markdown";
 import { LanguageDisplay } from "./LanguageDisplay";
 import { useAudioMetadata } from "@/hooks/useAudioMetadata";
+import { getProxyUrl } from "@/utils/urlUtils";
 
 const AudioResults = ({ transcription }: { transcription: any }) => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -47,13 +48,6 @@ const AudioResults = ({ transcription }: { transcription: any }) => {
 
   useEffect(() => {
     if (audioFile.url) {
-      const getProxyUrl = (audioUrl: string): string => {
-        if (audioUrl.includes('.s3.') || audioUrl.includes('s3.amazonaws.com')) {
-          return `/api/proxy?url=${encodeURIComponent(audioUrl)}`;
-        }
-        return audioUrl;
-      };
-
       const proxyUrl = getProxyUrl(audioFile.url);
       const audio = new Audio(proxyUrl);
       audio.crossOrigin = "anonymous";
