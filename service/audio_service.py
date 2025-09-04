@@ -30,7 +30,7 @@ from scipy import misc
 #   number={7},
 #   doi={10.18637/jss.v031.i07}
 # }
-from fastapi import  HTTPException
+from fastapi import  HTTPException, UploadFile
 import openai
 from dotenv import load_dotenv
 from config import openai_api_key, model_id, model_path
@@ -39,6 +39,8 @@ import logging
 import whisper_timestamped as whisper_ts
 import requests
 from urllib.parse import urlparse
+import tempfile
+import os
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -123,7 +125,7 @@ def translate_with_whisper_timestamped(audioPath):
         
         # Check if language_probs exists
         if 'language_probs' in result:
-            logger.info(f"Language probabilities: {result['language_probs']}")
+            logger.info("Language probabilities: %s", result['language_probs'])
         
         return {
             "text": result.get("text", ""),
@@ -140,3 +142,38 @@ def translate_with_whisper_timestamped(audioPath):
             status_code=500,
             detail=f"Translation failed: {str(e)}"
         )
+
+def translate_with_whisper_from_upload(upload_file: UploadFile):
+    """Translate uploaded audio file to English language using whisper model (without timestamps)."""
+    logger.info("Translation from upload started")
+    temp_file_path = None
+    try:
+        # Create a temporary file with the original file extension
+        file_extension = os.path.splitext(upload_file.filename)[1] if upload_file.filename else ".wav"
+        
+        # Create temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as temp_file:
+            temp_file_path = temp_file.name
+            # Write uploaded file content to temporary file
+            content = upload_file.file.read()
+            temp_file.write(content)
+            temp_file.flush()
+
+        options = dict(beam_size=5, best_of=5)
+        translate_options = dict(task="translate", **options)
+        result = model.transcribe(temp_file_path, **translate_options)
+        return result["text"]
+        
+    except Exception as e:
+        logger.error(f"Translation from upload failed: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Translation from upload failed: {str(e)}"
+        )
+    finally:
+        # Clean up temporary file
+        if temp_file_path and os.path.exists(temp_file_path):
+            try:
+                os.unlink(temp_file_path)
+            except Exception as e:
+                logger.warning(f"Failed to delete temporary file {temp_file_path}: {str(e)}")

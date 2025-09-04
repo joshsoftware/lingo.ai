@@ -12,6 +12,7 @@ import {
   UploadIcon,
 } from "lucide-react";
 
+import { useDropzone } from "react-dropzone";
 import { useRef, useState, useEffect } from "react";
 import Image from "next/image";
 import { useMutation } from "@tanstack/react-query";
@@ -49,6 +50,43 @@ const RecorderCard = (props: RecorderCardProps) => {
       setAudioURL(URL.createObjectURL(newFiles[0]));
     }
   };
+
+  const handleFileError = (file: any) => {
+    file.errors.forEach((error: any) => {
+      switch (error.code) {
+        case "file-too-large":
+          toast.error(`File ${file.file.name} is too large`, {
+            description: "Please upload a file less than 5MB",
+          });
+          break;
+        case "file-invalid-type":
+          toast.error(`File ${file.file.name} is invalid`, {
+            description: "Please upload a valid audio or video file",
+          });
+          break;
+        default:
+          toast.error(`File ${file.file.name} encountered an error`, {
+            description: error.message,
+          });
+          break;
+      }
+    });
+  };
+
+  const { getRootProps, getInputProps } = useDropzone({
+    maxFiles: 1,
+    onDrop: (acceptedFiles, rejectedFiles) => {
+      if (rejectedFiles.length > 0) {
+        rejectedFiles.forEach(handleFileError);
+      }
+      handleFileChange(acceptedFiles);
+    },
+    accept: {
+      "audio/*": [".mp3", ".wav"],
+      "video/*": [".mp4"],
+    },
+    noDrag: true,
+  });
 
 
 
@@ -260,36 +298,14 @@ const RecorderCard = (props: RecorderCardProps) => {
         </div>
       ) : (
         <Card
+          {...getRootProps()}
           className="bg-[#F9FFFD] flex flex-col justify-between w-full h-full"
         >
           <CardContent className="flex-grow pt-2">
             <div className="flex flex-col h-full w-full items-center justify-center p-4 rounded-md">
               <input
                 ref={fileInputRef}
-                type="file"
-                accept="audio/*,video/*"
-                onChange={(e) => {
-                  const files = e.target.files;
-                  if (files && files.length > 0) {
-                    const file = files[0];
-                    // Validate file size (5MB limit)
-                    if (file.size > 5 * 1024 * 1024) {
-                      toast.error(`File ${file.name} is too large`, {
-                        description: "Please upload a file less than 5MB",
-                      });
-                      return;
-                    }
-                    // Validate file type
-                    const validTypes = ['audio/mp3', 'audio/wav', 'video/mp4'];
-                    if (!validTypes.includes(file.type)) {
-                      toast.error(`File ${file.name} is invalid`, {
-                        description: "Please upload a valid audio or video file",
-                      });
-                      return;
-                    }
-                    handleFileChange([file]);
-                  }
-                }}
+                {...getInputProps()}
                 id="file-upload-handle"
                 className="hidden"
               />
@@ -383,13 +399,7 @@ const RecorderCard = (props: RecorderCardProps) => {
               ) : (
                 <Fragment>
                   {!isRecording && (
-                    <Button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        fileInputRef.current?.click();
-                      }}
-                      className="flex gap-2 bg-white border-2 border-[#668D7E] hover:bg-white hover:border-2 hover:border-[#668D7E] text-[#668D7E]"
-                    >
+                    <Button className="flex gap-2 bg-white border-2 border-[#668D7E] hover:bg-white hover:border-2 hover:border-[#668D7E] text-[#668D7E]">
                       <UploadIcon className="w-4 h-4" />
                       Upload File
                     </Button>

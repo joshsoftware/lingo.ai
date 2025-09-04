@@ -15,16 +15,19 @@ import { Key, useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import Markdown from "react-markdown";
 import { LanguageDisplay } from "./LanguageDisplay";
-import { getAudioDuration } from "@/utils/recording";
+import { useAudioMetadata } from "@/hooks/useAudioMetadata";
 
 const AudioResults = ({ transcription }: { transcription: any }) => {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [audioDuration, setAudioDuration] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
+  
+  // Use the optimized caching hook
+  const { duration, fileSize, isLoading, error } = useAudioMetadata(transcription.documentUrl);
+  
   const audioFile = {
     name: transcription.documentName,
-    duration: audioDuration ?? "Loading...",
+    duration: duration ?? (isLoading ? "Loading..." : error ? "Error" : "--:--"),
     uploadDate: format(new Date(transcription.createdAt), "dd MMM yyyy"),
     originalLanguage: transcription.detectedLanguage || null,
     url: transcription.documentUrl,
@@ -35,7 +38,6 @@ const AudioResults = ({ transcription }: { transcription: any }) => {
     confidence: 95, // Or pull dynamically if available
   };
 
-
   const summary = {
     keyPoints: transcription.summary?.split("\n") || [],
     actionItems: [],
@@ -45,29 +47,17 @@ const AudioResults = ({ transcription }: { transcription: any }) => {
 
   useEffect(() => {
     if (audioFile.url) {
-      const audio = new Audio(audioFile.url);
-      audio.crossOrigin = "anonymous"; 
-      audioRef.current = audio;
-
-     
-      const fetchDuration = async () => {
-        try {
-          const duration = await getAudioDuration(audioFile.url);
-          setAudioDuration(duration);
-        } catch (error) {
-          console.error("Failed to get audio duration:", error);
-          
-          if (transcription.audioDuration && transcription.audioDuration > 0) {
-            const minutes = Math.floor(transcription.audioDuration / 60);
-            const seconds = transcription.audioDuration % 60;
-            setAudioDuration(`${minutes}:${seconds < 10 ? "0" : ""}${seconds}`);
-          } else {
-            setAudioDuration("--:--");
-          }
+      const getProxyUrl = (audioUrl: string): string => {
+        if (audioUrl.includes('.s3.') || audioUrl.includes('s3.amazonaws.com')) {
+          return `/api/proxy?url=${encodeURIComponent(audioUrl)}`;
         }
+        return audioUrl;
       };
 
-      fetchDuration();
+      const proxyUrl = getProxyUrl(audioFile.url);
+      const audio = new Audio(proxyUrl);
+      audio.crossOrigin = "anonymous";
+      audioRef.current = audio;
 
       audio.addEventListener("timeupdate", () => {
         setCurrentTime(audio.currentTime || 0);

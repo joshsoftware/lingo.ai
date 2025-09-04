@@ -1,5 +1,17 @@
+
+// Legacy functions - consider using useAudioMetadata hook instead for better caching
+// These are kept for backward compatibility
+
+const getProxyUrl = (audioUrl: string): string => {
+  if (audioUrl.includes('.s3.') || audioUrl.includes('s3.amazonaws.com')) {
+    return `/api/proxy?url=${encodeURIComponent(audioUrl)}`;
+  }
+  return audioUrl;
+};
+
 export const getAudioDuration = async (audioUrl: string): Promise<string> => {
   try {
+    const proxyUrl = getProxyUrl(audioUrl);
     const audio = new Audio();
     audio.crossOrigin = "anonymous";
     
@@ -13,7 +25,6 @@ export const getAudioDuration = async (audioUrl: string): Promise<string> => {
         const duration = audio.duration;
         if (isNaN(duration) || !isFinite(duration)) {
           console.warn("HTML Audio gave invalid duration, trying fallback method");
-       
           fetchAudioDurationFallback(audioUrl)
             .then(resolve)
             .catch(() => reject(new Error("Invalid audio duration")));
@@ -27,18 +38,15 @@ export const getAudioDuration = async (audioUrl: string): Promise<string> => {
       audio.addEventListener("error", (e) => {
         clearTimeout(timeout);
         console.warn("HTML Audio method failed, trying fetch method:", e);
-        
-      
         fetchAudioDurationFallback(audioUrl)
           .then(resolve)
           .catch(reject);
       });
 
-      audio.src = audioUrl;
+      audio.src = proxyUrl;
     });
   } catch (error) {
     console.error("Error in getAudioDuration:", error);
- 
     try {
       return await fetchAudioDurationFallback(audioUrl);
     } catch (fallbackError) {
@@ -52,21 +60,9 @@ const fetchAudioDurationFallback = async (audioUrl: string): Promise<string> => 
   try {
     const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
     const audioContext = new AudioContext();
-
-    let response: Response;
-    try {
-     
-      response = await fetch(audioUrl, { 
-        mode: 'cors',
-        credentials: 'omit'
-      });
-    } catch (corsError) {
-      console.warn("CORS mode failed, trying no-cors:", corsError);
-      
-      response = await fetch(audioUrl, { 
-        mode: 'no-cors'
-      });
-    }
+    
+    const proxyUrl = getProxyUrl(audioUrl);
+    const response = await fetch(proxyUrl);
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -89,11 +85,10 @@ const fetchAudioDurationFallback = async (audioUrl: string): Promise<string> => 
   }
 };
 
-
-
 export const getFileSize = async (fileUrl: string): Promise<string> => {
   try {
-    const response = await fetch(fileUrl);
+    const proxyUrl = getProxyUrl(fileUrl);
+    const response = await fetch(proxyUrl);
     if (!response.ok) {
       console.error(`Error fetching file: ${response.status} ${response.statusText}`);
       return "Invalid size";

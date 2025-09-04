@@ -89,7 +89,7 @@ const DetailedTranscription = ({
         }
       }
     },
-    []
+    [isPlaying]
   );
 
   return (
