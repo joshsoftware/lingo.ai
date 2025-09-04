@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FileAudio, Pause, Play } from "lucide-react";
 import Link from "next/link";
-import { getAudioDuration, getFileSize } from "@/utils/recording";
+import { useAudioMetadata } from "@/hooks/useAudioMetadata";
 import { userTranscriptions } from "@/types/transcriptions";
 import { LanguageDisplay } from "./LanguageDisplay";
 
@@ -27,62 +27,38 @@ const TranscriptionRow = ({
   onAudioEnd,
   rowRef,
 }: TranscriptionRowProps) => {
-  const [audioDuration, setAudioDuration] = useState<string | null>(null);
-  const [fileSize, setFileSize] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  
 
-
-  const getProxyUrl = (audioUrl: string): string => {
-    if (audioUrl.includes('.s3.') || audioUrl.includes('s3.amazonaws.com')) {
-      return `/api/proxy?url=${encodeURIComponent(audioUrl)}`;
-    }
-    return audioUrl;
-  };
+  const { duration: audioDuration, fileSize, isLoading, error } = useAudioMetadata(transcription?.documentUrl);
 
   useEffect(() => {
-    const fetchAudioDuration = async () => {
-      if (transcription?.documentUrl) {
-      
-        if (transcription.audioDuration && transcription.audioDuration > 0) {
-          const minutes = Math.floor(transcription.audioDuration / 60);
-          const seconds = transcription.audioDuration % 60;
-          const formattedDuration = `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
-          setAudioDuration(formattedDuration);
-        } else {
-         
-          const duration = await getAudioDuration(transcription.documentUrl);
-          setAudioDuration(duration);
+    if (transcription?.documentUrl) {
+      const getProxyUrl = (audioUrl: string): string => {
+        if (audioUrl.includes('.s3.') || audioUrl.includes('s3.amazonaws.com')) {
+          return `/api/proxy?url=${encodeURIComponent(audioUrl)}`;
         }
+        return audioUrl;
+      };
+
+      const proxyUrl = getProxyUrl(transcription.documentUrl);
+      const audio = new Audio(proxyUrl);
+      audio.crossOrigin = "anonymous";
+      audioRef.current = audio;
+
+      audio.addEventListener("ended", () => {
+        if (audioRef.current) {
+          audioRef.current.pause();
+          onAudioEnd();
+        }
+      });
+
+      if (isPlaying) {
+        audio.play();
+      } else {
+        audio.pause();
       }
-    };
-
-    const fetchFileSize = async () => {
-      if (transcription?.documentUrl) {
-        const size = await getFileSize(transcription.documentUrl);
-        setFileSize(size);
-      }
-    };
-
-    const setupAudio = () => {
-      if (transcription?.documentUrl) {
-        
-        const proxyUrl = getProxyUrl(transcription.documentUrl);
-        
-        const audio = new Audio(proxyUrl);
-        audioRef.current = audio;
-
-        audio.addEventListener("ended", () => {
-          if (audioRef.current) {
-            audioRef.current.pause();
-            onAudioEnd();
-          }
-        });
-      }
-    };
-
-    fetchAudioDuration();
-    fetchFileSize();
-    setupAudio();
+    }
 
     return () => {
       if (audioRef.current) {
@@ -90,17 +66,7 @@ const TranscriptionRow = ({
         audioRef.current = null;
       }
     };
-  }, [transcription?.documentUrl, onAudioEnd]);
-
-  useEffect(() => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.play();
-      } else {
-        audioRef.current.pause();
-      }
-    }
-  }, [isPlaying]);
+  }, [transcription?.documentUrl, onAudioEnd, isPlaying]);
 
   return (
     <tr className="border-b border-gray-200 mt-4" ref={rowRef}>
@@ -128,7 +94,7 @@ const TranscriptionRow = ({
       </td>
       <td className="text-muted-foreground ">
         <div className="ml-4">
-          {fileSize ? fileSize : "Loading..."}
+          {fileSize ?? (isLoading ? "Loading..." : error ? "Error" : "--:--")}
         </div>
       </td>
       <td>
@@ -137,7 +103,7 @@ const TranscriptionRow = ({
         </div>
       </td>
       <td className="font-mono text-sm">
-        {audioDuration ? `Duration: ${audioDuration}` : "Loading..."}
+        {audioDuration ? `Duration: ${audioDuration}` : (isLoading ? "Loading..." : error ? "Error" : "--:--")}
       </td>
       <td className="text-muted-foreground ">
         {transcription?.createdAt
