@@ -6,4 +6,9 @@ export type TranscriptionResponse = {
   summary: string;
   segments: segment[];
   detected_language: string;
+  leadId?: string;
+  crmUrl?: string;
+  extractedData?: any;
+  isDefault?: boolean;
+  transcriptionId?: string | null;
 };

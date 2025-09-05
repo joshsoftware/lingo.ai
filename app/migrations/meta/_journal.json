@@ -85,6 +85,13 @@
       "when": 1754562354517,
       "tag": "0011_lucky_genesis",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1757093957998,
+      "tag": "0012_productive_wallop",
+      "breakpoints": true
     }
   ]
 }
