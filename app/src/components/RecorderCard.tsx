@@ -23,6 +23,8 @@ import { TranscriptionResponse } from "@/types/TranscriptionResponse";
 import { TranscriptionsPayload, TranscriptionsType } from "@/db/schema";
 import { Fragment } from "react";
 
+
+
 interface RecorderCardProps {
   userId: string;
 }
@@ -130,6 +132,10 @@ const RecorderCard = (props: RecorderCardProps) => {
           summary: res.summary,
           segments: res.segments,
           translation: res.translation,
+          leadId: res.leadId,
+          crmUrl: res.crmUrl,
+          extractedData: res.extractedData,
+          isDefault: res.isDefault
         });
 
         setFile(null);
@@ -160,7 +166,7 @@ const RecorderCard = (props: RecorderCardProps) => {
   const { mutate: saveTranscribe, isPending: isSavingTranscribe } = useMutation(
     {
       mutationKey: ["saveTranscribe"],
-      mutationFn: async (data: TranscriptionsPayload) => {
+      mutationFn: async (data: any) => {
         if (recordingTime > 0) {
           // recorded
           data.audioDuration = recordingTime;

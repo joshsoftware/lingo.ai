@@ -5,7 +5,7 @@ __pycache__/
 
 # C extensions
 *.so
-lingo-ui/node_modules
+
 # Distribution / packaging
 .Python
 build/
@@ -165,5 +165,3 @@ cython_debug/
 /service/service.json
 /service/user_account.json
 /service/models
-
-secrets/

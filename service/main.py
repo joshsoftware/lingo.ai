@@ -6,12 +6,18 @@ from starlette.middleware.cors import CORSMiddleware
 from audio_service import translate_with_whisper
 from audio_service import translate_with_whisper_timestamped
 from summarizer import summarize_using_openai
-from summarizer import summarize_using_ollama
+from summarizer import summarize_using_ollama, extract_contact_detailed_using_ollama
 from pydantic import BaseModel
 import traceback
 from util import generate_timestamp_jon
 from fastapi_versionizer.versionizer import Versionizer, api_version
+from config import odoo_url, odoo_db, odoo_username, odoo_password
+from crm_client import OdooCRMClient
+import os
+import requests
+import json
 
+import os.path
 app = FastAPI()
 
 # Add CORS middleware to the application
@@ -29,7 +35,7 @@ def root_route():
 
 class Body(BaseModel):
     audio_file_link: str
-
+# First API endpoint (v1)
 @api_version(1)
 @app.post("/upload-audio")
 async def upload_audio(body: Body):
@@ -42,16 +48,69 @@ async def upload_audio(body: Body):
 
         logger.info("translation done")
         summary = summarize_using_ollama(translation["text"])
+        contact_info = extract_contact_detailed_using_ollama(translation["text"]) if "text" in translation else {"name": None, "phone": None, "address": None}
 
         logger.info("summary done")
         result = generate_timestamp_jon(translation,summary)
+        
         logger.info(result)
+
+        # Fire-and-forget CRM sync (do not block response)
+        lead_id = None
+        try:
+            if odoo_url and odoo_db and odoo_username and odoo_password:
+                client = OdooCRMClient(odoo_url, odoo_db, odoo_username, odoo_password)
+                lead_id = client.create_lead(
+                    name=contact_info.get("name") or "Unknown",
+                    email=None,
+                    phone=contact_info.get("phone"),
+                )
+                logger.info(f"CRM: Lead created lead_id={lead_id}")
+                partner_id = client.add_contact_details(lead_id, contact_info.get("name"), None, contact_info.get("phone"))
+                logger.info(f"CRM: Partner created/linked partner_id={partner_id} to lead_id={lead_id}")
+                
+                # Update: Use the complete street information from LLM extraction
+                street = contact_info.get("street")
+                logger.info(f"{street}= streetstreetstreetstreet")
+                street2 = None
+                city = contact_info.get("city")
+                state = contact_info.get("state")
+                zip_code = contact_info.get("zip")
+                country = contact_info.get("country")
+
+                logger.info(f"CRM: Address components street={street}, city={city}")
+
+                updated = client.update_contact_address(
+                    partner_id, 
+                    street=street,
+                    street2=street2, 
+                    city=city,
+                    state_id=None,
+                    zip_code=zip_code,
+                    country_id=None
+                )
+                logger.info(f"CRM: Address update result={updated} for partner_id={partner_id}")
+                
+                 # Add CRM data to the result
+                result["leadId"] = str(lead_id)
+                result["crmUrl"] = odoo_url
+                result["extractedData"] = contact_info
+                result["transcriptionId"] = None  # This will be determined when transcription is saved
+                result["translation"] = translation["text"]
+                result["userId"] = None  # This will be set by frontend
+                result["isDefault"] = False
+            else:
+                logger.info("CRM: Odoo credentials not configured; skipping CRM sync")
+        except Exception as e:
+            logger.info(f"CRM: Exception during sync: {e}")
 
         return JSONResponse(content=result, status_code=200)
 
     except Exception as e:
         logger.info(traceback.format_exc())
         return JSONResponse(content={"message": str(e)}, status_code=500)
+
+# Second API endpoint (v2)
 @api_version(2)
 @app.post("/upload-audio")
 async def upload_audio(body: Body):
@@ -61,13 +120,69 @@ async def upload_audio(body: Body):
 
         # Remove file extension check since frontend handles this
         translation = translate_with_whisper_timestamped(body.audio_file_link)
-
+        print(translation,"+++++++++++++++++++++++++")
         logger.info("translation done")
         summary = summarize_using_ollama(translation["text"])
+        contact_info = extract_contact_detailed_using_ollama(translation["text"]) if "text" in translation else {"name": None, "phone": None, "address": None}
 
         logger.info("summary done")
         result = generate_timestamp_jon(translation,summary)
+        
         logger.info(result)
+
+        # Fire-and-forget CRM sync (do not block response)
+        lead_id = None
+        try:
+            print(odoo_url, odoo_db, odoo_username, odoo_password)
+            if odoo_url and odoo_db and odoo_username and odoo_password:
+                client = OdooCRMClient(odoo_url, odoo_db, odoo_username, odoo_password)
+                lead_id = client.create_lead(
+                    name=contact_info.get("name") or "Unknown",
+                    email=None,
+                    phone=contact_info.get("phone"),
+                )
+                logger.info(f"CRM: Lead created lead_id={lead_id}")
+                partner_id = client.add_contact_details(lead_id, contact_info.get("name"), None, contact_info.get("phone"))
+                logger.info(f"CRM: Partner created/linked partner_id={partner_id} to lead_id={lead_id}")
+                
+                # Update: Use the complete street information from LLM extraction
+                street = contact_info.get("street")
+                logger.info(f"CRM: - Street: '{street}'")
+
+
+                street2 = None
+                city = contact_info.get("city")
+                state = contact_info.get("state")
+                zip_code = contact_info.get("zip")
+                country = contact_info.get("country")
+                
+                logger.info(f"CRM: Address components street={street}, city={city}")
+                
+                updated = client.update_contact_address(
+                    partner_id, 
+                    street=street,
+                    street2=street2, 
+                    city=city,
+                    state_id=None,
+                    zip_code=zip_code,
+                    country_id=None
+                )
+                logger.info(f"CRM: Address update result={updated} for partner_id={partner_id}")
+              
+                # Add CRM data to the result
+                result["leadId"] = str(lead_id)
+                result["crmUrl"] = odoo_url
+                result["extractedData"] = contact_info
+                result["transcriptionId"] = None  # This will be determined when transcription is saved
+                result["translation"] = translation["text"]
+                result["userId"] = None  # This will be set by frontend
+                result["isDefault"] = False
+
+
+            else:
+                logger.info("CRM: Odoo credentials not configured; skipping CRM sync")
+        except Exception as e:
+            logger.info(f"CRM: Exception during sync: {e}")
 
         return JSONResponse(content=result, status_code=200)
 
@@ -81,3 +196,122 @@ versions = Versionizer(
     latest_prefix='/latest',
     sort_routes=True
 ).versionize()
+# Add this function to call our new API endpoint
+async def save_crm_lead_data(lead_id, file_path, translation, extracted_data, summary, user_id=None, transcription_id=None):
+
+    """
+    Save CRM lead data to the database through the Next.js API.
+    """
+    try:
+        # Get base URL from environment or use default
+        api_base_url = os.environ.get("NEXT_API_BASE_URL", "http://localhost:3000")
+        
+        # Extract just the filename from the file path
+        file_name = os.path.basename(file_path)
+        
+        # Prepare the data to send
+        crm_lead_data = {
+            "leadId": str(lead_id),
+            "crmUrl": odoo_url,  # Using the odoo_url from config
+            "fileName": file_name,
+            "transcriptionId": transcription_id,  # This might be None if not provided
+            "extractedData": extracted_data,
+            "translation": translation,
+            "userId": user_id,  # This might be None if not provided
+            "isDefault": False  # Adding the default field set to false
+        }
+        
+        # Make the API call
+        response = requests.post(
+            f"{api_base_url}/api/crm-leads", 
+            json=crm_lead_data,
+            headers={"Content-Type": "application/json"}
+        )
+        
+        if response.status_code == 200:
+            logger.info(f"CRM lead data saved successfully for lead_id={lead_id}")
+            return response.json()
+        else:
+            logger.error(f"Failed to save CRM lead data: {response.status_code} - {response.text}")
+            return None
+            
+    except Exception as e:
+        logger.error(f"Exception saving CRM lead data: {str(e)}")
+        return None
+
+
+
+# Add this function to retrieve default CRM leads
+async def get_default_crm_leads():
+    """
+    Fetch CRM leads that are marked as default.
+    """
+    try:
+        api_base_url = os.environ.get("NEXT_API_BASE_URL", "http://localhost:3000")
+        
+        response = requests.get(
+            f"{api_base_url}/api/crm-leads/default",
+            headers={"Content-Type": "application/json"}
+        )
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            logger.error(f"Failed to get default CRM leads: {response.status_code}")
+            return None
+    except Exception as e:
+        logger.error(f"Error fetching default CRM leads: {str(e)}")
+        return None
+
+# Add a route to expose this functionality
+@app.get("/crm-leads/default")
+async def fetch_default_crm_leads():
+    try:
+        result = await get_default_crm_leads()
+        if result and result.get("success"):
+            return JSONResponse(content=result, status_code=200)
+        else:
+            return JSONResponse(
+                content={"message": "Failed to retrieve default CRM leads"}, 
+                status_code=500
+            )
+    except Exception as e:
+        logger.error(f"Error in fetch_default_crm_leads: {str(e)}")
+        return JSONResponse(content={"message": str(e)}, status_code=500)
+
+
+# Replace all four functions with this single cleaner endpoint
+@app.get("/crm-lead/{lead_id}")
+async def get_crm_lead(lead_id: str):
+    """
+    Get CRM lead data by ID from the database.
+    This single endpoint handles both database ID and CRM system ID lookups.
+    """
+    try:
+        api_base_url = os.environ.get("NEXT_API_BASE_URL", "http://localhost:3000")
+        
+        # First try to get by database ID
+        response = requests.get(
+            f"{api_base_url}/api/crm-leads/{lead_id}",
+            headers={"Content-Type": "application/json"}
+        )
+        
+        # If not found, try by CRM system ID
+        if response.status_code == 404:
+            response = requests.post(
+                f"{api_base_url}/api/crm-leads/{lead_id}/lookup",
+                json={"leadId": lead_id},
+                headers={"Content-Type": "application/json"}
+            )
+        
+        if response.status_code == 200:
+            return JSONResponse(content=response.json(), status_code=200)
+        else:
+            return JSONResponse(
+                content={"message": "CRM lead not found"}, 
+                status_code=404
+            )
+            
+    except Exception as e:
+        logger.error(f"Error retrieving CRM lead: {str(e)}")
+        return JSONResponse(content={"message": str(e)}, status_code=500)

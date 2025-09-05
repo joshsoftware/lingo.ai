@@ -5,4 +5,10 @@ export type TranscriptionResponse = {
   translation: string;
   summary: string;
   segments: segment[];
+  // Add CRM fields
+  leadId?: string;
+  crmUrl?: string;
+  extractedData?: any;
+  isDefault?: boolean;
+  transcriptionId?: string | null;
 };

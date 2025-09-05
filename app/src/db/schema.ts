@@ -96,3 +96,24 @@ export const passwordResetTokens = pgTable("password_reset_tokens", {
 
 export type TranscriptionsPayload = typeof transcriptions.$inferInsert;
 export type TranscriptionsType = typeof transcriptions.$inferSelect;
+
+
+// Add this to your schema.ts file if it doesn't exist
+
+export const crmLeadsTable = pgTable("crm_leads", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  leadId: text("lead_id").notNull(),
+  crmUrl: text("crm_url").notNull(),
+  fileName: text("file_name").notNull(),
+  documentUrl: text("document_url").notNull(), // Add this new field
+  transcriptionId: uuid("transcription_id").references(() => transcriptions.id),
+  extractedData: jsonb("extracted_data").notNull(),
+  translation: text("translation").notNull(),
+  userId: text("user_id").references(() => userTable.id),
+  isDefault: boolean("is_default").notNull().default(false),
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow()
+});
+
+// Make sure to export the type as well
+export type CrmLeadsPayload = typeof crmLeadsTable.$inferInsert;
+export type CrmLeadsType = typeof crmLeadsTable.$inferSelect;
