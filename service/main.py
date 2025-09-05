@@ -1,23 +1,22 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form
+from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.responses import JSONResponse
 from logger import logger
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from audio_service import translate_with_whisper
-from audio_service import translate_with_whisper_timestamped
+from audio_service import translate_with_whisper_timestamped, translate_with_whisper_from_upload
+from intent import find_intent_using_openai, find_intent_using_regex
 from summarizer import summarize_using_openai
-from summarizer import summarize_using_ollama, extract_contact_detailed_using_ollama
+from summarizer import summarize_using_ollama,extract_contact_detailed_using_ollama
 from pydantic import BaseModel
 import traceback
 from util import generate_timestamp_json
 from fastapi_versionizer.versionizer import Versionizer, api_version
-from config import odoo_url, odoo_db, odoo_username, odoo_password
-from crm_client import OdooCRMClient
-import os
-import requests
 import json
+from crm_client import OdooCRMClient
+from config import odoo_url, odoo_db, odoo_username, odoo_password
 
-import os.path
 app = FastAPI()
 
 # Add CORS middleware to the application
@@ -35,22 +34,56 @@ def root_route():
 
 class Body(BaseModel):
     audio_file_link: str
+
+def generate_timestamp_json(translation, summary, detected_language=None):
+    """Generate the final JSON response with all required fields"""
+    return {
+        "message": "File processed successfully!",
+        "translation": translation.get("text", ""),
+        "summary": summary,
+        "segments": translation.get("segments", []),
+        "detected_language": detected_language or translation.get("detected_language", "unknown")
+    }
+
+
+def generate_timestamp_json(translation, summary, detected_language=None):
+    """Generate the final JSON response with all required fields"""
+    return {
+        "message": "File processed successfully!",
+        "translation": translation.get("text", ""),
+        "summary": summary,
+        "segments": translation.get("segments", []),
+        "detected_language": detected_language or translation.get("detected_language", "unknown")
+    }
+
+@app.get("/")
+def root_route():
+    return 'Hello, this is the root route for lingo ai server'
+
+class Body(BaseModel):
+    audio_file_link: str
 # First API endpoint (v1)
 @api_version(1)
 @app.post("/upload-audio")
 async def upload_audio(body: Body):
     try:
+
         if body.audio_file_link == "":
             return JSONResponse(status_code=400, content={"message":"Invalid file link"})
 
-        # Remove file extension check since frontend handles this
         translation = translate_with_whisper_timestamped(body.audio_file_link)
-        detected_language = translation.get('detected_language', 'unknown')
+        
+        # Extract detected language
+        detected_language = translation.get("detected_language", "unknown")
+        
         logger.info("translation done")
         summary = summarize_using_ollama(translation["text"])
 
         logger.info("summary done")
-        result = generate_timestamp_json(translation,summary,detected_language)
+        
+        # Pass the translation object and detected_language to generate_timestamp_json
+        result = generate_timestamp_json(translation, summary, detected_language)
+        
 
         contact_info = extract_contact_detailed_using_ollama(translation["text"]) if "text" in translation else {"name": None, "phone": None, "address": None}
         
@@ -119,14 +152,19 @@ async def upload_audio(body: Body):
         if body.audio_file_link == "":
             return JSONResponse(status_code=400, content={"message":"Invalid file link"})
 
-        # Remove file extension check since frontend handles this
         translation = translate_with_whisper_timestamped(body.audio_file_link)
-        detected_language = translation.get('detected_language', 'unknown')
+        
+        # Extract detected language
+        detected_language = translation.get("detected_language", "unknown")
+        
         logger.info("translation done")
         summary = summarize_using_ollama(translation["text"])
 
         logger.info("summary done")
-        result = generate_timestamp_json(translation,summary,detected_language)
+        
+        # Pass the translation object and detected_language to generate_timestamp_json
+        result = generate_timestamp_json(translation, summary, detected_language)
+        
 
         contact_info = extract_contact_detailed_using_ollama(translation["text"]) if "text" in translation else {"name": None, "phone": None, "address": None}
         
