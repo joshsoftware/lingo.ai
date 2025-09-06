@@ -7,7 +7,7 @@ from config import ollama_host, ollama_model_name
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
-ALLOWED_INTENTS = ["get_balance", "recent_txn", "pay_someone", "unknown"]
+ALLOWED_INTENTS = ["get_balance", "recent_txn", "pay_person", "unknown"]
 
 def safe_json_parse(response_text: str) -> dict:
     """Safely parse JSON, falling back to regex extraction if needed."""
@@ -77,7 +77,7 @@ Always respond with STRICT JSON only.
 User Input: "{text}"
 
 Instructions:
-1. Detect the intent from this list ONLY: ["get_balance", "recent_txn", "pay_someone", "unknown"].
+1. Detect the intent from this list ONLY: ["get_balance", "recent_txn", "pay_person", "unknown"].
 2. Extract entities:
    - "amount": numeric value only (integer or float). If missing, use null.
    - "currency": "USD" for $, dollars; "INR" for ₹, rs, rupees; else null.
@@ -169,7 +169,7 @@ def determine_action(intent: str, entities: dict) -> str:
         return "respond"
     elif intent == "recent_txn":
         return "respond"
-    elif intent == "pay_someone":
+    elif intent == "pay_person":
         amount = entities.get("amount")
         recipient = entities.get("recipient")
         
