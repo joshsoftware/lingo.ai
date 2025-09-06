@@ -13,6 +13,7 @@ import traceback
 from util import generate_timestamp_json
 from fastapi_versionizer.versionizer import Versionizer, api_version
 import json
+from core_banking_mock import router as core_banking_mock_router
 
 app = FastAPI()
 
@@ -96,6 +97,8 @@ versions = Versionizer(
     latest_prefix='/latest',
     sort_routes=True
 ).versionize()
+
+app.include_router(core_banking_mock_router)
 
 @app.post("/voice/transcribe-intent")
 async def transcribe_intent(audio: UploadFile = File(...), session_id: str = Form(...)):
