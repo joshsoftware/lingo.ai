@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from audio_service import translate_with_whisper
 from audio_service import translate_with_whisper_timestamped, translate_with_whisper_from_upload
-from intent import find_intent_using_openai, find_intent_using_regex
+from detect_intent import detect_intent_with_llama, format_intent_response
 from summarizer import summarize_using_openai
 from summarizer import summarize_using_ollama
 from pydantic import BaseModel
@@ -105,9 +105,11 @@ async def transcribe_intent(audio: UploadFile = File(...), session_id: str = For
 
         translation_text = translate_with_whisper_from_upload(audio)
         logger.info("translation done")
+        logger.info(translation_text)
 
-        intent = find_intent_using_regex(translation_text)
+        intent = detect_intent_with_llama(translation_text)
         logger.info("intent find done")
+        logger.info("Intent: ", intent)
 
         try:
             if isinstance(intent, dict):
@@ -119,10 +121,15 @@ async def transcribe_intent(audio: UploadFile = File(...), session_id: str = For
             result = {"error": intent, "session_id": session_id, "translation": translation_text}
             return JSONResponse(content=result, status_code=200)
         
+        # Map Llama response to your expected format
+        formatted_intent_data = format_intent_response(intent_dict)
+
         result = {
             "session_id": session_id,
             "translation": translation_text,
-            "intent_data": intent_dict
+            "intent_data": {
+                "intent_data": formatted_intent_data
+            }
         }
         return JSONResponse(content=result, status_code=200)
 
