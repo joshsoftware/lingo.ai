@@ -1,5 +1,7 @@
 import json
 import traceback
+import os
+import requests
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, UploadFile
@@ -55,12 +57,6 @@ def generate_timestamp_json(translation, summary, detected_language=None):
         "detected_language": detected_language or translation.get("detected_language", "unknown")
     }
 
-@app.get("/")
-def root_route():
-    return 'Hello, this is the root route for lingo ai server'
-
-class Body(BaseModel):
-    audio_file_link: str
 # First API endpoint (v1)
 @api_version(1)
 @app.post("/upload-audio")
@@ -172,7 +168,6 @@ async def upload_audio(body: Body):
         # Fire-and-forget CRM sync (do not block response)
         lead_id = None
         try:
-            print(odoo_url, odoo_db, odoo_username, odoo_password)
             if odoo_url and odoo_db and odoo_username and odoo_password:
                 client = OdooCRMClient(odoo_url, odoo_db, odoo_username, odoo_password)
                 lead_id = client.create_lead(
