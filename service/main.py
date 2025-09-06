@@ -38,7 +38,7 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-app.include_router(core_banking_mock.router)
+app.include_router(core_banking_mock_router)
 
 @app.get("/")
 def root_route():
