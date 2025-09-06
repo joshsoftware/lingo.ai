@@ -1,21 +1,29 @@
-from fastapi import FastAPI, UploadFile, File, Form
-from fastapi import FastAPI, UploadFile, File, Form
-from fastapi.responses import JSONResponse
-from logger import logger
-from dotenv import load_dotenv
-from starlette.middleware.cors import CORSMiddleware
-from audio_service import translate_with_whisper
-from audio_service import translate_with_whisper_timestamped, translate_with_whisper_from_upload
-from intent import find_intent_using_openai, find_intent_using_regex
-from summarizer import summarize_using_openai
-from summarizer import summarize_using_ollama,extract_contact_detailed_using_ollama
-from pydantic import BaseModel
-import traceback
-from util import generate_timestamp_json
-from fastapi_versionizer.versionizer import Versionizer, api_version
 import json
+import traceback
+
+from dotenv import load_dotenv
+from fastapi import FastAPI, File, Form, UploadFile
+from fastapi.responses import JSONResponse
+from fastapi_versionizer.versionizer import Versionizer, api_version
+from pydantic import BaseModel
+from starlette.middleware.cors import CORSMiddleware
+
+from audio_service import (
+    translate_with_whisper,
+    translate_with_whisper_from_upload,
+    translate_with_whisper_timestamped,
+)
+from config import odoo_db, odoo_password, odoo_url, odoo_username
+from core_banking_mock import router as core_banking_mock_router
 from crm_client import OdooCRMClient
-from config import odoo_url, odoo_db, odoo_username, odoo_password
+from intent import find_intent_using_openai, find_intent_using_regex
+from logger import logger
+from summarizer import (
+    extract_contact_detailed_using_ollama,
+    summarize_using_ollama,
+    summarize_using_openai,
+)
+from util import generate_timestamp_json
 
 app = FastAPI()
 
@@ -28,23 +36,14 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
+app.include_router(core_banking_mock.router)
+
 @app.get("/")
 def root_route():
     return 'Hello, this is the root route for lingo ai server'
 
 class Body(BaseModel):
     audio_file_link: str
-
-def generate_timestamp_json(translation, summary, detected_language=None):
-    """Generate the final JSON response with all required fields"""
-    return {
-        "message": "File processed successfully!",
-        "translation": translation.get("text", ""),
-        "summary": summary,
-        "segments": translation.get("segments", []),
-        "detected_language": detected_language or translation.get("detected_language", "unknown")
-    }
-
 
 def generate_timestamp_json(translation, summary, detected_language=None):
     """Generate the final JSON response with all required fields"""
