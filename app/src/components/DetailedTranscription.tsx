@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import Markdown from "react-markdown";
 import { LanguageDisplay } from "./LanguageDisplay";
 import { useAudioMetadata } from "@/hooks/useAudioMetadata";
+import { formatDuration } from "@/utils/recording";
 import { getProxyUrl } from "@/utils/urlUtils";
 
 const AudioResults = ({ transcription }: { transcription: any }) => {
@@ -24,11 +25,12 @@ const AudioResults = ({ transcription }: { transcription: any }) => {
   const [currentTime, setCurrentTime] = useState(0);
   
   // Use the optimized caching hook
-  const { duration, fileSize, isLoading, error } = useAudioMetadata(transcription.documentUrl);
+  const { displayDuration, displayFileSize } = useAudioMetadata(transcription.documentUrl);
   
   const audioFile = {
     name: transcription.documentName,
-    duration: duration ?? (isLoading ? "Loading..." : error ? "Error" : "--:--"),
+    duration: displayDuration,
+    fileSize: displayFileSize,
     uploadDate: format(new Date(transcription.createdAt), "dd MMM yyyy"),
     originalLanguage: transcription.detectedLanguage || null,
     url: transcription.documentUrl,
@@ -110,7 +112,7 @@ const AudioResults = ({ transcription }: { transcription: any }) => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
                   File Name
@@ -122,6 +124,12 @@ const AudioResults = ({ transcription }: { transcription: any }) => {
                   Duration
                 </p>
                 <Badge variant="secondary">{audioFile.duration}</Badge>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  File Size
+                </p>
+                <Badge variant="secondary">{audioFile.fileSize}</Badge>
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
@@ -221,12 +229,7 @@ const AudioResults = ({ transcription }: { transcription: any }) => {
                               index: Key | null | undefined
                             ) => {
                               const formatTime = (time: number) => {
-                                const minutes = Math.floor(time / 60);
-                                const seconds = Math.floor(time % 60);
-                                return `${minutes}:${String(seconds).padStart(
-                                  2,
-                                  "0"
-                                )}`;
+                                return formatDuration(time);
                               };
 
                               return (

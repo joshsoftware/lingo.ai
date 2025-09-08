@@ -10,6 +10,7 @@ import { useAudioMetadata } from "@/hooks/useAudioMetadata";
 import { getProxyUrl } from "@/utils/urlUtils";
 import { userTranscriptions } from "@/types/transcriptions";
 import { LanguageDisplay } from "./LanguageDisplay";
+import { formatDuration } from "@/utils/recording";
 
 interface TranscriptionRowProps {
   transcription: userTranscriptions;
@@ -31,7 +32,7 @@ const TranscriptionRow = ({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
 
-  const { duration: audioDuration, fileSize, isLoading, error } = useAudioMetadata(transcription?.documentUrl);
+  const { displayDuration, displayFileSize } = useAudioMetadata(transcription?.documentUrl);
 
   useEffect(() => {
     if (transcription?.documentUrl) {
@@ -88,7 +89,7 @@ const TranscriptionRow = ({
       </td>
       <td className="text-muted-foreground ">
         <div className="ml-4">
-          {fileSize ?? (isLoading ? "Loading..." : error ? "Error" : "--:--")}
+          {displayFileSize}
         </div>
       </td>
       <td>
@@ -97,7 +98,7 @@ const TranscriptionRow = ({
         </div>
       </td>
       <td className="font-mono text-sm">
-        {audioDuration ? `Duration: ${audioDuration}` : (isLoading ? "Loading..." : error ? "Error" : "--:--")}
+        Duration: {displayDuration}
       </td>
       <td className="text-muted-foreground ">
         {transcription?.createdAt
