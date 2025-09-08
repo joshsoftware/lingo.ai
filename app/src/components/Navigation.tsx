@@ -254,14 +254,14 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem
                     onClick={() => router.push("/transcriptions")}
-                    className="cursor-pointer hover:!text-black hover:font-bold hover:!bg-[#668D7E]/30"
+                    className="cursor-pointer hover:!text-white hover:font-bold hover:!bg-[#668D7E]"
                   >
                     <FileText className="mr-2 h-4 w-4" />
                     Summarization
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => router.push("/crm")}
-                    className="cursor-pointer hover:!text-black hover:font-bold hover:!bg-[#668D7E]/30"
+                    className="cursor-pointer hover:!text-white hover:font-bold hover:!bg-[#668D7E]"
                   >
                     <Database className="mr-2 h-4 w-4" />
                     View CRM
