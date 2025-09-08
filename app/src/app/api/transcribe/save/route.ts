@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { transcriptions, TranscriptionsPayload, userTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { crmLeadsTable } from "@/db/schema"; // Import crmLeadsTable explicitly
 
 export async function POST(req: Request) {
   try {
@@ -13,8 +14,11 @@ export async function POST(req: Request) {
       translation,
       audioDuration,
       segments,
-      detectedLanguage
-    }: TranscriptionsPayload = body;
+      detectedLanguage,
+      isDefault,
+    } = body;
+      // CRM data
+      const { leadId, crmUrl, extractedData } = body;
 
 
 
@@ -42,6 +46,30 @@ export async function POST(req: Request) {
       segments,
       detectedLanguage
     }).returning();
+    
+    // If lead ID exists, save CRM data
+    if (leadId) {
+      try {
+        console.log("Saving CRM lead data for lead ID:", leadId);
+        
+        await db.insert(crmLeadsTable).values({
+          leadId: leadId,
+          crmUrl: crmUrl || "",
+          fileName: documentName,
+          documentUrl: documentUrl, // Make sure this field exists in your schema
+          transcriptionId: response[0].id,
+          extractedData: extractedData || {},
+          translation: translation,
+          userId: userID,
+          isDefault: isDefault === true
+        });
+        
+        console.log("CRM lead data saved successfully");
+      } catch (crmError) {
+        console.error("Error saving CRM lead data:", crmError);
+        // Continue with the response even if CRM save fails
+      }
+    }
 
     return new Response(JSON.stringify(response), { status: 200 });
   } catch (error) {
