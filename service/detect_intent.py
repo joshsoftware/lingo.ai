@@ -3,29 +3,54 @@ import re
 import logging
 import ollama
 from config import ollama_host, ollama_model_name
+from typing import Dict, Any
+from time_utils import normalize_timeframe
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 ALLOWED_INTENTS = ["get_balance", "recent_txn", "pay_person", "unknown"]
 
-def safe_json_parse(response_text: str) -> dict:
-    """Safely parse JSON, falling back to regex extraction if needed."""
+SYSTEM = (
+    "You are an NLU engine for a banking voice assistant in India. "
+    "You must return STRICT JSON with keys: intent (string), entities (object), language (string). "
+    "Allowed intents: get_balance, recent_txn, spend_summary, pay_person, unknown. "
+    "Entities you may extract: amount (number), payee (string), timeframe (string), "
+    "date (string in ISO yyyy-mm-dd), start_date (ISO), end_date (ISO), merchant (string), "
+    "count (integer). Keep JSON minimal; no prose, no markdown."
+)
+
+USER_TEMPLATE = """Transcript: {transcript}
+
+Return JSON ONLY. Examples:
+
+Ex1:
+{{"intent":"get_balance","entities":{{}},"language":"{lang}"}}
+
+Ex2:
+{{"intent":"recent_txn","entities":{{"date":"2025-09-02"}},"language":"{lang}"}}
+
+Ex3:
+{{"intent":"spend_summary","entities":{{"timeframe":"last_month"}},"language":"{lang}"}}
+
+Ex4:
+{{"intent":"pay_person","entities":{{"payee":"Ananya","amount":1500}},"language":"{lang}"}}
+"""
+
+def safe_json_parse(s: str) -> Dict[str, Any]:
+    # Try direct parse
     try:
-        return json.loads(response_text)
-    except json.JSONDecodeError:
-        match = re.search(r"\{.*\}", response_text, re.DOTALL)
-        if match:
-            try:
-                return json.loads(match.group())
-            except json.JSONDecodeError:
-                pass
-        return {
-            "intent": "unknown",
-            "entities": {"amount": None, "currency": None, "recipient": None},
-            "confidence": 0.0,
-            "error": "Failed to parse JSON"
-        }
+        return json.loads(s)
+    except Exception:
+        pass
+    # Fallback: extract first {...} block
+    m = re.search(r"\{.*\}", s, re.S)
+    if not m:
+        return {"intent": "unknown", "entities": {}, "language": "und"}
+    try:
+        return json.loads(m.group(0))
+    except Exception:
+        return {"intent": "unknown", "entities": {}, "language": "und"}
 
 def validate_schema(result: dict) -> dict:
     """Validate and normalize schema for intent detection result."""
@@ -47,6 +72,13 @@ def validate_schema(result: dict) -> dict:
     recipient = entities.get("recipient", None)
     if isinstance(recipient, str) and recipient.lower() in ["null", "none", ""]:
         recipient = None
+    timeframe = entities.get("timeframe", None)
+    if isinstance(timeframe, str) and timeframe.lower() in ["null", "none", ""]:
+        timeframe = None
+
+    dt = entities.get("date", None)
+    if isinstance(dt, str) and dt.lower() in ["null", "none", ""]:
+        dt = None
 
     confidence = result.get("confidence", 0.0)
     try:
@@ -65,49 +97,23 @@ def validate_schema(result: dict) -> dict:
         "confidence": confidence,
     }
 
-def detect_intent_with_llama(text: str) -> dict:
-    """Detect user intent and extract entities using LLaMA via Ollama client."""
-    if not text or not text.strip():
-        return {"error": "Empty text provided"}
-
-    prompt = f"""
-You are an expert intent detection system for a financial application.
-Always respond with STRICT JSON only.
-
-User Input: "{text}"
-
-Instructions:
-1. Detect the intent from this list ONLY: ["get_balance", "recent_txn", "pay_person", "unknown"].
-2. Extract entities:
-   - "amount": numeric value only (integer or float). If missing, use null.
-   - "currency": "USD" for $, dollars; "INR" for ₹, rs, rupees; else null.
-   - "recipient": name of person if present, else null.
-3. Provide a "confidence" score (0.0 to 1.0). 
-   - ≥0.8 if clear
-   - 0.5–0.7 if ambiguous
-   - <0.5 if unclear
-
-🚨 Respond ONLY in this JSON format:
-{{
-  "intent": "detected_intent",
-  "entities": {{
-    "amount": number_or_null,
-    "currency": "USD/INR/null",
-    "recipient": "name_or_null"
-  }},
-  "confidence": number_between_0_and_1
-}}
-"""
+def detect_intent_with_llama(transcript: str, lang_hint: str = "en") -> Dict[str, Any]:
+    prompt = USER_TEMPLATE.format(transcript=transcript.strip(), lang=lang_hint)
+   
 
     try:
         response = ollama.Client(host=ollama_host).generate(
+            system = SYSTEM,
             model=ollama_model_name,
             prompt=prompt,
-            options={"temperature": 0.0, "top_p": 0.8, "max_tokens": 300},
+            options={"temperature": 0.0, "top_p": 0.8, "max_tokens": 300},            
+            stream=False,
         )
 
         llama_response = response["response"].strip()
         parsed = safe_json_parse(llama_response)
+        
+        parsed["entities"] = normalize_timeframe(parsed.get("entities", {}))
         validated = validate_schema(parsed)
 
         logger.info(f"Intent detected: {validated['intent']} (confidence: {validated['confidence']})")
@@ -145,7 +151,9 @@ def format_intent_response(llama_response: dict) -> dict:
         "entities": {
             "amount": entities.get("amount"),
             "currency": entities.get("currency"),
-            "recipient": entities.get("recipient")
+            "recipient": entities.get("recipient"),
+            "timeframe": entities.get("timeframe"),
+            "date": entities.get("date"),
         },
         "action": action
     }
