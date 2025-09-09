@@ -8,7 +8,6 @@ class OdooCRMClient:
         self.db = db
         self.username = username
         self.password = password
-        
 
         self.common = xmlrpc.client.ServerProxy(f"{url}/xmlrpc/2/common", allow_none=True)
         self.uid = self.common.authenticate(db, username, password, {})
