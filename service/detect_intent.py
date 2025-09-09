@@ -9,13 +9,13 @@ from time_utils import normalize_timeframe
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
-ALLOWED_INTENTS = ["get_balance", "recent_txn", "pay_person", "unknown"]
+ALLOWED_INTENTS = ["get_balance", "recent_txn", "pay_person", "spend_summary", "unknown"]
 
 SYSTEM = (
     "You are an NLU engine for a banking voice assistant in India. "
     "You must return STRICT JSON with keys: intent (string), entities (object), language (string). "
     "Allowed intents: get_balance, recent_txn, spend_summary, pay_person, unknown. "
-    "Entities you may extract: amount (number), payee (string), timeframe (string), "
+    "Entities you may extract: amount (number), payee (string), currency (string in ISO), timeframe (string), "
     "date (string in ISO yyyy-mm-dd), start_date (ISO), end_date (ISO), merchant (string), "
     "count (integer). Keep JSON minimal; no prose, no markdown."
 )
@@ -34,7 +34,7 @@ Ex3:
 {{"intent":"spend_summary","entities":{{"timeframe":"last_month"}},"language":"{lang}"}}
 
 Ex4:
-{{"intent":"pay_person","entities":{{"payee":"Ananya","amount":1500}},"language":"{lang}"}}
+{{"intent":"pay_person","entities":{{"payee":"Ananya","amount":1500,"currency":"INR"}},"language":"{lang}"}}
 """
 
 def safe_json_parse(s: str) -> Dict[str, Any]:
@@ -69,7 +69,7 @@ def validate_schema(result: dict) -> dict:
     if currency not in ["USD", "INR", None, "null"]:
         currency = None
 
-    recipient = entities.get("recipient", None)
+    recipient = entities.get("payee", None)
     if isinstance(recipient, str) and recipient.lower() in ["null", "none", ""]:
         recipient = None
     timeframe = entities.get("timeframe", None)
@@ -93,6 +93,8 @@ def validate_schema(result: dict) -> dict:
             "amount": amount,
             "currency": currency if currency != "null" else None,
             "recipient": recipient,
+            "timeframe": timeframe,
+            "date": dt,
         },
         "confidence": confidence,
     }
@@ -177,6 +179,11 @@ def determine_action(intent: str, entities: dict) -> str:
         return "respond"
     elif intent == "recent_txn":
         return "respond"
+    elif intent == "spend_summary":
+        timeframe = entities.get("timeframe")
+        if timeframe:
+            return "respond"
+        return "ask_for_details"
     elif intent == "pay_person":
         amount = entities.get("amount")
         recipient = entities.get("recipient")
