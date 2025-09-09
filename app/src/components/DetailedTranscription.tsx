@@ -15,16 +15,22 @@ import { Key, useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import Markdown from "react-markdown";
 import { LanguageDisplay } from "./LanguageDisplay";
+import { useAudioMetadata } from "@/hooks/useAudioMetadata";
+import { formatDuration } from "@/utils/recording";
+import { getProxyUrl } from "@/utils/urlUtils";
 
 const AudioResults = ({ transcription }: { transcription: any }) => {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [audioDuration, setAudioDuration] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   
+  // Use the optimized caching hook
+  const { displayDuration, displayFileSize } = useAudioMetadata(transcription.documentUrl);
+  
   const audioFile = {
     name: transcription.documentName,
-    duration: audioDuration ?? "Loading...",
+    duration: displayDuration,
+    fileSize: displayFileSize,
     uploadDate: format(new Date(transcription.createdAt), "dd MMM yyyy"),
     originalLanguage: transcription.detectedLanguage || null,
     url: transcription.documentUrl,
@@ -42,27 +48,12 @@ const AudioResults = ({ transcription }: { transcription: any }) => {
   };
 
 
-  const getProxyUrl = (audioUrl: string): string => {
-    if (audioUrl.includes('.s3.') || audioUrl.includes('s3.amazonaws.com')) {
-      return `/api/proxy?url=${encodeURIComponent(audioUrl)}`;
-    }
-    return audioUrl;
-  };
-
-
   useEffect(() => {
     if (audioFile.url) {
-
       const proxyUrl = getProxyUrl(audioFile.url);
-      
       const audio = new Audio(proxyUrl);
+      audio.crossOrigin = "anonymous";
       audioRef.current = audio;
-
-      audio.addEventListener("loadedmetadata", () => {
-        const mins = Math.floor(audio.duration / 60);
-        const secs = Math.floor(audio.duration % 60);
-        setAudioDuration(`${mins}:${secs.toString().padStart(2, "0")}`);
-      });
 
       audio.addEventListener("timeupdate", () => {
         setCurrentTime(audio.currentTime || 0);
@@ -121,7 +112,7 @@ const AudioResults = ({ transcription }: { transcription: any }) => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
                   File Name
@@ -133,6 +124,12 @@ const AudioResults = ({ transcription }: { transcription: any }) => {
                   Duration
                 </p>
                 <Badge variant="secondary">{audioFile.duration}</Badge>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  File Size
+                </p>
+                <Badge variant="secondary">{audioFile.fileSize}</Badge>
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
@@ -232,12 +229,7 @@ const AudioResults = ({ transcription }: { transcription: any }) => {
                               index: Key | null | undefined
                             ) => {
                               const formatTime = (time: number) => {
-                                const minutes = Math.floor(time / 60);
-                                const seconds = Math.floor(time % 60);
-                                return `${minutes}:${String(seconds).padStart(
-                                  2,
-                                  "0"
-                                )}`;
+                                return formatDuration(time);
                               };
 
                               return (

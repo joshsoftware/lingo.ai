@@ -22,6 +22,7 @@ import { TranscribeDocumentRequest } from "@/Validators/document";
 import { TranscriptionResponse } from "@/types/TranscriptionResponse";
 import { TranscriptionsPayload, TranscriptionsType } from "@/db/schema";
 import { Fragment } from "react";
+import { formatDuration } from "@/utils/recording";
 
 interface RecorderCardProps {
   userId: string;
@@ -273,9 +274,7 @@ const RecorderCard = (props: RecorderCardProps) => {
   }, []);
 
   const formatTime = (time: number) => {
-    const minutes = Math.floor(time / 60);
-    const seconds = time % 60;
-    return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+    return formatDuration(time);
   };
 
   const handleTranscribeClick = (e: React.MouseEvent) => {
