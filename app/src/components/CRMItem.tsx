@@ -15,20 +15,8 @@ import {
 import Link from "next/link";
 import { getAllCrmLeads, transformCrmLead } from "@/lib/crm-api";
 import { CRM_CONSTANTS } from "@/constants/crm";
-
-
-interface CRMDisplayData {
-  id: string;
-  leadId: string;
-  crmUrl: string;
-  fileName: string;
-  email: string;
-  company: string;
-  contact: string;
-  lastContact: string;
-  documentUrl: string;
-  translation: string;
-}
+import { ExtractedData, CRMDisplayData } from "@/types/crm";
+import { CrmLeadsType } from "@/db/schema";
 
 
 
@@ -37,8 +25,8 @@ const CRMItem = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const transformLead = useCallback((lead: any): CRMDisplayData => {
-    const extractedData = lead.extractedData as any || {};
+  const transformLead = useCallback((lead: CrmLeadsType): CRMDisplayData => {
+    const extractedData = (lead.extractedData as ExtractedData) || {};
     return {
       id: lead.id,
       leadId: lead.leadId,

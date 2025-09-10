@@ -16,9 +16,11 @@ export async function POST(req: Request) {
       segments,
       detectedLanguage,
       isDefault,
-    } = body;
       // CRM data
-      const { leadId, crmUrl, extractedData } = body;
+      leadId,
+      crmUrl,
+      extractedData
+    } = body;
 
 
 

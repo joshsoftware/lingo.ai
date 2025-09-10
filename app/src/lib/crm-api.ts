@@ -1,5 +1,5 @@
 import { CrmLeadsType } from "@/db/schema";
-
+import { ExtractedData } from "@/types/crm";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -134,8 +134,7 @@ export class CrmApiClient {
 
 
   transformLeadToDisplay(lead: CrmLeadsType): CrmLeadWithDetails {
-  
-    const extractedData = lead.extractedData as any || {};
+    const extractedData = (lead.extractedData as ExtractedData) || {};
     
     return {
       ...lead,

@@ -16,19 +16,7 @@ import {
 import { useCallback, useEffect, useRef, useState, memo } from "react";
 import Markdown from "react-markdown";
 import { CRM_CONSTANTS } from "@/constants/crm";
-
-interface CRMRecord {
-  id: string;
-  leadId: string;
-  crmUrl: string;
-  fileName: string;
-  contact: string;
-  email: string;
-  company: string;
-  lastContact: string;
-  documentUrl: string;
-  translation: string;
-}
+import { CRMRecord } from "@/types/crm";
 
 const DetailedCRM = memo(({ crmRecord }: { crmRecord: CRMRecord }) => {
   const [isPlaying, setIsPlaying] = useState(false);

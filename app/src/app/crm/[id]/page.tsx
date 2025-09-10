@@ -3,6 +3,7 @@ import DetailedCRM from "../../../components/DetailedCRM";
 import { getCrmLeadById } from "@/lib/crm-api";
 import { notFound } from "next/navigation";
 import { CRM_CONSTANTS } from "@/constants/crm";
+import { ExtractedData } from "@/types/crm";
 
 export const metadata: Metadata = {
   title: "Lingo.ai | CRM Details",
@@ -19,7 +20,7 @@ const page = async (props: PageProps) => {
   
   try {
     const lead = await getCrmLeadById(id);
-    const extractedData = lead.extractedData as any || {};
+    const extractedData = (lead.extractedData as ExtractedData) || {};
     const crmRecord = {
       id: lead.id,
       leadId: lead.leadId,
