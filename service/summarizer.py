@@ -7,8 +7,7 @@ import ollama
 import json
 import re
 from config import ollama_host, ollama_model_name
-import re
-import json
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 

@@ -112,7 +112,7 @@ async def upload_audio(body: Body):
                 )
                 logger.info(f"CRM: Address update result={updated} for partner_id={partner_id}")
                 
-                 # Add CRM data to the result
+                # Add CRM data to the result
                 result["leadId"] = str(lead_id)
                 result["crmUrl"] = odoo_url
                 result["extractedData"] = contact_info
@@ -222,8 +222,6 @@ versions = Versionizer(
     latest_prefix='/latest',
     sort_routes=True
 ).versionize()
-# Add this function to call our new API endpoint
-async def save_crm_lead_data(lead_id, file_path, translation, extracted_data, summary, user_id=None, transcription_id=None):
 
 app.include_router(core_banking_mock_router)
 
@@ -319,6 +317,7 @@ async def fetch_default_crm_leads():
     except Exception as e:
         logger.error(f"Error in fetch_default_crm_leads: {str(e)}")
         return JSONResponse(content={"message": str(e)}, status_code=500)
+
 async def save_crm_lead_data(lead_id, file_path, translation, extracted_data, summary, user_id=None, transcription_id=None):
 
     """
