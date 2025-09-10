@@ -11,7 +11,6 @@ ollama_host = os.getenv("OLLAMA_HOST", "http://localhost:11434")
 ollama_model_name = os.getenv("OLLAMA_MODEL_NAME", "llama3.2")
 open_ai_model_name = os.getenv("OPENAI_MODEL_NAME", "gpt-4")
 open_ai_temperature = os.getenv("OPENAI_TEMPERATURE", 0.2)
-
 odoo_url = os.getenv("ODOO_URL")
 odoo_db = os.getenv("ODOO_DB")
 odoo_username = os.getenv("ODOO_USERNAME")

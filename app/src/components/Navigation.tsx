@@ -14,6 +14,9 @@ import {
   Files,
   User2,
   Layers,
+  ChevronDown,
+  FileText,
+  Database,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -239,11 +242,32 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
                 </Link>
               </Button>
             )}
-            {pathname !== "/transcriptions" && (
-              <Button variant={"greenTheme"}>
-                <Files className="mr-2 w-4 h-4" />
-                <Link href={"/transcriptions"}>{uiState.recordsLabel}</Link>
-              </Button>
+            {pathname !== "/transcriptions" && pathname !== "/crm" && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant={"greenTheme"} className="flex items-center gap-2">
+                    <Files className="w-4 h-4" />
+                    {uiState.recordsLabel}
+                    <ChevronDown className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem
+                    onClick={() => router.push("/transcriptions")}
+                    className="cursor-pointer hover:!text-white hover:font-bold hover:!bg-[#668D7E]"
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    Summarization
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => router.push("/crm")}
+                    className="cursor-pointer hover:!text-white hover:font-bold hover:!bg-[#668D7E]"
+                  >
+                    <Database className="mr-2 h-4 w-4" />
+                    View CRM
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
 
             {isSignedIn && pathname !== "/" && (

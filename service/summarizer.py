@@ -48,7 +48,6 @@ def summarize_using_ollama(text):
     summary = response["response"]
     return summary
 
-
 def _extract_first_json_block(text: str) -> dict | None:
     """Helper to find the first JSON block in a string."""
     try:

@@ -117,6 +117,10 @@ const RecorderCard = (props: RecorderCardProps) => {
           translation: res.translation,
           segments: res.segments,
           detectedLanguage: res.detected_language,
+          leadId: res.leadId,
+          crmUrl: res.crmUrl,
+          extractedData: res.extractedData,
+          isDefault: res.isDefault,
         });
       },
       onError: (error) => {
@@ -181,7 +185,7 @@ const RecorderCard = (props: RecorderCardProps) => {
         setStatus(`Saving transcription for ${file?.name}`);
         toast.info(`Saving transcription for ${file?.name}`);
       },
-      mutationFn: async (data: TranscriptionsPayload) => {
+      mutationFn: async (data: any) => {
         if (recordingTime > 0) {
           // recorded
           data.audioDuration = recordingTime;
