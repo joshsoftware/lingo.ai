@@ -17,7 +17,6 @@ export async function GET(req: Request) {
       data: defaultLeads
     });
   } catch (error) {
-    console.error("Error fetching default CRM leads:", error);
     return NextResponse.json(
       { success: false, error: "Failed to fetch default CRM leads" },
       { status: 500 }

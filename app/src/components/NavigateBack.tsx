@@ -15,6 +15,8 @@ const NavigateBack = (props: NavigateBackProps) => {
   const handleBack = () => {
     if (pathname.startsWith("/transcriptions/")) {
       router.push("/transcriptions");
+    } else if (pathname.startsWith("/crm/")) {
+      router.push("/crm");
     } else {
       href ? router.push(href) : router.back();
     }

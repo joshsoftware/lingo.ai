@@ -50,7 +50,6 @@ export async function POST(req: Request) {
     // If lead ID exists, save CRM data
     if (leadId) {
       try {
-        console.log("Saving CRM lead data for lead ID:", leadId);
         
         await db.insert(crmLeadsTable).values({
           leadId: leadId,
@@ -64,16 +63,13 @@ export async function POST(req: Request) {
           isDefault: isDefault === true
         });
         
-        console.log("CRM lead data saved successfully");
       } catch (crmError) {
-        console.error("Error saving CRM lead data:", crmError);
         // Continue with the response even if CRM save fails
       }
     }
 
     return new Response(JSON.stringify(response), { status: 200 });
   } catch (error) {
-    console.log(error);
     return new Response(JSON.stringify(error), { status: 500 });
   }
 }

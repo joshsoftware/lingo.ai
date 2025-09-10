@@ -10,7 +10,6 @@ export async function GET(
   try {
     const id = params.id;
     
-    console.log("Direct lookup for CRM lead with ID:", id);
     
     if (!id) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
@@ -47,7 +46,6 @@ export async function GET(
     // Return the found lead
     return NextResponse.json(lead[0]);
   } catch (error) {
-    console.error("Error in direct CRM lead lookup:", error);
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }

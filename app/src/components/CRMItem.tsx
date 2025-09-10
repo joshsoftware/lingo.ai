@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Database, User, Mail, Phone, Calendar, MapPin, Play, Pause, FileAudio } from "lucide-react";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "./ui/table";
@@ -13,127 +13,120 @@ import {
   SelectValue,
 } from "./ui/select";
 import Link from "next/link";
+import { getAllCrmLeads, transformCrmLead } from "@/lib/crm-api";
+import { CRM_CONSTANTS } from "@/constants/crm";
 
-// Static CRM data for demonstration
-const staticCRMData = [
-  {
-    id: "1",
-    name: "John Smith",
-    email: "john.smith@example.com",
-    phone: "+1 (555) 123-4567",
-    company: "Acme Corporation",
-    status: "Active",
-    lastContact: "2024-01-15",
-    location: "New York, NY",
-    leadSource: "Website",
-    recordingUrl: "https://www.soundjay.com/misc/sounds/bell-ringing-05.wav",
-    recordingName: "call_with_john_smith_jan15.mp3",
-  },
-  {
-    id: "2",
-    name: "Sarah Johnson",
-    email: "sarah.j@techcorp.com",
-    phone: "+1 (555) 987-6543",
-    company: "TechCorp Solutions",
-    status: "Prospect",
-    lastContact: "2024-01-12",
-    location: "San Francisco, CA",
-    leadSource: "Referral",
-    recordingUrl: "https://www.soundjay.com/misc/sounds/bell-ringing-05.wav",
-    recordingName: "meeting_sarah_johnson_jan12.mp3",
-  },
-  {
-    id: "3",
-    name: "Michael Brown",
-    email: "m.brown@innovate.io",
-    phone: "+1 (555) 456-7890",
-    company: "Innovate Inc",
-    status: "Qualified",
-    lastContact: "2024-01-10",
-    location: "Austin, TX",
-    leadSource: "Cold Call",
-    recordingUrl: "https://www.soundjay.com/misc/sounds/bell-ringing-05.wav",
-    recordingName: "demo_call_michael_brown_jan10.mp3",
-  },
-  {
-    id: "4",
-    name: "Emily Davis",
-    email: "emily.davis@startup.com",
-    phone: "+1 (555) 321-0987",
-    company: "StartupCo",
-    status: "Active",
-    lastContact: "2024-01-08",
-    location: "Seattle, WA",
-    leadSource: "Social Media",
-    recordingUrl: "https://www.soundjay.com/misc/sounds/bell-ringing-05.wav",
-    recordingName: "follow_up_emily_davis_jan08.mp3",
-  },
-  {
-    id: "5",
-    name: "David Wilson",
-    email: "d.wilson@enterprise.com",
-    phone: "+1 (555) 654-3210",
-    company: "Enterprise Solutions",
-    status: "Closed",
-    lastContact: "2024-01-05",
-    location: "Chicago, IL",
-    leadSource: "Trade Show",
-    recordingUrl: "https://www.soundjay.com/misc/sounds/bell-ringing-05.wav",
-    recordingName: "closing_call_david_wilson_jan05.mp3",
-  },
-];
+
+interface CRMDisplayData {
+  id: string;
+  leadId: string;
+  crmUrl: string;
+  fileName: string;
+  email: string;
+  company: string;
+  contact: string;
+  lastContact: string;
+  documentUrl: string;
+  translation: string;
+}
+
+
 
 const CRMItem = () => {
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [crmData, setCrmData] = useState<CRMDisplayData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleFilterChange = (value: string) => {
-    setStatusFilter(value);
-  };
+  const transformLead = useCallback((lead: any): CRMDisplayData => {
+    const extractedData = lead.extractedData as any || {};
+    return {
+      id: lead.id,
+      leadId: lead.leadId,
+      crmUrl: lead.crmUrl,
+      fileName: lead.fileName,
+      email: extractedData.email || '',
+      company: extractedData.company || CRM_CONSTANTS.FALLBACK_DATA.COMPANY,
+      contact: extractedData.contact || CRM_CONSTANTS.FALLBACK_DATA.CONTACT,
+      lastContact: lead.createdAt ? new Date(lead.createdAt).toLocaleDateString() : '',
+      documentUrl: lead.documentUrl,
+      translation: lead.translation
+    };
+  }, []);
 
-  const filteredData = statusFilter === "all" 
-    ? staticCRMData 
-    : staticCRMData.filter(item => item.status.toLowerCase() === statusFilter.toLowerCase());
+  useEffect(() => {
+    const fetchCrmData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const leads = await getAllCrmLeads();
+        const transformedLeads = leads.map(transformLead);
+        setCrmData(transformedLeads);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : CRM_CONSTANTS.MESSAGES.FAILED_TO_FETCH);
+        setCrmData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "active":
-        return "default";
-      case "prospect":
-        return "secondary";
-      case "qualified":
-        return "outline";
-      case "closed":
-        return "destructive";
-      default:
-        return "secondary";
-    }
-  };
+    fetchCrmData();
+  }, [transformLead]);
+
+  const filteredData = useMemo(() => crmData, [crmData]);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 pt-4 pb-8 max-w-[1400px]">
+        <div className="flex items-center justify-center h-64">
+          <div className="flex items-center gap-2">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
+            <span>{CRM_CONSTANTS.MESSAGES.LOADING}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (crmData.length === 0 && !error) {
+    return (
+      <div className="container mx-auto px-4 pt-4 pb-8 max-w-[1400px]">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">{CRM_CONSTANTS.UI.TITLE}</h1>
+          <p className="text-muted-foreground">
+            {CRM_CONSTANTS.UI.SUBTITLE}
+          </p>
+        </div>
+        
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <Database className="h-16 w-16 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">{CRM_CONSTANTS.UI.EMPTY_STATE_TITLE}</h3>
+            <p className="text-muted-foreground text-center max-w-md">
+              {CRM_CONSTANTS.UI.EMPTY_STATE_DESCRIPTION}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div>
       <div className="container mx-auto px-4 pt-4 pb-8 max-w-[1400px]">
-        <div className="overflow-clip flex w-full max-w-xs ml-auto mb-6">
-          <Select
-            value={statusFilter}
-            onValueChange={handleFilterChange}
-          >
-            <SelectTrigger className="focus:outline-none focus:ring-0 focus:ring-offset-0">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Records</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="prospect">Prospect</SelectItem>
-              <SelectItem value="qualified">Qualified</SelectItem>
-              <SelectItem value="closed">Closed</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        {error && (
+          <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-yellow-800">
+              <strong>Warning:</strong> {error}. Showing fallback data.
+            </p>
+          </div>
+        )}
+        
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">CRM Records</h1>
+          <h1 className="text-3xl font-bold mb-2">{CRM_CONSTANTS.UI.TITLE}</h1>
           <p className="text-muted-foreground">
-            Manage and view your customer relationship management data
+            {CRM_CONSTANTS.UI.SUBTITLE}
+            {crmData.length > 0 && ` (${crmData.length} records)`}
           </p>
         </div>
 
@@ -149,13 +142,12 @@ const CRMItem = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12"></TableHead>
+                  <TableHead className="w-32">Lead ID</TableHead>
                   <TableHead className="w-48">File Name</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Company</TableHead>
                   <TableHead>Contact</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Lead Source</TableHead>
+                  <TableHead>Company</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>CRM URL</TableHead>
                   <TableHead>Last Contact</TableHead>
                 </TableRow>
               </TableHeader>
@@ -173,10 +165,10 @@ const CRMItem = () => {
 };
 
 interface CRMRecordRowProps {
-  record: typeof staticCRMData[0];
+  record: CRMDisplayData;
 }
 
-const CRMRecordRow = ({ record }: CRMRecordRowProps) => {
+const CRMRecordRow = memo(({ record }: CRMRecordRowProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -210,8 +202,8 @@ const CRMRecordRow = ({ record }: CRMRecordRowProps) => {
   };
 
   useEffect(() => {
-    if (record.recordingUrl) {
-      const audio = new Audio(record.recordingUrl);
+    if (record.documentUrl) {
+      const audio = new Audio(record.documentUrl);
       audioRef.current = audio;
 
       audio.addEventListener("ended", handleAudioEnd);
@@ -221,7 +213,7 @@ const CRMRecordRow = ({ record }: CRMRecordRowProps) => {
         audio.pause();
       };
     }
-  }, [record.recordingUrl]);
+  }, [record.documentUrl]);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -252,15 +244,23 @@ const CRMRecordRow = ({ record }: CRMRecordRowProps) => {
       <td className="py-3 px-2">
         <Link href={`/crm/${record.id}`}>
           <div className="flex items-center gap-2">
+            <Database className="h-4 w-4 text-muted-foreground" />
+            <span className="font-medium text-sm">{record.leadId}</span>
+          </div>
+        </Link>
+      </td>
+      <td className="py-3 px-2">
+        <Link href={`/crm/${record.id}`}>
+          <div className="flex items-center gap-2">
             <FileAudio className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium text-sm truncate">{record.recordingName}</span>
+            <span className="font-medium text-sm truncate">{record.fileName}</span>
           </div>
         </Link>
       </td>
       <td>
         <div className="flex items-center gap-2">
           <User className="h-4 w-4 text-muted-foreground" />
-          <span className="font-medium">{record.name}</span>
+          <span className="font-medium">{record.contact}</span>
         </div>
       </td>
       <td className="text-muted-foreground">
@@ -269,33 +269,23 @@ const CRMRecordRow = ({ record }: CRMRecordRowProps) => {
         </div>
       </td>
       <td>
-        <div className="ml-4 space-y-1">
+        <div className="ml-4">
           <div className="flex items-center gap-1 text-sm">
             <Mail className="h-3 w-3 text-muted-foreground" />
             <span className="text-muted-foreground">{record.email}</span>
           </div>
-          <div className="flex items-center gap-1 text-sm">
-            <Phone className="h-3 w-3 text-muted-foreground" />
-            <span className="text-muted-foreground">{record.phone}</span>
-          </div>
-        </div>
-      </td>
-      <td>
-        <div className="ml-4">
-          <Badge variant={getStatusBadgeVariant(record.status)}>
-            {record.status}
-          </Badge>
-        </div>
-      </td>
-      <td className="text-muted-foreground">
-        <div className="flex items-center gap-1 ml-4">
-          <MapPin className="h-3 w-3" />
-          <span className="text-sm">{record.location}</span>
         </div>
       </td>
       <td className="text-muted-foreground">
         <div className="ml-4">
-          {record.leadSource}
+          <a 
+            href={record.crmUrl} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-800 underline text-sm"
+          >
+            View in CRM
+          </a>
         </div>
       </td>
       <td className="text-muted-foreground">
@@ -306,6 +296,8 @@ const CRMRecordRow = ({ record }: CRMRecordRowProps) => {
       </td>
     </tr>
   );
-};
+});
+
+CRMRecordRow.displayName = 'CRMRecordRow';
 
 export default CRMItem;
