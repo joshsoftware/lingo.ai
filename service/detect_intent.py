@@ -1,4 +1,7 @@
+
+from itertools import count
 import json
+#from msilib import PID_WORDCOUNT
 import re
 import logging
 import ollama
@@ -9,32 +12,80 @@ from time_utils import normalize_timeframe
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
-ALLOWED_INTENTS = ["get_balance", "recent_txn", "pay_person", "spend_summary", "unknown"]
+ALLOWED_INTENTS = ["get_balance", "recent_txn", "transfer_money",  "spend_insights", "unknown"]
 
-SYSTEM = (
-    "You are an NLU engine for a banking voice assistant in India. "
-    "You must return STRICT JSON with keys: intent (string), entities (object), language (string). "
-    "Allowed intents: get_balance, recent_txn, spend_summary, pay_person, unknown. "
-    "Entities you may extract: amount (number), payee (string), currency (string in ISO), timeframe (string), "
-    "date (string in ISO yyyy-mm-dd), start_date (ISO), end_date (ISO), merchant (string), "
-    "count (integer). Keep JSON minimal; no prose, no markdown."
-)
+SYSTEM = """
+You are a strict NLU engine for a  banking  assistant in India.  
+1. Identify the user's intent. Choose from: [get_balance, recent_txn, transferMoney, spend_insights, unknown].
+2. Extract the following entities if present: amount (number), payee (string), timeframe (string), date (yyyy-mm-dd), start_date (yyyy-mm-dd), end_date (yyyy-mm-dd), merchant (string), count (integer), category (str),..
 
-USER_TEMPLATE = """Transcript: {transcript}
+You MUST return valid JSON with this schema:
+{
+  "intent": "get_balance" | "recent_txn" | "spend_insights" | "transfer_money" | "unknown",
+  "entities": { },
+  "language": "<BCP-47 code like en-IN, hi-IN, ta-IN>"
+}
 
-Return JSON ONLY. Examples:
+Rules:
+- Always pick one of the allowed intents, never invent new ones.
+- Dates MUST be normalized into ISO format yyyy-mm-dd. Use today's date as reference (2025-09-07).
+- Extract entities only if explicitly present. If missing, leave empty.
+- Keep JSON minimal. No markdown, no extra text.
 
-Ex1:
+Examples:
+User: "What is my balance?" or "How much money I have in my account?"
 {{"intent":"get_balance","entities":{{}},"language":"{lang}"}}
 
-Ex2:
-{{"intent":"recent_txn","entities":{{"date":"2025-09-02"}},"language":"{lang}"}}
+User: "Show transactions on 10th September"
+{{"intent":"spend_insights","entities":{{"date":"2025-09-10"}},"language":"{lang}"}}
 
-Ex3:
-{{"intent":"spend_summary","entities":{{"timeframe":"last_month"}},"language":"{lang}"}}
 
-Ex4:
-{{"intent":"pay_person","entities":{{"payee":"Ananya","amount":1500,"currency":"INR"}},"language":"{lang}"}}
+User: "Show last 5 transactions"
+{{"intent":"recent_txn","entities":{{"count": 5}},"language":"{lang}"}}
+
+User: "Send 1500 to AnanyaRavi"
+{{"intent":"transfer_money","entities":{{"payee":"Ananya","amount":1500,"currency":"INR"}},"language":"{lang}"}}
+
+User: "How much I spend food last 10 days"
+{{"intent":"spend_insights","entities":{{"timeframe":"10 days","category":"food"}},"language":"{lang}"}}
+
+User: "How much I spend amazon last week"
+{{"intent":"spend_insights","entities":{{"timeframe":"last_week","merchant":"amazon"}},"language":"{lang}"}}
+
+“Show me my last 5 Swiggy transactions”
+{{"intent":"spend_insights","entities":{{"count":5,"merchant":"swiggy"}},"language":"{lang}"}}
+
+Do NOT hallucinate.
+
+"""
+USER_TEMPLATE = """
+You are a user
+Transcript: {transcript}
+Find the intent  and extract the required entities
+Return JSON ONLY. 
+Examples:
+User: "What is my balance?" or "How much money I have in my account?"
+{{"intent":"get_balance","entities":{{}},"language":"{lang}"}}
+
+User: "Show transactions on 10th September"
+{{"intent":"spend_insights","entities":{{"date":"2025-09-10"}},"language":"{lang}"}}
+
+
+User: "Show last 5 transactions"
+{{"intent":"recent_txn","entities":{{"count": 5}},"language":"{lang}"}}
+
+User: "Send 1500 to AnanyaRavi"
+{{"intent":"transfer_money","entities":{{"payee":"Ananya","amount":1500,"currency":"INR"}},"language":"{lang}"}}
+
+User: "How much I spend food last 10 days"
+{{"intent":"spend_insights","entities":{{"timeframe":"10 days","category":"food"}},"language":"{lang}"}}
+
+User: "How much I spend amazon last week"
+{{"intent":"spend_insights","entities":{{"timeframe":"last_week","merchant":"amazon"}},"language":"{lang}"}}
+
+“Show me my last 5 Swiggy transactions”
+{{"intent":"spend_insights","entities":{{"count":5,"merchant":"swiggy"}},"language":"{lang}"}}
+
 """
 
 def safe_json_parse(s: str) -> Dict[str, Any]:
@@ -54,10 +105,10 @@ def safe_json_parse(s: str) -> Dict[str, Any]:
 
 def validate_schema(result: dict) -> dict:
     """Validate and normalize schema for intent detection result."""
+    
     intent = result.get("intent", "unknown")
     if intent not in ALLOWED_INTENTS:
         intent = "unknown"
-
     entities = result.get("entities", {})
     amount = entities.get("amount", None)
     try:
@@ -76,9 +127,17 @@ def validate_schema(result: dict) -> dict:
     if isinstance(timeframe, str) and timeframe.lower() in ["null", "none", ""]:
         timeframe = None
 
+    count = entities.get("count", None)
+
     dt = entities.get("date", None)
     if isinstance(dt, str) and dt.lower() in ["null", "none", ""]:
         dt = None
+    category = entities.get("category", None)
+    if isinstance(category, str) and category.lower() in ["null", "none", ""]:
+        category = None
+    merchant = entities.get("merchant", None)
+    if isinstance(merchant, str) and merchant.lower() in ["null", "none", ""]:
+        merchant = None
 
     confidence = result.get("confidence", 0.0)
     try:
@@ -95,6 +154,9 @@ def validate_schema(result: dict) -> dict:
             "recipient": recipient,
             "timeframe": timeframe,
             "date": dt,
+            "category":category,
+            "merchant":merchant,
+            "count":count
         },
         "confidence": confidence,
     }
@@ -111,14 +173,14 @@ def detect_intent_with_llama(transcript: str, lang_hint: str = "en") -> Dict[str
             options={"temperature": 0.0, "top_p": 0.8, "max_tokens": 300},            
             stream=False,
         )
-
+       
+        
         llama_response = response["response"].strip()
         parsed = safe_json_parse(llama_response)
-        
         parsed["entities"] = normalize_timeframe(parsed.get("entities", {}))
         validated = validate_schema(parsed)
-
         logger.info(f"Intent detected: {validated['intent']} (confidence: {validated['confidence']})")
+        logger.info(f"Entities: {validated['entities']}")
         return validated
 
     except Exception as e:
@@ -138,6 +200,7 @@ def format_intent_response(llama_response: dict) -> dict:
         
     Returns:
         Formatted intent_data matching the expected structure
+        
     """
     
     # Extract values from Llama response
@@ -156,6 +219,9 @@ def format_intent_response(llama_response: dict) -> dict:
             "recipient": entities.get("recipient"),
             "timeframe": entities.get("timeframe"),
             "date": entities.get("date"),
+            "category": entities.get("category"),
+            "merchant": entities.get("merchant)"),
+            "count":entities.get("count")
         },
         "action": action
     }
@@ -179,12 +245,8 @@ def determine_action(intent: str, entities: dict) -> str:
         return "respond"
     elif intent == "recent_txn":
         return "respond"
-    elif intent == "spend_summary":
-        timeframe = entities.get("timeframe")
-        if timeframe:
-            return "respond"
-        return "ask_for_details"
-    elif intent == "pay_person":
+   
+    elif intent == "transfer_money":
         amount = entities.get("amount")
         recipient = entities.get("recipient")
         
@@ -193,5 +255,22 @@ def determine_action(intent: str, entities: dict) -> str:
             return "process_payment"
         else:
             return "ask_for_details"
+    elif intent == "spend_insights":
+        timeframe = entities.get("timeframe")
+        if timeframe:
+            category = entities.get("category")
+            merchant = entities.get("merchant")
+            count = entities.get("count")
+            if category or merchant:
+                return "respond"
+            else:
+                return "ask_for_details"
+        return "ask_for_details"
     else:
         return "unknown"
+#translation_text = "how much did i spend on amazon last week?"
+#translation_text = "how much did i spend on food yester?"
+#translation_text = "what is the current balance in my account?"
+translation_text = "Send 1000 to Ananya"
+intent = detect_intent_with_llama(translation_text)
+print(intent)
