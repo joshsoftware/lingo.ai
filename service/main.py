@@ -1,21 +1,31 @@
-from fastapi import FastAPI, UploadFile, File, Form
-from fastapi.responses import JSONResponse
-from logger import logger
-from dotenv import load_dotenv
-from starlette.middleware.cors import CORSMiddleware
-from audio_service import translate_with_whisper
-from audio_service import translate_with_whisper_timestamped, translate_with_whisper_from_upload
-from detect_intent import detect_intent_with_llama, format_intent_response
-from summarizer import summarize_using_openai
-from summarizer import summarize_using_ollama,extract_contact_detailed_using_ollama
-from pydantic import BaseModel
-import traceback
-from util import generate_timestamp_json
-from fastapi_versionizer.versionizer import Versionizer, api_version
 import json
-from crm_client import OdooCRMClient
-from config import odoo_url, odoo_db, odoo_username, odoo_password
+import traceback
+import os
+import requests
+
+from dotenv import load_dotenv
+from fastapi import FastAPI, File, Form, UploadFile
+from fastapi.responses import JSONResponse
+from fastapi_versionizer.versionizer import Versionizer, api_version
+from pydantic import BaseModel
+from starlette.middleware.cors import CORSMiddleware
+
+from audio_service import (
+    translate_with_whisper,
+    translate_with_whisper_from_upload,
+    translate_with_whisper_timestamped,
+)
+from config import odoo_db, odoo_password, odoo_url, odoo_username
 from core_banking_mock import router as core_banking_mock_router
+from crm_client import OdooCRMClient
+from intent import find_intent_using_openai, find_intent_using_regex
+from logger import logger
+from summarizer import (
+    extract_contact_detailed_using_ollama,
+    summarize_using_ollama,
+    summarize_using_openai,
+)
+from util import generate_timestamp_json
 
 app = FastAPI()
 
@@ -27,6 +37,8 @@ app.add_middleware(
     allow_methods=["*"],  # Allows all HTTP methods
     allow_headers=["*"],  # Allows all headers
 )
+
+app.include_router(core_banking_mock_router)
 
 @app.get("/")
 def root_route():
@@ -156,7 +168,6 @@ async def upload_audio(body: Body):
         # Fire-and-forget CRM sync (do not block response)
         lead_id = None
         try:
-            print(odoo_url, odoo_db, odoo_username, odoo_password)
             if odoo_url and odoo_db and odoo_username and odoo_password:
                 client = OdooCRMClient(odoo_url, odoo_db, odoo_username, odoo_password)
                 lead_id = client.create_lead(
@@ -219,51 +230,49 @@ versions = Versionizer(
     latest_prefix='/latest',
     sort_routes=True
 ).versionize()
+# Add this function to call our new API endpoint
+async def save_crm_lead_data(lead_id, file_path, translation, extracted_data, summary, user_id=None, transcription_id=None):
 
-app.include_router(core_banking_mock_router)
-
-@app.post("/voice/transcribe-intent")
-async def transcribe_intent(audio: UploadFile = File(...), session_id: str = Form(...)):
+    """
+    Save CRM lead data to the database through the Next.js API.
+    """
     try:
-        if not audio:
-            return JSONResponse(status_code=400, content={"message":"No audio file provided"})
-
-        translation_text = translate_with_whisper_from_upload(audio)
-        #translation_text = "how much did i spend on food last week?"
-        #translation_text = "what is the current balance in my account?"
-        #translation_text = "Send 1000 to Ananya"
-        logger.info("translation done")
-        logger.info(translation_text)
-
-        intent = detect_intent_with_llama(translation_text)
-        logger.info("intent find done")
-        logger.info("Intent: ", intent)
-
-        try:
-            if isinstance(intent, dict):
-                intent_dict = intent
-            else:
-                intent_dict = json.loads(intent)
-        except json.JSONDecodeError:
-            logger.warning(f"Intent detection returned non-JSON response: {intent}")
-            result = {"error": intent, "session_id": session_id, "translation": translation_text}
-            return JSONResponse(content=result, status_code=200)
+        # Get base URL from environment or use default
+        api_base_url = os.environ.get("NEXT_API_BASE_URL", "http://localhost:3000")
         
-        # Map Llama response to your expected format
-        formatted_intent_data = format_intent_response(intent_dict)
-
-        result = {
-            "session_id": session_id,
-            "translation": translation_text,
-            "intent_data": {
-                "intent_data": formatted_intent_data
-            }
+        # Extract just the filename from the file path
+        file_name = os.path.basename(file_path)
+        
+        # Prepare the data to send
+        crm_lead_data = {
+            "leadId": str(lead_id),
+            "crmUrl": odoo_url,  # Using the odoo_url from config
+            "fileName": file_name,
+            "transcriptionId": transcription_id,  # This might be None if not provided
+            "extractedData": extracted_data,
+            "translation": translation,
+            "userId": user_id,  # This might be None if not provided
+            "isDefault": False  # Adding the default field set to false
         }
-        return JSONResponse(content=result, status_code=200)
-
+        
+        # Make the API call
+        response = requests.post(
+            f"{api_base_url}/api/crm-leads", 
+            json=crm_lead_data,
+            headers={"Content-Type": "application/json"}
+        )
+        
+        if response.status_code == 200:
+            logger.info(f"CRM lead data saved successfully for lead_id={lead_id}")
+            return response.json()
+        else:
+            logger.error(f"Failed to save CRM lead data: {response.status_code} - {response.text}")
+            return None
+            
     except Exception as e:
-        logger.info(traceback.format_exc())
-        return JSONResponse(content={"message": str(e)}, status_code=500)
+        logger.error(f"Exception saving CRM lead data: {str(e)}")
+        return None
+
 
 
 # Add this function to retrieve default CRM leads
