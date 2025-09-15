@@ -21,3 +21,9 @@ python-dotenv
 whisper-timestamped
 silero-vad
 fastapi_versionizer
+datetime
+dateparser
+torch 
+transformers 
+accelerate 
+sentencepiece
