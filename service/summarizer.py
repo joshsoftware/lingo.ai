@@ -220,9 +220,10 @@ def extract_contact_detailed_using_ollama(text: str):
     except Exception as e:
         logger.warning(f"LLM detailed extraction failed: {e}")
         # Return a basic extraction using regex patterns if LLM fails
+        phone_match = re.search(r'(\d{3}[-\.\s]?\d{3}[-\.\s]?\d{4})', text)
         return {
             "name": extracted_name, 
-            "phone": re.search(r'(\d{3}[-\.\s]?\d{3}[-\.\s]?\d{4})', text).group(1).replace('-', '') if re.search(r'(\d{3}[-\.\s]?\d{3}[-\.\s]?\d{4})', text) else None,
+            "phone": phone_match.group(1).replace('-', '') if phone_match else None,
             "address": f"{street_address}, {city}" if street_address and city else None,
             "street": street_address, 
             "city": city, 

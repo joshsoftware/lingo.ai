@@ -143,47 +143,47 @@ async def transcribe_intent(audio: UploadFile = File(...), session_id: str = For
     except Exception as e:
         logger.info(traceback.format_exc())
         return JSONResponse(content={"message": str(e)}, status_code=500)
-async def save_crm_lead_data(lead_id, file_path, translation, extracted_data, summary, user_id=None, transcription_id=None):
+# async def save_crm_lead_data(lead_id, file_path, translation, extracted_data, summary, user_id=None, transcription_id=None):
 
-    """
-    Save CRM lead data to the database through the Next.js API.
-    """
-    try:
-        # Get base URL from environment or use default
-        api_base_url = os.environ.get("NEXT_API_BASE_URL", "http://localhost:3000")
+#     """
+#     Save CRM lead data to the database through the Next.js API.
+#     """
+#     try:
+#         # Get base URL from environment or use default
+#         api_base_url = os.environ.get("NEXT_API_BASE_URL", "http://localhost:3000")
         
-        # Extract just the filename from the file path
-        file_name = os.path.basename(file_path)
+#         # Extract just the filename from the file path
+#         file_name = os.path.basename(file_path)
         
-        # Prepare the data to send
-        crm_lead_data = {
-            "leadId": str(lead_id),
-            "crmUrl": odoo_url,  # Using the odoo_url from config
-            "fileName": file_name,
-            "transcriptionId": transcription_id,  # This might be None if not provided
-            "extractedData": extracted_data,
-            "translation": translation,
-            "userId": user_id,  # This might be None if not provided
-            "isDefault": False  # Adding the default field set to false
-        }
+#         # Prepare the data to send
+#         crm_lead_data = {
+#             "leadId": str(lead_id),
+#             "crmUrl": odoo_url,  # Using the odoo_url from config
+#             "fileName": file_name,
+#             "transcriptionId": transcription_id,  # This might be None if not provided
+#             "extractedData": extracted_data,
+#             "translation": translation,
+#             "userId": user_id,  # This might be None if not provided
+#             "isDefault": False  # Adding the default field set to false
+#         }
         
-        # Make the API call
-        response = requests.post(
-            f"{api_base_url}/api/crm-leads", 
-            json=crm_lead_data,
-            headers={"Content-Type": "application/json"}
-        )
+#         # Make the API call
+#         response = requests.post(
+#             f"{api_base_url}/api/crm-leads", 
+#             json=crm_lead_data,
+#             headers={"Content-Type": "application/json"}
+#         )
         
-        if response.status_code == 200:
-            logger.info(f"CRM lead data saved successfully for lead_id={lead_id}")
-            return response.json()
-        else:
-            logger.error(f"Failed to save CRM lead data: {response.status_code} - {response.text}")
-            return None
+#         if response.status_code == 200:
+#             logger.info(f"CRM lead data saved successfully for lead_id={lead_id}")
+#             return response.json()
+#         else:
+#             logger.error(f"Failed to save CRM lead data: {response.status_code} - {response.text}")
+#             return None
             
-    except Exception as e:
-        logger.error(f"Exception saving CRM lead data: {str(e)}")
-        return None
+#     except Exception as e:
+#         logger.error(f"Exception saving CRM lead data: {str(e)}")
+#         return None
 
 
 
@@ -197,7 +197,8 @@ async def get_default_crm_leads():
         
         response = requests.get(
             f"{api_base_url}/api/crm-leads/default",
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
+            timeout=30
         )
         
         if response.status_code == 200:
@@ -241,7 +242,8 @@ async def get_crm_lead_direct(lead_id: str):
         
         response = requests.get(
             simple_url,
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
+            timeout=30
         )
         
         if response.status_code == 200:
