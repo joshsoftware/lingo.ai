@@ -135,9 +135,7 @@ async def transcribe_intent(audio: UploadFile = File(...), session_id: str = For
         result = {
             "session_id": session_id,
             "translation": translation_text,
-            "intent_data": {
-                "intent_data": formatted_intent_data
-            }
+            "intent_data": formatted_intent_data            
         }
         return JSONResponse(content=result, status_code=200)
 
