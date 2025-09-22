@@ -172,7 +172,7 @@ def validate_schema(result: dict) -> dict:
 
 def detect_intent_with_llama(transcript: str, lang_hint: str = "en") -> Dict[str, Any]:
     prompt = USER_TEMPLATE.format(transcript=transcript.strip(), lang=lang_hint)
-    transcript = "how much i spend on amazon last month?"
+    #transcript = "how much i spend on amazon last month?"
     try:
         response = ollama.Client(host=ollama_host).generate(
             system = SYSTEM,
