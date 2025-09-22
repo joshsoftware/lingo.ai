@@ -116,8 +116,8 @@ async def transcribe_intent(audio: UploadFile = File(...), session_id: str = For
         logger.info(translation_text)
 
         intent = detect_intent_with_llama(translation_text,language)
-        logger.info("intent find done")
-        logger.info("Intent: ", intent)
+        logger.info("intent identified")
+
 
         try:
             if isinstance(intent, dict):
@@ -128,7 +128,6 @@ async def transcribe_intent(audio: UploadFile = File(...), session_id: str = For
             logger.warning(f"Intent detection returned non-JSON response: {intent}")
             result = {"error": intent, "session_id": session_id, "translation": translation_text}
             return JSONResponse(content=result, status_code=200)
-        
         # Map Llama response to your expected format
         formatted_intent_data = format_intent_response(intent_dict)
 
@@ -137,6 +136,7 @@ async def transcribe_intent(audio: UploadFile = File(...), session_id: str = For
             "translation": translation_text,
             "intent_data": formatted_intent_data            
         }
+        
         return JSONResponse(content=result, status_code=200)
 
     except Exception as e:
