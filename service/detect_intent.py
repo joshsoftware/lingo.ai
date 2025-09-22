@@ -31,6 +31,7 @@ Rules:
 - Dates MUST be normalized into ISO format yyyy-mm-dd. Use today's date as reference (2025-09-07).
 - Extract entities only if explicitly present. If missing, leave empty.
 - Keep JSON minimal. No markdown, no extra text.
+- If you cannopt detect the language then default to en
 
 Examples:
 User: "What is my balance?" or "How much money I have in my account?"
@@ -44,6 +45,10 @@ User: "Show last 5 transactions"
 {{"intent":"recent_txn","entities":{{"count": 5}},"language":"{lang}"}}
 
 User: "Send 1500 to AnanyaRavi"
+{{"intent":"transfer_money","entities":{{"payee":"Ananya","amount":1500,"currency":"INR"}},"language":"{lang}"}}
+
+
+User: "Transfer 1500 to Shubam"
 {{"intent":"transfer_money","entities":{{"payee":"Ananya","amount":1500,"currency":"INR"}},"language":"{lang}"}}
 
 User: "How much I spend food last 10 days"
@@ -76,6 +81,10 @@ User: "Show last 5 transactions"
 
 User: "Send 1500 to AnanyaRavi"
 {{"intent":"transfer_money","entities":{{"payee":"Ananya","amount":1500,"currency":"INR"}},"language":"{lang}"}}
+
+User: "Transfer 150 to Shubam"
+{{"intent":"transfer_money","entities":{{"payee":"Shubam","amount":150,"currency":"INR"}},"language":"{lang}"}}
+
 
 User: "How much I spend food last 10 days"
 {{"intent":"spend_insights","entities":{{"timeframe":"10 days","category":"food"}},"language":"{lang}"}}
@@ -176,6 +185,8 @@ def detect_intent_with_llama(transcript: str, lang_hint: str = "en") -> Dict[str
        
         
         llama_response = response["response"].strip()
+        logger.info(f"llama response: {llama_response}")
+
         parsed = safe_json_parse(llama_response)
         parsed["entities"] = normalize_timeframe(parsed.get("entities", {}))
         validated = validate_schema(parsed)
@@ -272,5 +283,8 @@ def determine_action(intent: str, entities: dict) -> str:
 #translation_text = "how much did i spend on food yester?"
 #translation_text = "what is the current balance in my account?"
 translation_text = "Send 1000 to Ananya"
+#translation_text = "இருப்பு என்ன?"
+#translation_text = "அனன்யாவுக்கு 1000 ரூபாய் அனுப்பு."
+#translation_text = "Transfer 5002 to Ananya"
 intent = detect_intent_with_llama(translation_text)
 print(intent)
