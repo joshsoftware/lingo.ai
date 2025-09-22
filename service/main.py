@@ -105,15 +105,17 @@ async def transcribe_intent(audio: UploadFile = File(...), session_id: str = For
     try:
         if not audio:
             return JSONResponse(status_code=400, content={"message":"No audio file provided"})
+        response = translate_with_whisper_from_upload(audio)
+        translation_text = response['text']
+        language = response["language"]
 
-        translation_text = translate_with_whisper_from_upload(audio)
         #translation_text = "how much did i spend on food last week?"
         #translation_text = "what is the current balance in my account?"
         #translation_text = "Send 1000 to Ananya"
         logger.info("translation done")
         logger.info(translation_text)
 
-        intent = detect_intent_with_llama(translation_text)
+        intent = detect_intent_with_llama(translation_text,language)
         logger.info("intent find done")
         logger.info("Intent: ", intent)
 

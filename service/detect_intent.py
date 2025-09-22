@@ -30,7 +30,7 @@ Rules:
 - Always pick one of the allowed intents, never invent new ones.
 - Dates MUST be normalized into ISO format yyyy-mm-dd. Use today's date as reference (2025-09-07).
 - Extract entities only if explicitly present. If missing, leave empty.
-- If you cannopt detect the language then default to en
+- If you cannopt detect the language then default to en-IN
 - make sure the json response is valid json with proper enclosing paranthesis
 - Keep JSON minimal. No markdown, no extra text.
 

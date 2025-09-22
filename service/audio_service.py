@@ -162,7 +162,7 @@ def translate_with_whisper_from_upload(upload_file: UploadFile):
         options = dict(beam_size=5, best_of=5)
         translate_options = dict(task="translate", **options)
         result = model.transcribe(temp_file_path, **translate_options)
-        return result["text"]
+        return result
         
     except Exception as e:
         logger.error(f"Translation from upload failed: {str(e)}")
