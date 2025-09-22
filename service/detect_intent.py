@@ -32,7 +32,7 @@ Rules:
 - Extract entities only if explicitly present. If missing, leave empty.
 - If you cannopt detect the language then default to en-IN
 - make sure the json response is valid json with proper enclosing paranthesis
-- Keep JSON minimal. No markdown, no extra text.
+- Keep JSON minimal. No markdown, no extra text, no extra quotes.
 
 Examples:
 User: "What is my balance?" or "How much money I have in my account?"
@@ -180,7 +180,7 @@ def detect_intent_with_llama(transcript: str, lang_hint: str = "en") -> Dict[str
         response = ollama.Client(host=ollama_host).generate(
             system = SYSTEM,
             model=ollama_model_name,
-            prompt=prompt,
+            prompt=transcript.strip(),
             options={"temperature": 0.0, "top_p": 0.8, "max_tokens": 300},            
             stream=False,
         )
@@ -288,7 +288,8 @@ def determine_action(intent: str, entities: dict) -> str:
 #translation_text = "what is the current balance in my account?"
 #translation_text = "Send 1000 to Ananya"
 #translation_text = "இருப்பு என்ன?"
-translation_text = "அனன்யாவுக்கு 1000 ரூபாய் அனுப்பு."
+#translation_text = "அனன்யாவுக்கு 1000 ரூபாய் அனுப்பு"
 #translation_text = "Transfer 5002 to Ananya"
+translation_text = "Last two transactions"
 intent = detect_intent_with_llama(translation_text)
 print(intent)
