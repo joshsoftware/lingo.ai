@@ -30,8 +30,9 @@ Rules:
 - Always pick one of the allowed intents, never invent new ones.
 - Dates MUST be normalized into ISO format yyyy-mm-dd. Use today's date as reference (2025-09-07).
 - Extract entities only if explicitly present. If missing, leave empty.
-- Keep JSON minimal. No markdown, no extra text.
 - If you cannopt detect the language then default to en
+- make sure the json response is valid json with proper enclosing paranthesis
+- Keep JSON minimal. No markdown, no extra text.
 
 Examples:
 User: "What is my balance?" or "How much money I have in my account?"
@@ -183,7 +184,7 @@ def detect_intent_with_llama(transcript: str, lang_hint: str = "en") -> Dict[str
             stream=False,
         )
        
-        
+        logger.info(response)
         llama_response = response["response"].strip()
         logger.info(f"llama response: {llama_response}")
 
@@ -279,10 +280,10 @@ def determine_action(intent: str, entities: dict) -> str:
         return "ask_for_details"
     else:
         return "unknown"
-#translation_text = "how much did i spend on amazon last week?"
+translation_text = "how much i spend on amazon last month?"
 #translation_text = "how much did i spend on food yester?"
 #translation_text = "what is the current balance in my account?"
-translation_text = "Send 1000 to Ananya"
+#translation_text = "Send 1000 to Ananya"
 #translation_text = "இருப்பு என்ன?"
 #translation_text = "அனன்யாவுக்கு 1000 ரூபாய் அனுப்பு."
 #translation_text = "Transfer 5002 to Ananya"
