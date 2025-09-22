@@ -148,7 +148,7 @@ def validate_schema(result: dict) -> dict:
     merchant = entities.get("merchant", None)
     if isinstance(merchant, str) and merchant.lower() in ["null", "none", ""]:
         merchant = None
-
+    language = result.get("language","en")
     confidence = result.get("confidence", 0.0)
     try:
         confidence = float(confidence)
@@ -168,13 +168,14 @@ def validate_schema(result: dict) -> dict:
             "merchant":merchant,
             "count":count
         },
+        "language": language,
         "confidence": confidence,
     }
 
 def detect_intent_with_llama(transcript: str, lang_hint: str = "en") -> Dict[str, Any]:
     prompt = USER_TEMPLATE.format(transcript=transcript.strip(), lang=lang_hint)
    
-
+    print(lang_hint)
     try:
         response = ollama.Client(host=ollama_host).generate(
             system = SYSTEM,
@@ -218,6 +219,7 @@ def format_intent_response(llama_response: dict) -> dict:
     # Extract values from Llama response
     intent = llama_response.get("intent", "unknown")
     entities = llama_response.get("entities", {})
+    language = llama_response.get("language","en")
     
     # Determine action based on intent and entities
     action = determine_action(intent, entities)
@@ -235,6 +237,7 @@ def format_intent_response(llama_response: dict) -> dict:
             "merchant": entities.get("merchant)"),
             "count":entities.get("count")
         },
+        "language": language,
         "action": action
     }
     
@@ -280,12 +283,12 @@ def determine_action(intent: str, entities: dict) -> str:
         return "ask_for_details"
     else:
         return "unknown"
-translation_text = "how much i spend on amazon last month?"
+#translation_text = "how much i spend on amazon last month?"
 #translation_text = "how much did i spend on food yester?"
 #translation_text = "what is the current balance in my account?"
 #translation_text = "Send 1000 to Ananya"
 #translation_text = "இருப்பு என்ன?"
-#translation_text = "அனன்யாவுக்கு 1000 ரூபாய் அனுப்பு."
+translation_text = "அனன்யாவுக்கு 1000 ரூபாய் அனுப்பு."
 #translation_text = "Transfer 5002 to Ananya"
 intent = detect_intent_with_llama(translation_text)
 print(intent)
