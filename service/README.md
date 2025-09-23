@@ -39,6 +39,8 @@ Activate the virtual environment
 Install dependencies
 
     pip install -r requirements.txt
+    
+    python3 -c "from database import Base, engine; import models; Base.metadata.create_all(bind=engine)"
 
     uvicorn main:app --host localhost --port 8000 --reload
 

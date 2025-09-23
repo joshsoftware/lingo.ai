@@ -14,7 +14,7 @@ from util import generate_timestamp_json
 from fastapi_versionizer.versionizer import Versionizer, api_version
 import json
 from core_banking_mock import router as core_banking_mock_router
-
+from banking.core_banking_routes import router as banking_router
 app = FastAPI()
 
 # Add CORS middleware to the application
@@ -98,8 +98,8 @@ versions = Versionizer(
     sort_routes=True
 ).versionize()
 
-app.include_router(core_banking_mock_router)
-
+# app.include_router(core_banking_mock_router)
+app.include_router(banking_router)
 @app.post("/voice/transcribe-intent")
 async def transcribe_intent(audio: UploadFile = File(...), session_id: str = Form(...)):
     try:
