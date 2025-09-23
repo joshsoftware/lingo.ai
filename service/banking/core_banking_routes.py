@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
-from datetime import datetime
+from datetime import datetime, timedelta
 from .database import get_db
 from .models import Customer, Account, Transaction
 from pydantic import BaseModel
@@ -68,6 +68,7 @@ async def pay_money(request: PaymentRequest, customer_id: int = 1, db: Session =
 
 @router.get("/transactions")
 async def search_txn(
+    customer_id: int = None,
     merchant: str = None,
     limit: int = None,
     start_date: str = None,
@@ -76,23 +77,39 @@ async def search_txn(
 ):
     query = db.query(Transaction).order_by(desc(Transaction.transaction_date))
 
+    # Filter by customer_id if provided
+    if customer_id is not None:
+        # Find all accounts for this customer
+        accounts = db.query(Account.id).filter(Account.customer_id == customer_id, Account.is_active == True).all()
+        account_ids = [a.id for a in accounts]
+        if account_ids:
+            query = query.filter(Transaction.from_account_id.in_(account_ids))
+        else:
+            return {"transactions": []}
+
+    # Filter by merchant if provided
     if merchant:
         query = query.filter(Transaction.merchant.ilike(f"%{merchant}%"))
 
+    # Filter by date range if provided
+    date_filtered = False
     if start_date:
         try:
-            start_dt = datetime.datetime.strptime(start_date, "%Y-%m-%d")
+            start_dt = datetime.strptime(start_date, "%Y-%m-%d")
             query = query.filter(Transaction.transaction_date >= start_dt)
+            date_filtered = True
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid start_date format. Use YYYY-MM-DD.")
     if end_date:
         try:
-            end_dt = datetime.datetime.strptime(end_date, "%Y-%m-%d") + datetime.timedelta(days=1)
+            end_dt = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
             query = query.filter(Transaction.transaction_date < end_dt)
+            date_filtered = True
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid end_date format. Use YYYY-MM-DD.")
 
-    if start_date or end_date:
+    # If date filtering is applied, ignore limit
+    if date_filtered:
         db_transactions = query.all()
     else:
         db_transactions = query.limit(limit if limit else 5).all()
