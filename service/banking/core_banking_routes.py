@@ -5,6 +5,7 @@ from datetime import datetime
 from .database import get_db
 from .models import Customer, Account, Transaction
 from pydantic import BaseModel
+from typing import Optional
 
 router = APIRouter(prefix="/bank/me", tags=["banking"])
 
@@ -66,28 +67,36 @@ async def pay_money(request: PaymentRequest, customer_id: int = 1, db: Session =
     }
 
 @router.get("/transactions")
-async def search_txn(merchant: str = None, limit: int = 5, customer_id: int = 1, db: Session = Depends(get_db)):
-    """Search transactions with optional merchant filter"""
-    account = db.query(Account).filter(
-        Account.customer_id == customer_id,
-        Account.is_active == True
-    ).first()
-    
-    if not account:
-        raise HTTPException(status_code=404, detail="Account not found")
-    
-    # Query transactions
-    query = db.query(Transaction).filter(
-        Transaction.from_account_id == account.id
-    ).order_by(desc(Transaction.transaction_date))
-    
+async def search_txn(
+    merchant: str = None,
+    limit: int = None,
+    start_date: str = None,
+    end_date: str = None,
+    db: Session = Depends(get_db)
+):
+    query = db.query(Transaction).order_by(desc(Transaction.transaction_date))
+
     if merchant:
-        # Use the merchant field for filtering
         query = query.filter(Transaction.merchant.ilike(f"%{merchant}%"))
-        
-    # Get transactions and format them like the mock
-    db_transactions = query.limit(limit).all()
-    
+
+    if start_date:
+        try:
+            start_dt = datetime.datetime.strptime(start_date, "%Y-%m-%d")
+            query = query.filter(Transaction.transaction_date >= start_dt)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid start_date format. Use YYYY-MM-DD.")
+    if end_date:
+        try:
+            end_dt = datetime.datetime.strptime(end_date, "%Y-%m-%d") + datetime.timedelta(days=1)
+            query = query.filter(Transaction.transaction_date < end_dt)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid end_date format. Use YYYY-MM-DD.")
+
+    if start_date or end_date:
+        db_transactions = query.all()
+    else:
+        db_transactions = query.limit(limit if limit else 5).all()
+
     results = [
         {
             "id": t.id,
@@ -97,5 +106,4 @@ async def search_txn(merchant: str = None, limit: int = 5, customer_id: int = 1,
         }
         for t in db_transactions
     ]
-    
     return {"transactions": results}
