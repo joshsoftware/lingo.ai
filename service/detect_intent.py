@@ -266,7 +266,7 @@ def determine_action(intent: str, entities: dict) -> str:
         if amount and recipient:
             return "respond"
         else:
-            return "Need both recipient and amount to be transferred. Could you please repeat the statment "
+            return "Need both recipient and amount to be transferred. Could you please repeat the statement "
     elif intent == "txn_insights":
         timeframe = entities.get("timeframe")
         if timeframe:
@@ -280,7 +280,7 @@ def determine_action(intent: str, entities: dict) -> str:
         return "To filter transactions details, need date range"
     else:
         return "unknown"
-translation_text = "how much i spend on amazon last month?"
+# translation_text = "how much i spend on amazon last month?"
 #translation_text = "how much did i spend on food yester?"
 #translation_text = "what is the current balance in my account?"
 #translation_text = "Send 1000 to Ananya"
@@ -288,5 +288,5 @@ translation_text = "how much i spend on amazon last month?"
 #translation_text = "அனன்யாவுக்கு 1000 ரூபாய் அனுப்பு"
 #translation_text = "Transfer 5002 to Ananya"
 #translation_text = "Last two transactions"
-intent = detect_intent_with_llama(translation_text)
-print(intent)
+# intent = detect_intent_with_llama(translation_text)
+# print(intent)
