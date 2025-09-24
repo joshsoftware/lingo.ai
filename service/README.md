@@ -40,8 +40,10 @@ Install dependencies
 
     pip install -r requirements.txt
     
-    python3 -c "from database import Base, engine; import models; Base.metadata.create_all(bind=engine)"
+    python3 -c "from banking.database import Base, engine; import banking.models; Base.metadata.create_all(bind=engine)"
 
+    python3 banking/seed_data.py
+    
     uvicorn main:app --host localhost --port 8000 --reload
 
 # Api endpoints

@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Text, Boolean
 from sqlalchemy.orm import relationship
-from .database import Base
+from banking.database import Base
 import datetime
 
 class Customer(Base):
@@ -31,6 +31,8 @@ class Account(Base):
     balance = Column(Float, default=0.0)
     currency = Column(String(3), default="INR")
     customer_id = Column(Integer, ForeignKey("customers.id"))
+    branch = Column(String(100), nullable=True)        # Added field
+    ifsc_code = Column(String(20), nullable=True)      # Added field
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     is_active = Column(Boolean, default=True)
     
@@ -46,12 +48,13 @@ class Transaction(Base):
     __tablename__ = "transactions"
     
     id = Column(Integer, primary_key=True, index=True,autoincrement=True)
-    transaction_type = Column(String(50))  # deposit, withdrawal, transfer
+    transaction_type = Column(String(50))  # credit,debit
     amount = Column(Float, nullable=False)
-    merchant = Column(String(100), nullable=True)  # Added merchant field to match mock API
+    recipient = Column(String(100), nullable=True)  # Added merchant field to match mock API
     transaction_date = Column(DateTime, default=datetime.datetime.utcnow)
     reference_id = Column(String(100), unique=True, index=True)
-    
+    category = Column(String(100), nullable=True)
+    payment_method = Column(String(50), nullable=True) #upi,rtgs,neft,cash,card,imps
     # Account relationships
     from_account_id = Column(Integer, ForeignKey("accounts.id"))
     to_account_id = Column(Integer, ForeignKey("accounts.id"), nullable=True)
@@ -71,6 +74,9 @@ class Beneficiary(Base):
     account_number = Column(String(20), nullable=False)
     bank_name = Column(String(100), nullable=True)
     customer_id = Column(Integer, ForeignKey("customers.id"))
+    nickname = Column(String(100), nullable=True)      # Added field
+    tag = Column(String(50), nullable=True)            # Added field
+    ifsc_code = Column(String(20), nullable=True)      # Added field
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     is_active = Column(Boolean, default=True)
     
