@@ -5,7 +5,9 @@ import random
 
 db = SessionLocal()
 
+# =========================
 # 1. Create Customers
+# =========================
 customers = [
     Customer(
         name="Amit Sharma",
@@ -32,10 +34,13 @@ customers = [
         is_active=True
     ),
 ]
+
 db.add_all(customers)
 db.commit()
 
+# =========================
 # 2. Create Accounts
+# =========================
 accounts = [
     Account(
         account_number="AMIT12345",
@@ -68,37 +73,13 @@ accounts = [
         is_active=True
     ),
 ]
+
 db.add_all(accounts)
 db.commit()
 
-# 3. Create Transactions (10 per customer, random dates in last 3 months)
-merchant_list = [
-    ("swiggy", "food"), ("zomato", "food"), ("amazon", "e-commerce"),
-    ("flipkart", "e-commerce"), ("electricity", "utility"), ("water", "utility"),
-    ("gas", "utility"), ("restaurant", "food"), ("myntra", "e-commerce"), ("mobile", "utility")
-]
-
-transactions = []
-for i, account in enumerate(accounts):
-    for j in range(10):
-        merchant, category = random.choice(merchant_list)
-        txn_date = datetime.datetime(2024, 7, 6) + datetime.timedelta(days=random.randint(0, 92))
-        txn = Transaction(
-            transaction_type="debit",
-            amount=random.randint(500, 3000),
-            recipient=merchant,
-            transaction_date=txn_date,
-            reference_id=f"TXN-{i+1}-{j+1}-{txn_date.strftime('%Y%m%d')}",
-            category=category,
-            payment_method="upi",
-            from_account_id=account.id
-        )
-        transactions.append(txn)
-db.add_all(transactions)
-db.commit()
-
-# 4. Create Beneficiaries (5 with duplicate name "Shailesh")
-# 4. Create Beneficiaries (3 named "Shailesh" + 3 different names)
+# =========================
+# 3. Create Beneficiaries
+# =========================
 beneficiaries = [
     # 3 duplicates - Shailesh
     Beneficiary(
@@ -167,5 +148,52 @@ beneficiaries = [
 
 db.add_all(beneficiaries)
 db.commit()
-print("Seed data inserted successfully!")
+
+# =========================
+# 4. Create Transactions (Jan 2025 - 7th Oct 2025)
+# =========================
+merchant_list = [
+    ("swiggy", "food"), ("zomato", "food"), ("amazon", "e-commerce"),
+    ("flipkart", "e-commerce"), ("electricity", "utility"), ("water", "utility"),
+    ("gas", "utility"), ("restaurant", "food"), ("myntra", "e-commerce"), ("mobile", "utility")
+]
+
+transactions_per_month = {
+    1: 5,   # Jan
+    2: 3,   # Feb
+    3: 4,   # Mar
+    4: 6,   # Apr
+    5: 5,   # May
+    6: 3,   # Jun
+    7: 4,   # Jul
+    8: 2,   # Aug
+    9: 5,   # Sep
+    10: 7   # Oct (now 7 transactions, covering 1-7)
+}
+
+transactions = []
+
+for account in db.query(Account).all():
+    for month, txn_count in transactions_per_month.items():
+        for i in range(txn_count):
+            merchant, category = random.choice(merchant_list)
+            # For October, limit day to 1-7
+            day = i + 1 if month == 10 else random.randint(1, 28)
+            txn_date = datetime.datetime(2025, month, day)
+            txn = Transaction(
+                transaction_type=random.choice(["debit", "credit"]),
+                amount=random.randint(500, 3000),
+                recipient=merchant,
+                transaction_date=txn_date,
+                reference_id=f"TXN-{account.id}-{month}-{i+1}-{txn_date.strftime('%Y%m%d')}",
+                category=category,
+                payment_method="upi",
+                from_account_id=account.id
+            )
+            transactions.append(txn)
+
+db.add_all(transactions)
+db.commit()
+
+print("Seed data inserted successfully (Jan 2025 - 7th Oct 2025)!")
 db.close()

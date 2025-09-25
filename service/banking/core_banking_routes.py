@@ -52,6 +52,105 @@ async def get_balance(
     return {"balance": account.balance,"customer_id":customer_id}
 
 
+def resolve_conflict(to: str, matches, primary_field: str):
+    """
+    Smart conflict resolution:
+    - If primary_field matches multiple entries:
+      - Check if nicknames differ -> show nickname differences
+      - Else check if tags differ -> show tag differences
+      - Else show generic message
+    """
+    # Check nickname differences
+    nicknames = [b.nickname for b in matches if b.nickname]
+    unique_nicknames = set(nicknames)
+    if len(unique_nicknames) > 1:
+        details = [f"'{b.nickname}'" for b in matches if b.nickname]
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Multiple beneficiaries found with {primary_field} '{to}' with different nicknames: {', '.join(details)}. Please specify which nickname."
+        )
+
+    # Nicknames same or missing, check tags
+    tags = [b.tag for b in matches if b.tag]
+    unique_tags = set(tags)
+    if len(unique_tags) > 1:
+        details = [f"'{b.tag}'" for b in matches if b.tag]
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Multiple beneficiaries found with {primary_field} '{to}' with same nickname but different tags: {', '.join(details)}. Please specify which tag."
+        )
+
+    # No distinguishing nicknames or tags
+    raise HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail=f"Multiple beneficiaries found with {primary_field} '{to}' with no distinguishing nickname or tag. Please use a more specific identifier."
+    )
+
+
+def find_beneficiary(db: Session, customer_id: int, to: str):
+    """Find a beneficiary by name, nickname, or tag with conflict handling."""
+    for field in ["name", "nickname", "tag"]:
+        matches = db.query(Beneficiary).filter(
+            Beneficiary.customer_id == customer_id,
+            getattr(Beneficiary, field).ilike(to)
+        ).all()
+
+        if matches:
+            if len(matches) == 1:
+                return matches[0]
+
+            # Smart conflict resolution only for name
+            if field == "name":
+                resolve_conflict(to, matches, primary_field="name")
+            else:
+                # Fallback for nickname or tag
+                details = []
+                for b in matches:
+                    identifier = f"'{b.name}'"
+                    if b.nickname:
+                        identifier += f" (nickname: {b.nickname})"
+                    if b.tag:
+                        identifier += f" (tag: {b.tag})"
+                    details.append(identifier)
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"Multiple beneficiaries found with {field} '{to}': {', '.join(details)}. Please specify further."
+                )
+
+    # Partial match fallback
+    matches = db.query(Beneficiary).filter(
+        Beneficiary.customer_id == customer_id,
+        (
+            Beneficiary.name.ilike(f"%{to}%") |
+            Beneficiary.nickname.ilike(f"%{to}%") |
+            Beneficiary.tag.ilike(f"%{to}%")
+        )
+    ).all()
+
+    if not matches:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No beneficiary matching '{to}' found for this customer. "
+                   f"Please check the name, nickname, or tag, or add as a new beneficiary."
+        )
+
+    if len(matches) > 1:
+        details = []
+        for b in matches:
+            identifier = f"'{b.name}'"
+            if b.nickname:
+                identifier += f" (nickname: {b.nickname})"
+            if b.tag:
+                identifier += f" (tag: {b.tag})"
+            details.append(identifier)
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Multiple beneficiaries partially match '{to}': {', '.join(details)}. Please use a more specific name, nickname, or tag."
+        )
+
+    return matches[0]
+
+
 @router.post("/pay")
 async def pay_money(
     request: PaymentRequest,
@@ -61,50 +160,32 @@ async def pay_money(
 ):
     """Send money to a merchant or contact"""
 
+    # Identify customer
     if phone:
         customer = db.query(Customer).filter(Customer.phone == phone).first()
         if not customer:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, 
-                detail=f"Customer with phone number '{phone}' not found "
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Customer with phone number '{phone}' not found"
             )
         customer_id = customer.id
 
     if not customer_id:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, 
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Missing required parameter: Please provide either 'customer_id' or 'phone'"
         )
 
     to = request.to
     amount = request.amount
     transaction_type = request.transaction_type
-    payment_method = request.payment_method
+    payment_method = request.payment_method or "upi"
     category = request.category
 
-    beneficiaries = db.query(Beneficiary).filter(
-        Beneficiary.customer_id == customer_id,
-        (
-            (Beneficiary.name.ilike(f"%{to}%")) |
-            (Beneficiary.nickname.ilike(f"%{to}%")) |
-            (Beneficiary.tag.ilike(f"%{to}%"))
-        )
-    ).all()
+    # Resolve beneficiary
+    beneficiary = find_beneficiary(db, customer_id, to)
 
-    if len(beneficiaries) == 0:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
-            detail=f"No beneficiary matching '{to}' found for this customer. Please check the name or add as a new beneficiary."
-        )
-    if len(beneficiaries) > 1:
-        beneficiary_names = [b.name for b in beneficiaries]
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, 
-            detail=f"Multiple matching beneficiaries found for '{to}': {', '.join(beneficiary_names)}. Please use a more specific name."
-        )
-
-    beneficiary = beneficiaries[0]  
-
+    # Categorize merchant
     food_merchants = ["swiggy", "zomato", "restaurant"]
     ecommerce_merchants = ["amazon", "myntra", "flipkart"]
     utility_merchants = ["electricity", "water", "gas", "mobile"]
@@ -122,6 +203,7 @@ async def pay_money(
     else:
         category = "individual"
 
+    # Find active account
     account = db.query(Account).filter(
         Account.customer_id == customer_id,
         Account.is_active == True
@@ -129,27 +211,31 @@ async def pay_money(
 
     if not account:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
+            status_code=status.HTTP_404_NOT_FOUND,
             detail=f"No active account found for customer ID {customer_id}"
         )
 
+    # Balance check
     if amount > account.balance:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, 
-            detail=f"Insufficient balance: Required ₹{amount:.2f}, available balance ₹{account.balance:.2f}"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Insufficient balance: Required ₹{amount:.2f}, "
+                   f"available balance ₹{account.balance:.2f}"
         )
 
+    # Deduct balance
     account.balance -= amount
 
+    # Create transaction
     reference_id = f"TXN-{datetime.now().strftime('%Y%m%d%H%M%S')}"
     transaction = Transaction(
         transaction_type=transaction_type,
         amount=amount,
-        recipient=to,  
+        recipient=beneficiary.name,
         reference_id=reference_id,
         payment_method=payment_method,
         category=category,
-        from_account_id=account.id,  
+        from_account_id=account.id,
     )
 
     db.add(transaction)
@@ -157,9 +243,12 @@ async def pay_money(
 
     return {
         "status": "success",
-        "to": to,
+        "to": beneficiary.name,
         "amount": amount,
-        "balance": account.balance
+        "balance": account.balance,
+        "reference_id": reference_id,
+        "payment_method": payment_method,
+        "category": category
     }
 
 
