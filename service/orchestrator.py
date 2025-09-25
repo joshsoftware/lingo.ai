@@ -96,7 +96,6 @@ def _get_period_description(timeframe: str, start_date: str, end_date: str) -> s
             return "this year"
         else:
             # Handle numeric timeframes like "10 days", "2 weeks", etc.
-            import re
             match = re.search(r'(\d+)\s*(day|week|month|year)s?', timeframe_lower)
             if match:
                 num = match.group(1)
@@ -123,7 +122,7 @@ def _get_period_description(timeframe: str, start_date: str, end_date: str) -> s
 def _calculate_recipient_insights(transactions: list, recipient: str, period_desc: str) -> Dict[str, Any]:
     """Calculate insights for a specific recipient."""
     recipient_txns = [t for t in transactions if recipient.lower() in t.get("recipient", "").lower()]
-    total_spent = sum(abs(t.get("amount", 0)) for t in recipient_txns if IS_DEBIT)
+    total_spent = sum(abs(t.get("amount", 0)) for t in recipient_txns if IS_DEBIT(t))
 
     return {
         "total_spent": total_spent,
@@ -134,7 +133,7 @@ def _calculate_recipient_insights(transactions: list, recipient: str, period_des
 def _calculate_category_insights(transactions: list, category: str, period_desc: str) -> Dict[str, Any]:
     """Calculate insights for a specific category."""
     category_txns = [t for t in transactions if category.lower() in t.get("category", "").lower()]
-    total_spent = sum(abs(t.get("amount", 0)) for t in category_txns if IS_DEBIT)
+    total_spent = sum(abs(t.get("amount", 0)) for t in category_txns if IS_DEBIT(t))
 
     return {
         "total_spent": total_spent,
@@ -144,7 +143,7 @@ def _calculate_category_insights(transactions: list, category: str, period_desc:
 
 def _calculate_general_insights(transactions: list, period_desc: str) -> Dict[str, Any]:
     """Calculate general spending insights."""
-    total_spent = sum(abs(t.get("amount", 0)) for t in transactions if IS_DEBIT)
+    total_spent = sum(abs(t.get("amount", 0)) for t in transactions if IS_DEBIT(t))
 
     if not transactions:
         return {
@@ -155,14 +154,14 @@ def _calculate_general_insights(transactions: list, period_desc: str) -> Dict[st
     # Find a top-spending recipient
     recipient_totals = {}
     for t in transactions:
-        if IS_DEBIT:  # Only debits
+        if IS_DEBIT(t):  # Only debits
             recipient_name = t.get("recipient", "Unknown")
             recipient_totals[recipient_name] = recipient_totals.get(recipient_name, 0) + abs(t.get("amount", 0))
 
     # Find the top-spending category
     category_totals = {}
     for t in transactions:
-        if IS_DEBIT:  # Only debits
+        if IS_DEBIT(t):  # Only debits
             category_name = t.get("category", "Unknown")
             category_totals[category_name] = category_totals.get(category_name, 0) + abs(t.get("amount", 0))
 
@@ -267,16 +266,15 @@ class BankingOrchestrator:
             if phone is not None:
                 params["phone"] = phone
 
-            async with httpx.AsyncClient() as client:
-                response = await client.get(f"{self.base_url}{BALANCE_ENDPOINT}", params=params)
-                response.raise_for_status()
-                balance_data = response.json()
-                
-                return {
-                    "success": "true",
-                    "data": balance_data,
-                    "message": f"Your account balance is {balance_data['balance']:,.2f}."
-                }
+            response = await self.client.get(f"{self.base_url}{BALANCE_ENDPOINT}", params=params)
+            response.raise_for_status()
+            balance_data = response.json()
+
+            return {
+                "success": "true",
+                "data": balance_data,
+                "message": f"Your account balance is {balance_data['balance']:,.2f}."
+            }
         except httpx.HTTPStatusError as e:
             logger.error(f"HTTP error fetching balance: {e.response.status_code} - {e.response.text}")
             if e.response.status_code == 404:
@@ -322,22 +320,21 @@ class BankingOrchestrator:
             if recipient:
                 params["recipient"] = recipient
             
-            async with httpx.AsyncClient() as client:
-                response = await client.get(f"{self.base_url}{TRANSACTIONS_ENDPOINT}", params=params)
-                response.raise_for_status()
-                txn_data = response.json()
-                
-                transactions = txn_data.get("transactions", [])
-                if recipient:
-                    message = f"Here are your {len(transactions)} most recent {recipient} transactions."
-                else:
-                    message = f"Here are your {len(transactions)} most recent transactions."
-                
-                return {
-                    "success": "true",
-                    "data": txn_data,
-                    "message": message
-                }
+            response = await self.client.get(f"{self.base_url}{TRANSACTIONS_ENDPOINT}", params=params)
+            response.raise_for_status()
+            txn_data = response.json()
+
+            transactions = txn_data.get("transactions", [])
+            if recipient:
+                message = f"Here are your {len(transactions)} most recent {recipient} transactions."
+            else:
+                message = f"Here are your {len(transactions)} most recent transactions."
+
+            return {
+                "success": "true",
+                "data": txn_data,
+                "message": message
+            }
         except httpx.HTTPStatusError as e:
             logger.error(f"HTTP error fetching recent transactions: {e.response.status_code} - {e.response.text}")
             try:
@@ -406,28 +403,27 @@ class BankingOrchestrator:
                 if phone is not None:
                     params["phone"] = phone
                 
-                async with httpx.AsyncClient() as client:
-                    # Send payment request with JSON body
-                    payment_response = await client.post(
-                        f"{self.base_url}{PAY_ENDPOINT}",
-                        json=payment_request,
-                        params=params
-                    )
-                    payment_response.raise_for_status()
-                    payment_data = payment_response.json()
+                # Send payment request with JSON body
+                payment_response = await self.client.post(
+                    f"{self.base_url}{PAY_ENDPOINT}",
+                    json=payment_request,
+                    params=params
+                )
+                payment_response.raise_for_status()
+                payment_data = payment_response.json()
 
-                    if payment_data.get("status") == "success":
-                        return {
-                            "success": "true",
-                            "data": payment_data,
-                            "message": f"Transferred {amount} {currency} to {recipient} successfully. Your current balance is {payment_data.get('balance', 0):,.2f}."
-                        }
-                    else:
-                        return {
-                            "success": "false",
-                            "data": payment_data,
-                            "message": f"Transfer failed: {payment_data.get('reason', 'Unknown error')}"
-                        }
+                if payment_data.get("status") == "success":
+                    return {
+                        "success": "true",
+                        "data": payment_data,
+                        "message": f"Transferred {amount} {currency} to {recipient} successfully. Your current balance is {payment_data.get('balance', 0):,.2f}."
+                    }
+                else:
+                    return {
+                        "success": "false",
+                        "data": payment_data,
+                        "message": f"Transfer failed: {payment_data.get('reason', 'Unknown error')}"
+                    }
             except httpx.HTTPStatusError as e:
                 logger.error(f"HTTP error processing transfer: {e.response.status_code} - {e.response.text}")
                 try:
@@ -552,12 +548,11 @@ class BankingOrchestrator:
             params["limit"] = count
         
         # Make API call
-        async with httpx.AsyncClient() as client:
-            response = await client.get(f"{self.base_url}{TRANSACTIONS_ENDPOINT}", params=params)
-            response.raise_for_status()
-            txn_data = response.json()
-            
-            return txn_data.get("transactions", [])
+        response = await self.client.get(f"{self.base_url}{TRANSACTIONS_ENDPOINT}", params=params)
+        response.raise_for_status()
+        txn_data = response.json()
+
+        return txn_data.get("transactions", [])
 
     async def close(self):
         """Close the HTTP client."""

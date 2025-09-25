@@ -54,7 +54,7 @@ User: "Transfer 1500 to Shubam"
 {"intent":"transfer_money","entities":{"recipient":"Shubam","amount":1500,"currency":"INR"},"language":"{lang}"}
 
 User: "Show me my last 10 transactions to shubam"
-{"intent":"transfer_money","entities":{"recipient":"shubam","count":10},"language":"{lang}"}
+{"intent":"txn_insights","entities":{"recipient":"shubam","count":10},"language":"{lang}"}
 
 User: "How much I spent on food for last 10 days"
 {"intent":"txn_insights","entities":{"timeframe":"10 days","category":"food"},"language":"{lang}"}
