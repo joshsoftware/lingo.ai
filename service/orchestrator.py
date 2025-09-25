@@ -8,7 +8,7 @@ It processes different banking intents and calls appropriate APIs.
 import logging
 import httpx
 import os
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import re
@@ -116,21 +116,20 @@ def _get_period_description(timeframe: str, start_date: str, end_date: str) -> s
         return "your recent transactions"
 
 
-def _calculate_merchant_insights(transactions: list, merchant: str, period_desc: str) -> Dict[str, Any]:
-    """Calculate insights for a specific merchant."""
-    merchant_txns = [t for t in transactions if merchant.lower() in t.get("merchant", "").lower()]
-    total_spent = sum(abs(t.get("amount", 0)) for t in merchant_txns if t.get("amount", 0) < 0)
+def _calculate_recipient_insights(transactions: list, recipient: str, period_desc: str) -> Dict[str, Any]:
+    """Calculate insights for a specific recipient."""
+    recipient_txns = [t for t in transactions if recipient.lower() in t.get("recipient", "").lower()]
+    total_spent = sum(abs(t.get("amount", 0)) for t in recipient_txns if t.get("amount", 0) < 0)
 
     return {
         "total_spent": total_spent,
-        "message": f"You've spent {total_spent:,.2f} INR on {merchant} {period_desc}."
+        "message": f"You've spent {total_spent:,.2f} INR on {recipient} {period_desc}."
     }
 
 
 def _calculate_category_insights(transactions: list, category: str, period_desc: str) -> Dict[str, Any]:
     """Calculate insights for a specific category."""
-    # For category-based insights (simplified - using merchant as category proxy)
-    category_txns = [t for t in transactions if category.lower() in t.get("merchant", "").lower()]
+    category_txns = [t for t in transactions if category.lower() in t.get("category", "").lower()]
     total_spent = sum(abs(t.get("amount", 0)) for t in category_txns if t.get("amount", 0) < 0)
 
     return {
@@ -149,16 +148,32 @@ def _calculate_general_insights(transactions: list, period_desc: str) -> Dict[st
             "message": f"No spending data found for {period_desc}."
         }
 
-    # Find a top-spending merchant
-    merchant_totals = {}
+    # Find a top-spending recipient
+    recipient_totals = {}
     for t in transactions:
         if t.get("amount", 0) < 0:  # Only negative amounts (expenses)
-            merchant_name = t.get("merchant", "Unknown")
-            merchant_totals[merchant_name] = merchant_totals.get(merchant_name, 0) + abs(t.get("amount", 0))
+            recipient_name = t.get("recipient", "Unknown")
+            recipient_totals[recipient_name] = recipient_totals.get(recipient_name, 0) + abs(t.get("amount", 0))
 
-    if merchant_totals:
-        top_merchant = max(merchant_totals.items(), key=lambda x: x[1])
-        message = f"Your top spending category {period_desc} was {top_merchant[0]} at {top_merchant[1]:,.2f} INR. Total spent: {total_spent:,.2f} INR."
+    # Find the top-spending category
+    category_totals = {}
+    for t in transactions:
+        if t.get("amount", 0) < 0:  # Only negative amounts (expenses)
+            category_name = t.get("category", "Unknown")
+            category_totals[category_name] = category_totals.get(category_name, 0) + abs(t.get("amount", 0))
+
+    # Build message with both recipient and category insights
+    message_parts = []
+    if recipient_totals:
+        top_recipient = max(recipient_totals.items(), key=lambda x: x[1])
+        message_parts.append(f"Your top spending recipient {period_desc} was {top_recipient[0]} at {top_recipient[1]:,.2f} INR")
+    
+    if category_totals:
+        top_category = max(category_totals.items(), key=lambda x: x[1])
+        message_parts.append(f"Your top spending category {period_desc} was {top_category[0]} at {top_category[1]:,.2f} INR")
+    
+    if message_parts:
+        message = ". ".join(message_parts) + f". Total spent: {total_spent:,.2f} INR."
     else:
         message = f"You've spent {total_spent:,.2f} INR {period_desc}."
 
@@ -170,7 +185,7 @@ def _calculate_general_insights(transactions: list, period_desc: str) -> Dict[st
 
 def _calculate_spending_insights(transactions: list, entities: Dict[str, Any]) -> Dict[str, Any]:
     """Calculate spending insights based on transactions and filter criteria."""
-    merchant = entities.get("merchant")
+    recipient = entities.get("recipient")
     category = entities.get("category")
     timeframe = entities.get("timeframe")
     start_date = entities.get("start_date")
@@ -179,8 +194,8 @@ def _calculate_spending_insights(transactions: list, entities: Dict[str, Any]) -
     # Determine time period description
     period_desc = _get_period_description(timeframe, start_date, end_date)
 
-    if merchant:
-        return _calculate_merchant_insights(transactions, merchant, period_desc)
+    if recipient:
+        return _calculate_recipient_insights(transactions, recipient, period_desc)
     elif category:
         return _calculate_category_insights(transactions, category, period_desc)
     else:
@@ -197,41 +212,59 @@ class BankingOrchestrator:
         self.base_url = base_url or os.getenv("BANK_API_BASE_URL", "http://localhost:8000")
         self.client = httpx.AsyncClient()
 
-    async def process_intent(self, intent_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def process_intent(self, intent_and_banking_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Orchestrates intent processing and returns a structured response.
 
         Args:
-            intent_data: Dictionary containing intent, entities, and action.
+            intent_and_banking_data: Dictionary containing intent, entities, and action.
 
         Returns:
             Dictionary with orchestrator_data.
         """
-        intent = intent_data.get("intent")
-        entities = intent_data.get("entities", {})
-        action = intent_data.get("action")
+        intent = intent_and_banking_data.get("intent")
+        entities = intent_and_banking_data.get("entities", {})
+        action = intent_and_banking_data.get("action")
+        customer_id = intent_and_banking_data.get("customer_id")
+        phone = intent_and_banking_data.get("phone")
+        transaction_type = intent_and_banking_data.get("transaction_type")
+        payment_method = intent_and_banking_data.get("payment_method")
 
         logger.info(f"Processing intent: {intent} with action: {action}")
+
+        if not any([customer_id, phone]):
+            return {
+                "success": "false",
+                "data": {},
+                "message": "Either customer_id or phone is required to check balance."
+            }
         
         # Route to the appropriate handler
         if intent == "check_balance":
-            orchestrator_data = await self._handle_check_balance()
+            orchestrator_data = await self._handle_check_balance(customer_id, phone)
         elif intent == "recent_txn":
-            orchestrator_data = await self._handle_recent_transactions(entities)
+            orchestrator_data = await self._handle_recent_transactions(entities, customer_id, phone)
         elif intent == "transfer_money":
-            orchestrator_data = await self._handle_transfer_money(entities, action)
+            orchestrator_data = await self._handle_transfer_money(entities, action, customer_id, phone, transaction_type, payment_method)
         elif intent == "txn_insights":
-            orchestrator_data = await self._handle_txn_insights(entities)
+            orchestrator_data = await self._handle_txn_insights(entities, customer_id, phone)
         else:
             orchestrator_data = _handle_unknown_intent()
         
         return orchestrator_data
 
     
-    async def _handle_check_balance(self) -> Dict[str, Any]:
+    async def _handle_check_balance(self, customer_id : Optional[int] , phone : Optional[str]) -> Dict[str, Any]:
         try:
+            # Filter out None parameters as per new API requirements
+            params = {}
+            if customer_id is not None:
+                params["customer_id"] = customer_id
+            if phone is not None:
+                params["phone"] = phone
+
             async with httpx.AsyncClient() as client:
-                response = await client.get(f"{self.base_url}{BALANCE_ENDPOINT}")
+                response = await client.get(f"{self.base_url}{BALANCE_ENDPOINT}", params=params)
                 response.raise_for_status()
                 balance_data = response.json()
                 
@@ -239,6 +272,20 @@ class BankingOrchestrator:
                     "success": "true",
                     "data": balance_data,
                     "message": f"Your account balance is {balance_data['balance']:,.2f}."
+                }
+        except httpx.HTTPStatusError as e:
+            logger.error(f"HTTP error fetching balance: {e.response.status_code} - {e.response.text}")
+            if e.response.status_code == 404:
+                return {
+                    "success": "false",
+                    "data": {},
+                    "message": "Customer or account not found. Please verify your details."
+                }
+            else:
+                return {
+                    "success": "false",
+                    "data": {},
+                    "message": "Sorry, I couldn't fetch your balance at the moment. Please try again later."
                 }
         except Exception as e:
             logger.error(f"Error fetching balance: {e}")
@@ -248,11 +295,11 @@ class BankingOrchestrator:
                 "message": "Sorry, I couldn't fetch your balance at the moment. Please try again later."
             }
     
-    async def _handle_recent_transactions(self, entities: Dict[str, Any]) -> Dict[str, Any]:
+    async def _handle_recent_transactions(self, entities: Dict[str, Any], customer_id: Optional[int] = None, phone: Optional[str] = None) -> Dict[str, Any]:
         """Handle recent_txn intent - optional count parameter."""
         try:
             count = entities.get("count", 5)  # Default to 5 transactions
-            merchant = entities.get("merchant")
+            recipient = entities.get("recipient")
             
             # Ensure count is a valid integer
             if count is None:
@@ -264,8 +311,12 @@ class BankingOrchestrator:
                     count = 5
             
             params = {"limit": count}
-            if merchant:
-                params["merchant"] = merchant
+            if customer_id is not None:
+                params["customer_id"] = customer_id
+            if phone is not None:
+                params["phone"] = phone
+            if recipient:
+                params["recipient"] = recipient
             
             async with httpx.AsyncClient() as client:
                 response = await client.get(f"{self.base_url}{TRANSACTIONS_ENDPOINT}", params=params)
@@ -273,8 +324,8 @@ class BankingOrchestrator:
                 txn_data = response.json()
                 
                 transactions = txn_data.get("transactions", [])
-                if merchant:
-                    message = f"Here are your {len(transactions)} most recent {merchant} transactions."
+                if recipient:
+                    message = f"Here are your {len(transactions)} most recent {recipient} transactions."
                 else:
                     message = f"Here are your {len(transactions)} most recent transactions."
                 
@@ -282,6 +333,26 @@ class BankingOrchestrator:
                     "success": "true",
                     "data": txn_data,
                     "message": message
+                }
+        except httpx.HTTPStatusError as e:
+            logger.error(f"HTTP error fetching transactions: {e.response.status_code} - {e.response.text}")
+            if e.response.status_code == 404:
+                return {
+                    "success": "false",
+                    "data": {},
+                    "message": "Customer or transactions not found. Please verify your details."
+                }
+            elif e.response.status_code == 400:
+                return {
+                    "success": "false",
+                    "data": {},
+                    "message": "Invalid request parameters. Please check your input."
+                }
+            else:
+                return {
+                    "success": "false",
+                    "data": {},
+                    "message": "Sorry, I couldn't fetch your transactions at the moment. Please try again later."
                 }
         except Exception as e:
             logger.error(f"Error fetching transactions: {e}")
@@ -291,11 +362,12 @@ class BankingOrchestrator:
                 "message": "Sorry, I couldn't fetch your transactions at the moment. Please try again later."
             }
     
-    async def _handle_transfer_money(self, entities: Dict[str, Any], action: str) -> Dict[str, Any]:
+    async def _handle_transfer_money(self, entities: Dict[str, Any], action: str, customer_id: Optional[int] = None, phone: Optional[str] = None, transaction_type: Optional[str] = None, payment_method: Optional[str] = None) -> Dict[str, Any]:
         """Handle transfer_money intent - requires amount, currency, and recipient validation."""
         amount = entities.get("amount")
-        currency = entities.get("currency")
+        currency = entities.get("currency", "INR")  # Default currency
         recipient = entities.get("recipient")
+        category = entities.get("category")
         
         # Always check for amount and recipient - if any is missing, return a specific message
         if not amount or not recipient:
@@ -308,18 +380,38 @@ class BankingOrchestrator:
         # If all required fields are present, process the payment
         if action == "respond" and amount and recipient:
             try:
+                # Prepare PaymentRequest JSON body as per the new API structure
+                payment_request = {
+                    "to": recipient,
+                    "amount": float(amount)
+                }
+                
+                # Add optional fields if provided
+                if transaction_type:
+                    payment_request["transaction_type"] = transaction_type
+                if payment_method:
+                    payment_request["payment_method"] = payment_method
+                if category:
+                    payment_request["category"] = category
+                
+                # Filter out None parameters for query params
+                params = {}
+                if customer_id is not None:
+                    params["customer_id"] = customer_id
+                if phone is not None:
+                    params["phone"] = phone
+                
                 async with httpx.AsyncClient() as client:
-                    # First, make the payment
+                    # Send payment request with JSON body
                     payment_response = await client.post(
                         f"{self.base_url}{PAY_ENDPOINT}",
-                        params={"to": recipient, "amount": float(amount)}
+                        json=payment_request,
+                        params=params
                     )
                     payment_response.raise_for_status()
                     payment_data = payment_response.json()
 
-                    
                     if payment_data.get("status") == "success":
-
                         return {
                             "success": "true",
                             "data": payment_data,
@@ -331,6 +423,32 @@ class BankingOrchestrator:
                             "data": payment_data,
                             "message": f"Transfer failed: {payment_data.get('reason', 'Unknown error')}"
                         }
+            except httpx.HTTPStatusError as e:
+                logger.error(f"HTTP error processing transfer: {e.response.status_code} - {e.response.text}")
+                if e.response.status_code == 404:
+                    return {
+                        "success": "false",
+                        "data": {},
+                        "message": "Beneficiary not found. Please check the recipient name."
+                    }
+                elif e.response.status_code == 409:
+                    return {
+                        "success": "false",
+                        "data": {},
+                        "message": "Multiple beneficiaries found with that name. Please be more specific."
+                    }
+                elif e.response.status_code == 400:
+                    return {
+                        "success": "false",
+                        "data": {},
+                        "message": "Insufficient balance or invalid request. Please check your account balance."
+                    }
+                else:
+                    return {
+                        "success": "false",
+                        "data": {},
+                        "message": "Sorry, I couldn't process the transfer at the moment. Please try again later."
+                    }
             except Exception as e:
                 logger.error(f"Error processing transfer: {e}")
                 return {
@@ -346,11 +464,11 @@ class BankingOrchestrator:
             "message": "Transfer request received but action is not set to process payment."
         }
     
-    async def _handle_txn_insights(self, entities: Dict[str, Any]) -> Dict[str, Any]:
+    async def _handle_txn_insights(self, entities: Dict[str, Any], customer_id: Optional[int] = None, phone: Optional[str] = None) -> Dict[str, Any]:
         """Handle txn_insights intent - analyze spending patterns."""
         try:
             # Fetch transactions with date filtering support
-            transactions = await self._fetch_transactions_with_filters(entities)
+            transactions = await self._fetch_transactions_with_filters(entities, customer_id, phone)
             
             # Calculate spending insights
             analysis_result = _calculate_spending_insights(transactions, entities)
@@ -363,6 +481,26 @@ class BankingOrchestrator:
                 },
                 "message": analysis_result["message"]
             }
+        except httpx.HTTPStatusError as e:
+            logger.error(f"HTTP error fetching transactions for insights: {e.response.status_code} - {e.response.text}")
+            if e.response.status_code == 404:
+                return {
+                    "success": "false",
+                    "data": {},
+                    "message": "Customer or transactions not found for analysis. Please verify your details."
+                }
+            elif e.response.status_code == 400:
+                return {
+                    "success": "false",
+                    "data": {},
+                    "message": "Invalid request parameters for transaction analysis. Please check your input."
+                }
+            else:
+                return {
+                    "success": "false",
+                    "data": {},
+                    "message": "Sorry, I couldn't analyze your spending at the moment. Please try again later."
+                }
         except Exception as e:
             logger.error(f"Error analyzing spending: {e}")
             return {
@@ -371,10 +509,10 @@ class BankingOrchestrator:
                 "message": "Sorry, I couldn't analyze your spending at the moment. Please try again later."
             }
 
-    async def _fetch_transactions_with_filters(self, entities: Dict[str, Any]) -> list:
-        """Fetch transactions with date and merchant filtering."""
+    async def _fetch_transactions_with_filters(self, entities: Dict[str, Any], customer_id: Optional[int] = None, phone: Optional[str] = None) -> list:
+        """Fetch transactions with date and recipient filtering."""
         # Extract filter parameters
-        merchant = entities.get("merchant")
+        recipient = entities.get("recipient")
         category = entities.get("category")
         count = entities.get("count", 5)  # Default to analyzing last 5 transactions
         timeframe = entities.get("timeframe")
@@ -391,10 +529,17 @@ class BankingOrchestrator:
 
         # Build API parameters
         params = {}
-        if merchant:
-            params["merchant"] = merchant
-        elif category:
-            params["merchant"] = category
+        
+        # Add customer identification parameters (filter out None values)
+        if customer_id is not None:
+            params["customer_id"] = customer_id
+        if phone is not None:
+            params["phone"] = phone
+            
+        if recipient:
+            params["recipient"] = recipient
+        if category:
+            params["category"] = category
         
         # Add date parameters if present
         if start_date:
@@ -421,12 +566,12 @@ class BankingOrchestrator:
 # Global orchestrator instance
 orchestrator = BankingOrchestrator()
 
-async def orchestrate_banking_request(intent_data: Dict[str, Any]) -> Dict[str, Any]:
+async def orchestrate_banking_request(intent_and_banking_data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Args:
-        intent_data: Dictionary containing intent, entities, and action
+        intent_and_banking_data: Dictionary containing intent, entities, and action, and other banking api data.
         
     Returns:
         Dictionary with orchestrator_data
     """
-    return await orchestrator.process_intent(intent_data)
+    return await orchestrator.process_intent(intent_and_banking_data)

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, Form
+from fastapi import FastAPI, UploadFile, File, Form, Depends
 from fastapi.responses import JSONResponse
 from logger import logger
 from dotenv import load_dotenv
@@ -15,6 +15,7 @@ from fastapi_versionizer.versionizer import Versionizer, api_version
 import json
 from core_banking_mock import router as core_banking_mock_router
 from orchestrator import orchestrate_banking_request
+from typing import Optional
 
 app = FastAPI()
 
@@ -103,7 +104,14 @@ app.include_router(core_banking_mock_router)
 
 
 @app.post("/voice/transcribe-intent")
-async def transcribe_intent(audio: UploadFile = File(...), session_id: str = Form(...)):
+async def transcribe_intent(
+    audio: UploadFile = File(...),
+    session_id: Optional[str] = Form(None),
+    customer_id: Optional[int] = Form(None),
+    phone: Optional[str] = Form(None),
+    transaction_type: Optional[str] = Form(None),
+    payment_method: Optional[str] = Form(None)
+):
     """
     Transcribe audio and detect intent.
 
@@ -120,7 +128,7 @@ async def transcribe_intent(audio: UploadFile = File(...), session_id: str = For
 
         # translation_text = "how much did i spend on food last week?"
         # translation_text = "what is the current balance in my account?"
-        # translation_text = "tell me my last 10 transactions"
+        translation_text = "tell me my last 10 transactions"
         # translation_text = "tell me my last 5 swiggy transactions"
         # translation_text = "tell me my last month salary" # unknown intent
         # translation_text = "Send 1000"
@@ -145,7 +153,14 @@ async def transcribe_intent(audio: UploadFile = File(...), session_id: str = For
         # Step 3: Format intent response
         # Map Llama response to your expected format
         formatted_intent_data = format_intent_response(intent_dict)
-        orchestrated_data =  await orchestrate_banking_request(formatted_intent_data)
+        banking_params_dict = {
+            "customer_id": customer_id,
+            "phone": phone,
+            "transaction_type": transaction_type,
+            "payment_method": payment_method
+        }
+        merged_params = {**banking_params_dict, **formatted_intent_data}
+        orchestrated_data =  await orchestrate_banking_request(merged_params)
 
         # Step 4: Format a final response
         result = {
