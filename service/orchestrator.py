@@ -4,7 +4,7 @@ Banking Orchestration Service
 This service handles the orchestration flow for banking operations based on intent and action data.
 It processes different banking intents and calls appropriate APIs.
 """
-
+import json
 import logging
 import httpx
 import os
@@ -21,6 +21,10 @@ logger = logging.getLogger(__name__)
 BALANCE_ENDPOINT = "/bank/me/balance"
 TRANSACTIONS_ENDPOINT = "/bank/me/transactions"
 PAY_ENDPOINT = "/bank/me/pay"
+ORCHESTRATOR_INTERNAL_ERROR = "Sorry, I couldn't process the request at the moment. Please try again."
+BANK_API_ERROR = "We’re unable to process your request with the bank at the moment. Please try again later."
+
+IS_DEBIT = lambda t: t.get("transaction_type") == "debit"
 
 
 def _handle_unknown_intent() -> Dict[str, Any]:
@@ -119,7 +123,7 @@ def _get_period_description(timeframe: str, start_date: str, end_date: str) -> s
 def _calculate_recipient_insights(transactions: list, recipient: str, period_desc: str) -> Dict[str, Any]:
     """Calculate insights for a specific recipient."""
     recipient_txns = [t for t in transactions if recipient.lower() in t.get("recipient", "").lower()]
-    total_spent = sum(abs(t.get("amount", 0)) for t in recipient_txns if t.get("amount", 0) < 0)
+    total_spent = sum(abs(t.get("amount", 0)) for t in recipient_txns if IS_DEBIT)
 
     return {
         "total_spent": total_spent,
@@ -130,7 +134,7 @@ def _calculate_recipient_insights(transactions: list, recipient: str, period_des
 def _calculate_category_insights(transactions: list, category: str, period_desc: str) -> Dict[str, Any]:
     """Calculate insights for a specific category."""
     category_txns = [t for t in transactions if category.lower() in t.get("category", "").lower()]
-    total_spent = sum(abs(t.get("amount", 0)) for t in category_txns if t.get("amount", 0) < 0)
+    total_spent = sum(abs(t.get("amount", 0)) for t in category_txns if IS_DEBIT)
 
     return {
         "total_spent": total_spent,
@@ -140,7 +144,7 @@ def _calculate_category_insights(transactions: list, category: str, period_desc:
 
 def _calculate_general_insights(transactions: list, period_desc: str) -> Dict[str, Any]:
     """Calculate general spending insights."""
-    total_spent = sum(abs(t.get("amount", 0)) for t in transactions if t.get("amount", 0) < 0)
+    total_spent = sum(abs(t.get("amount", 0)) for t in transactions if IS_DEBIT)
 
     if not transactions:
         return {
@@ -151,18 +155,18 @@ def _calculate_general_insights(transactions: list, period_desc: str) -> Dict[st
     # Find a top-spending recipient
     recipient_totals = {}
     for t in transactions:
-        if t.get("amount", 0) < 0:  # Only negative amounts (expenses)
+        if IS_DEBIT:  # Only debits
             recipient_name = t.get("recipient", "Unknown")
             recipient_totals[recipient_name] = recipient_totals.get(recipient_name, 0) + abs(t.get("amount", 0))
 
     # Find the top-spending category
     category_totals = {}
     for t in transactions:
-        if t.get("amount", 0) < 0:  # Only negative amounts (expenses)
+        if IS_DEBIT:  # Only debits
             category_name = t.get("category", "Unknown")
             category_totals[category_name] = category_totals.get(category_name, 0) + abs(t.get("amount", 0))
 
-    # Build message with both recipient and category insights
+    # Build a message with both recipient and category insights
     message_parts = []
     if recipient_totals:
         top_recipient = max(recipient_totals.items(), key=lambda x: x[1])
@@ -236,7 +240,7 @@ class BankingOrchestrator:
             return {
                 "success": "false",
                 "data": {},
-                "message": "Either customer_id or phone is required to check balance."
+                "message": "Orchestrator error: Either customer_id or phone is required to check balance."
             }
         
         # Route to the appropriate handler
@@ -425,43 +429,38 @@ class BankingOrchestrator:
                         }
             except httpx.HTTPStatusError as e:
                 logger.error(f"HTTP error processing transfer: {e.response.status_code} - {e.response.text}")
-                if e.response.status_code == 404:
+                try:
+                    error_data = json.loads(e.response.text)
+                    error_message = error_data.get("detail", "Unknown error occurred")
+                except json.JSONDecodeError:
+                    # Fallback if response is not valid JSON
+                    error_message = e.response.text
+
+                if e.response.status_code in {400, 404, 409}:
                     return {
                         "success": "false",
                         "data": {},
-                        "message": "Beneficiary not found. Please check the recipient name."
-                    }
-                elif e.response.status_code == 409:
-                    return {
-                        "success": "false",
-                        "data": {},
-                        "message": "Multiple beneficiaries found with that name. Please be more specific."
-                    }
-                elif e.response.status_code == 400:
-                    return {
-                        "success": "false",
-                        "data": {},
-                        "message": "Insufficient balance or invalid request. Please check your account balance."
+                        "message": error_message
                     }
                 else:
                     return {
                         "success": "false",
                         "data": {},
-                        "message": "Sorry, I couldn't process the transfer at the moment. Please try again later."
+                        "message": BANK_API_ERROR
                     }
             except Exception as e:
                 logger.error(f"Error processing transfer: {e}")
                 return {
                     "success": "false",
                     "data": {},
-                    "message": "Sorry, I couldn't process the transfer at the moment. Please try again later."
+                    "message": ORCHESTRATOR_INTERNAL_ERROR
                 }
         
         # If the action is not "respond", don't process payment
         return {
             "success": "false",
             "data": {},
-            "message": "Transfer request received but action is not set to process payment."
+            "message": ORCHESTRATOR_INTERNAL_ERROR
         }
     
     async def _handle_txn_insights(self, entities: Dict[str, Any], customer_id: Optional[int] = None, phone: Optional[str] = None) -> Dict[str, Any]:
@@ -483,30 +482,30 @@ class BankingOrchestrator:
             }
         except httpx.HTTPStatusError as e:
             logger.error(f"HTTP error fetching transactions for insights: {e.response.status_code} - {e.response.text}")
-            if e.response.status_code == 404:
+            try:
+                error_data = json.loads(e.response.text)
+                error_message = error_data.get("detail", "Unknown error occurred")
+            except json.JSONDecodeError:
+                # Fallback if response is not valid JSON
+                error_message = e.response.text
+            if e.response.status_code in {400, 404}:
                 return {
                     "success": "false",
                     "data": {},
-                    "message": "Customer or transactions not found for analysis. Please verify your details."
-                }
-            elif e.response.status_code == 400:
-                return {
-                    "success": "false",
-                    "data": {},
-                    "message": "Invalid request parameters for transaction analysis. Please check your input."
+                    "message": error_message
                 }
             else:
                 return {
                     "success": "false",
                     "data": {},
-                    "message": "Sorry, I couldn't analyze your spending at the moment. Please try again later."
+                    "message": BANK_API_ERROR
                 }
         except Exception as e:
             logger.error(f"Error analyzing spending: {e}")
             return {
                 "success": "false",
                 "data": {},
-                "message": "Sorry, I couldn't analyze your spending at the moment. Please try again later."
+                "message": ORCHESTRATOR_INTERNAL_ERROR
             }
 
     async def _fetch_transactions_with_filters(self, entities: Dict[str, Any], customer_id: Optional[int] = None, phone: Optional[str] = None) -> list:
