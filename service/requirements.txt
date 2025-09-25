@@ -27,3 +27,6 @@ torch
 transformers 
 accelerate 
 sentencepiece
+
+sqlalchemy
+psycopg2-binary
