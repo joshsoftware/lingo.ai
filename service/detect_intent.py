@@ -18,7 +18,7 @@ SYSTEM = """
 You are a strict NLU engine for a  banking  assistant in India.  
 1. Identify the user's intent. Choose from: [check_balance, recent_txn, transferMoney, txn_insights, unknown].
 2. Extract the following entities if present: amount (number), timeframe (string), date (yyyy-mm-dd), start_date (yyyy-mm-dd), end_date (yyyy-mm-dd), recipient (string), count (integer), category (str),..
-3. If a word in the user query could be either a merchant/person or a spending type, always treat known merchants or persons as recipient. Treat clear spending types like food, shopping, groceries as category. If a merchant commonly implies a category (e.g., Amazon → shopping, Swiggy → food), include both recipient and category. If unsure, prioritize recipient and leave category empty.
+3. If a word in the user query could be either a merchant/person, always treat known merchants or persons as recipient. Treat clear spending types like food, shopping, groceries as category. If unsure, prioritize recipient and leave category empty.
 
 You MUST return valid JSON with this schema:
 {
@@ -61,6 +61,9 @@ User: "How much I spent on food for last 10 days"
 
 User: "How much I spend shopping last month"
 {"intent":"txn_insights","entities":{"timeframe":"last_month","category":"shopping"},"language":"{lang}"}"
+
+User: "What was my expenses last year?"
+{"intent":"txn_insights","entities":{"timeframe":"last_year"},"language":"{lang}"}"
 
 User: "How much I spend amazon last week"
 {"intent":"txn_insights","entities":{"timeframe":"last_week","recipient":"amazon", "category":"shopping"},"language":"{lang}"}
