@@ -49,7 +49,7 @@ async def get_balance(
             detail=f"No active account found for customer ID {customer_id}"
         )
 
-    return {"balance": account.balance}
+    return {"balance": account.balance,"customer_id":customer_id}
 
 
 @router.post("/pay")
