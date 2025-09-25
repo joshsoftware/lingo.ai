@@ -128,7 +128,7 @@ async def transcribe_intent(
 
         # translation_text = "how much did i spend on food last week?"
         # translation_text = "what is the current balance in my account?"
-        translation_text = "tell me my last 10 transactions"
+        # translation_text = "tell me my last 10 transactions"
         # translation_text = "tell me my last 5 swiggy transactions"
         # translation_text = "tell me my last month salary" # unknown intent
         # translation_text = "Send 1000"
