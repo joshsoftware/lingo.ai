@@ -221,7 +221,7 @@ class BankingOrchestrator:
         Orchestrates intent processing and returns a structured response.
 
         Args:
-            intent_and_banking_data: Dictionary containing intent, entities, and action.
+            intent_and_banking_data: Dictionary containing intent, entities, and action. It also contains Bank API parameters.
 
         Returns:
             Dictionary with orchestrator_data.
@@ -339,31 +339,32 @@ class BankingOrchestrator:
                     "message": message
                 }
         except httpx.HTTPStatusError as e:
-            logger.error(f"HTTP error fetching transactions: {e.response.status_code} - {e.response.text}")
-            if e.response.status_code == 404:
+            logger.error(f"HTTP error fetching recent transactions: {e.response.status_code} - {e.response.text}")
+            try:
+                error_data = json.loads(e.response.text)
+                error_message = error_data.get("detail", "Unknown error occurred")
+            except json.JSONDecodeError:
+                # Fallback if response is not valid JSON
+                error_message = e.response.text
+
+            if e.response.status_code in {400, 404}:
                 return {
                     "success": "false",
                     "data": {},
-                    "message": "Customer or transactions not found. Please verify your details."
-                }
-            elif e.response.status_code == 400:
-                return {
-                    "success": "false",
-                    "data": {},
-                    "message": "Invalid request parameters. Please check your input."
+                    "message": error_message
                 }
             else:
                 return {
                     "success": "false",
                     "data": {},
-                    "message": "Sorry, I couldn't fetch your transactions at the moment. Please try again later."
+                    "message": BANK_API_ERROR
                 }
         except Exception as e:
             logger.error(f"Error fetching transactions: {e}")
             return {
                 "success": "false",
                 "data": {},
-                "message": "Sorry, I couldn't fetch your transactions at the moment. Please try again later."
+                "message": ORCHESTRATOR_INTERNAL_ERROR
             }
     
     async def _handle_transfer_money(self, entities: Dict[str, Any], action: str, customer_id: Optional[int] = None, phone: Optional[str] = None, transaction_type: Optional[str] = None, payment_method: Optional[str] = None) -> Dict[str, Any]:

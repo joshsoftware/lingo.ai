@@ -153,6 +153,8 @@ async def transcribe_intent(
         # Step 3: Format intent response
         # Map Llama response to your expected format
         formatted_intent_data = format_intent_response(intent_dict)
+
+        # Step 4: Create a banking request params
         banking_params_dict = {
             "customer_id": customer_id,
             "phone": phone,
@@ -160,9 +162,11 @@ async def transcribe_intent(
             "payment_method": payment_method
         }
         merged_params = {**banking_params_dict, **formatted_intent_data}
+
+        # Call orchestration logic
         orchestrated_data =  await orchestrate_banking_request(merged_params)
 
-        # Step 4: Format a final response
+        # Step 5: Format a final response
         result = {
             "session_id": session_id,
             "translation": translation_text,
