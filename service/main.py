@@ -13,7 +13,7 @@ import traceback
 from util import generate_timestamp_json
 from fastapi_versionizer.versionizer import Versionizer, api_version
 import json
-from core_banking_mock import router as core_banking_mock_router
+from banking.core_banking_routes import router as banking_router
 from orchestrator import orchestrate_banking_request
 from typing import Optional
 
@@ -100,7 +100,7 @@ versions = Versionizer(
     sort_routes=True
 ).versionize()
 
-app.include_router(core_banking_mock_router)
+app.include_router(banking_router)
 
 
 @app.post("/voice/transcribe-intent")
@@ -149,7 +149,7 @@ async def transcribe_intent(
             logger.warning(f"Intent detection returned non-JSON response: {intent}")
             result = {"error": intent, "session_id": session_id, "translation": translation_text}
             return JSONResponse(content=result, status_code=200)
-        
+
         # Step 3: Format intent response
         # Map Llama response to your expected format
         formatted_intent_data = format_intent_response(intent_dict)
