@@ -201,6 +201,8 @@ def detect_intent_with_llama(transcript: str, lang_hint: str = "en") -> Dict[str
         validated = validate_schema(parsed)
         logger.info(f"Intent detected: {validated['intent']} (confidence: {validated['confidence']})")
         logger.info(f"Entities: {validated['entities']}")
+        # Manually add language detected by the whisper model
+        validated["language"] = lang_hint
         return validated
 
     except Exception as e:
