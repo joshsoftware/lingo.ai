@@ -4,7 +4,7 @@ from logger import logger
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from audio_service import translate_with_whisper
-from audio_service import translate_with_whisper_timestamped, translate_with_whisper_from_upload
+from audio_service import translate_with_whisper_timestamped, translate_with_whisper_from_upload, transcribe_or_translate
 from detect_intent import detect_intent_with_llama, format_intent_response
 from summarizer import summarize_using_openai
 from summarizer import summarize_using_ollama
@@ -142,3 +142,36 @@ async def transcribe_intent(audio: UploadFile = File(...), session_id: str = For
     except Exception as e:
         logger.info(traceback.format_exc())
         return JSONResponse(content={"message": str(e)}, status_code=500)
+    
+@app.post("/transcribe-translate")
+async def transcribe_translate(
+    audio: UploadFile = File(...), 
+    session_id: str = Form(...),
+    translate: bool = Form(True)
+):
+    """The endpoint can transcribe or translate audio based on the 'translate' form field."""
+    try:
+        if not audio:
+            return JSONResponse(status_code=400, content={"message":"No audio file provided"})
+        import datetime
+        start=datetime.datetime.now()
+        print("start",start)
+        translation_text = transcribe_or_translate(audio, translate=translate)
+        
+        logger.info("translation done")
+        print("translation_text",translation_text)
+
+        result = {
+            "session_id": session_id,
+            "translation": translation_text,
+        }
+        end=datetime.datetime.now()
+        print("end",end)
+        print("total time",end-start)
+        return JSONResponse(content=result, status_code=200)
+
+    except Exception as e:
+        logger.info(traceback.format_exc())
+        return JSONResponse(content={"message": str(e)}, status_code=500)
+
+

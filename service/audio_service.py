@@ -177,3 +177,41 @@ def translate_with_whisper_from_upload(upload_file: UploadFile):
                 os.unlink(temp_file_path)
             except Exception as e:
                 logger.warning(f"Failed to delete temporary file {temp_file_path}: {str(e)}")
+                
+def transcribe_or_translate(upload_file: UploadFile, translate: bool = True):
+    """Transcribe or translates using whisper model depending upon the translate field."""
+    action = "Translation" if translate else "Transcription"
+    logger.info(f"{action} started")
+    
+    temp_file_path = None
+    try:
+        # Create a temporary file with the original file extension
+        file_extension = os.path.splitext(upload_file.filename)[1] if upload_file.filename else ".wav"
+        # Create temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as temp_file:
+            temp_file_path = temp_file.name
+            # Write uploaded file content to temporary file
+            content = upload_file.file.read()
+            temp_file.write(content)
+            temp_file.flush()
+
+        options = dict(beam_size=5, best_of=5)
+        whisper_task="translate" if translate else "transcribe"
+        translate_options = dict(task=whisper_task, **options)
+        result = model.transcribe(temp_file_path, **translate_options)
+        return result["text"]
+        
+    except Exception as e:
+        logger.error(f"Translation from upload failed: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Translation from upload failed: {str(e)}"
+        )
+    finally:
+        # Clean up temporary file
+        if temp_file_path and os.path.exists(temp_file_path):
+            try:
+                os.unlink(temp_file_path)
+            except Exception as e:
+                logger.warning(f"Failed to delete temporary file {temp_file_path}: {str(e)}")
+
