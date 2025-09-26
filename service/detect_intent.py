@@ -17,7 +17,8 @@ ALLOWED_INTENTS = ["check_balance", "recent_txn", "transfer_money",  "txn_insigh
 SYSTEM = """
 You are a strict NLU engine for a  banking  assistant in India.  
 1. Identify the user's intent. Choose from: [check_balance, recent_txn, transferMoney, txn_insights, unknown].
-2. Extract the following entities if present: amount (number), payee (string), timeframe (string), date (yyyy-mm-dd), start_date (yyyy-mm-dd), end_date (yyyy-mm-dd), merchant (string), count (integer), category (str),..
+2. Extract the following entities if present: amount (number), timeframe (string), date (yyyy-mm-dd), start_date (yyyy-mm-dd), end_date (yyyy-mm-dd), recipient (string), count (integer), category (str),..
+3. If a word in the user query could be either a merchant/person, always treat known merchants or persons as recipient. Treat clear spending types like food, shopping, groceries as category. If unsure, prioritize recipient and leave category empty.
 
 You MUST return valid JSON with this schema:
 {
@@ -29,9 +30,10 @@ Rules:
 - Always pick one of the allowed intents, never invent new ones.
 - Dates MUST be normalized into ISO format yyyy-mm-dd. Use today's date as reference (2025-09-07).
 - Extract entities only if explicitly present. If missing, leave empty.
-- If you cannopt detect the language then default to en-IN
-- make sure the json response is valid json with proper enclosing paranthesis
+- If you cannot detect the language then default to en-IN
+- make sure the json response is valid json with proper enclosing parenthesis
 - Keep JSON minimal. No markdown, no extra text, no extra quotes.
+- Do not add anything for recipient if it recipient is not clear.
 
 Examples:
 User: "What is my balance?" or "How much money I have in my account?"
@@ -45,20 +47,29 @@ User: "Show last 5 transactions"
 {"intent":"recent_txn","entities":{"count": 5},"language":"{lang}"}
 
 User: "Send 1500 to AnanyaRavi"
-{"intent":"transfer_money","entities":{"payee":"Ananya","amount":1500,"currency":"INR"},"language":"{lang}"}
+{"intent":"transfer_money","entities":{"recipient":"AnanyaRavi","amount":1500,"currency":"INR"},"language":"{lang}"}
 
 
 User: "Transfer 1500 to Shubam"
-{"intent":"transfer_money","entities":{"payee":"Ananya","amount":1500,"currency":"INR"},"language":"{lang}"}
+{"intent":"transfer_money","entities":{"recipient":"Shubam","amount":1500,"currency":"INR"},"language":"{lang}"}
 
-User: "How much I spend food last 10 days"
+User: "Show me my last 10 transactions to shubam"
+{"intent":"txn_insights","entities":{"recipient":"shubam","count":10},"language":"{lang}"}
+
+User: "How much I spent on food for last 10 days"
 {"intent":"txn_insights","entities":{"timeframe":"10 days","category":"food"},"language":"{lang}"}
 
+User: "How much I spend shopping last month"
+{"intent":"txn_insights","entities":{"timeframe":"last_month","category":"shopping"},"language":"{lang}"}"
+
+User: "What was my expenses last year?"
+{"intent":"txn_insights","entities":{"timeframe":"last_year"},"language":"{lang}"}"
+
 User: "How much I spend amazon last week"
-{"intent":"txn_insights","entities":{"timeframe":"last_week","merchant":"amazon"},"language":"{lang}"}
+{"intent":"txn_insights","entities":{"timeframe":"last_week","recipient":"amazon", "category":"shopping"},"language":"{lang}"}
 
 “Show me my last 5 Swiggy transactions”
-{"intent":"txn_insights","entities":{"count":5,"merchant":"swiggy"},"language":"{lang}"}
+{"intent":"txn_insights","entities":{"count":5,"recipient":"swiggy"},"language":"{lang}"}
 
 Do NOT hallucinate.
 
@@ -79,21 +90,21 @@ User: "Show transactions on 10th September"
 User: "Show last 5 transactions"
 {{"intent":"recent_txn","entities":{{"count": 5}},"language":"{lang}"}}
 
-User: "Send 1500 to AnanyaRavi"
-{{"intent":"transfer_money","entities":{{"payee":"Ananya","amount":1500,"currency":"INR"}},"language":"{lang}"}}
+User: "Send 1500 to Ananya"
+{{"intent":"transfer_money","entities":{{"recipient":"Ananya","amount":1500,"currency":"INR"}},"language":"{lang}"}}
 
 User: "Transfer 150 to Shubam"
-{{"intent":"transfer_money","entities":{{"payee":"Shubam","amount":150,"currency":"INR"}},"language":"{lang}"}}
+{{"intent":"transfer_money","entities":{{"recipient":"Shubam","amount":150,"currency":"INR"}},"language":"{lang}"}}
 
 
 User: "How much I spend food last 10 days"
 {{"intent":"txn_insights","entities":{{"timeframe":"10 days","category":"food"}},"language":"{lang}"}}
 
 User: "How much I spend amazon last week"
-{{"intent":"txn_insights","entities":{{"timeframe":"last_week","merchant":"amazon"}},"language":"{lang}"}}
+{{"intent":"txn_insights","entities":{{"timeframe":"last_week","recipient":"amazon"}},"language":"{lang}"}}
 
 “Show me my last 5 Swiggy transactions”
-{{"intent":"txn_insights","entities":{{"count":5,"merchant":"swiggy"}},"language":"{lang}"}}
+{{"intent":"txn_insights","entities":{{"count":5,"recipient":"Swiggy"}},"language":"{lang}"}}
 
 """
 
@@ -127,9 +138,9 @@ def validate_schema(result: dict) -> dict:
     currency = entities.get("currency", None)
     if currency not in ["USD", "INR", None, "null"]:
         currency = None
-    recipient = entities.get("payee", None)
-    if isinstance(recipient, str) and recipient.lower() in ["null", "none", ""]:
-        recipient = None
+    # recipient = entities.get("payee", None)
+    # if isinstance(recipient, str) and recipient.lower() in ["null", "none", ""]:
+    #     recipient = None
     timeframe = entities.get("timeframe", None)
     if isinstance(timeframe, str) and timeframe.lower() in ["null", "none", ""]:
         timeframe = None
@@ -143,9 +154,9 @@ def validate_schema(result: dict) -> dict:
     category = entities.get("category", None)
     if isinstance(category, str) and category.lower() in ["null", "none", ""]:
         category = None
-    merchant = entities.get("merchant", None)
-    if isinstance(merchant, str) and merchant.lower() in ["null", "none", ""]:
-        merchant = None
+    recipient = entities.get("recipient", None)
+    if isinstance(recipient, str) and recipient.lower() in ["null", "none", ""]:
+        recipient = None
     language = result.get("language","en")
     confidence = result.get("confidence", 0.0)
     try:
@@ -163,7 +174,7 @@ def validate_schema(result: dict) -> dict:
             "start_date": start_date,
             "end_date": end_date,
             "category":category,
-            "merchant":merchant,
+            "recipient":recipient,
             "count":count
         },
         "language": language,
@@ -231,7 +242,6 @@ def format_intent_response(llama_response: dict) -> dict:
             "start_date": entities.get("start_date"),
             "end_date": entities.get("end_date"),
             "category": entities.get("category"),
-            "merchant": entities.get("merchant"),
             "count":entities.get("count")
         },
         "language": language,
@@ -266,21 +276,21 @@ def determine_action(intent: str, entities: dict) -> str:
         if amount and recipient:
             return "respond"
         else:
-            return "Need both recipient and amount to be transferred. Could you please repeat the statment "
+            return "Need both recipient and amount to be transferred. Could you please repeat the statement "
     elif intent == "txn_insights":
         timeframe = entities.get("timeframe")
         if timeframe:
             category = entities.get("category")
-            merchant = entities.get("merchant")
+            recipient = entities.get("recipient")
             count = entities.get("count")
-            if category or merchant:
+            if category or recipient:
                 return "respond"
             else:
                 return "To filter transactions details, need more filter criteria"
         return "To filter transactions details, need date range"
     else:
         return "unknown"
-translation_text = "how much i spend on amazon last month?"
+# translation_text = "how much i spend on amazon last month?"
 #translation_text = "how much did i spend on food yester?"
 #translation_text = "what is the current balance in my account?"
 #translation_text = "Send 1000 to Ananya"
@@ -288,5 +298,5 @@ translation_text = "how much i spend on amazon last month?"
 #translation_text = "அனன்யாவுக்கு 1000 ரூபாய் அனுப்பு"
 #translation_text = "Transfer 5002 to Ananya"
 #translation_text = "Last two transactions"
-intent = detect_intent_with_llama(translation_text)
-print(intent)
+# intent = detect_intent_with_llama(translation_text)
+# print(intent)

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, Form
+from fastapi import FastAPI, UploadFile, File, Form, Depends
 from fastapi.responses import JSONResponse
 from logger import logger
 from dotenv import load_dotenv
@@ -13,8 +13,10 @@ import traceback
 from util import generate_timestamp_json
 from fastapi_versionizer.versionizer import Versionizer, api_version
 import json
-from core_banking_mock import router as core_banking_mock_router
 from banking.core_banking_routes import router as banking_router
+from orchestrator import orchestrate_banking_request
+from typing import Optional
+
 app = FastAPI()
 
 # Add CORS middleware to the application
@@ -98,23 +100,42 @@ versions = Versionizer(
     sort_routes=True
 ).versionize()
 
-# app.include_router(core_banking_mock_router)
 app.include_router(banking_router)
+
+
 @app.post("/voice/transcribe-intent")
-async def transcribe_intent(audio: UploadFile = File(...), session_id: str = Form(...)):
+async def transcribe_intent(
+    audio: UploadFile = File(...),
+    session_id: Optional[str] = Form(None),
+    customer_id: Optional[int] = Form(None),
+    phone: Optional[str] = Form(None),
+    transaction_type: Optional[str] = Form(None),
+    payment_method: Optional[str] = Form(None)
+):
+    """
+    Transcribe audio and detect intent.
+
+    Processes audio → transcription → intent detection.
+    """
     try:
         if not audio:
             return JSONResponse(status_code=400, content={"message":"No audio file provided"})
+
+        # Step 1: Transcribe audio
         response = translate_with_whisper_from_upload(audio)
         translation_text = response['text']
         language = response["language"]
 
-        #translation_text = "how much did i spend on food last week?"
-        #translation_text = "what is the current balance in my account?"
-        #translation_text = "Send 1000 to Ananya"
+        # translation_text = "how much did i spend on food last week?"
+        # translation_text = "what is the current balance in my account?"
+        # translation_text = "tell me my last 10 transactions"
+        # translation_text = "tell me my last 5 swiggy transactions"
+        # translation_text = "tell me my last month salary" # unknown intent
+        # translation_text = "Send 1000"
         logger.info("translation done")
         logger.info(translation_text)
 
+        # Step 2: Detect intent
         intent = detect_intent_with_llama(translation_text,language)
         logger.info("intent identified")
 
@@ -128,17 +149,33 @@ async def transcribe_intent(audio: UploadFile = File(...), session_id: str = For
             logger.warning(f"Intent detection returned non-JSON response: {intent}")
             result = {"error": intent, "session_id": session_id, "translation": translation_text}
             return JSONResponse(content=result, status_code=200)
+
+        # Step 3: Format intent response
         # Map Llama response to your expected format
         formatted_intent_data = format_intent_response(intent_dict)
 
+        # Step 4: Create a banking request params
+        banking_params_dict = {
+            "customer_id": customer_id,
+            "phone": phone,
+            "transaction_type": transaction_type,
+            "payment_method": payment_method
+        }
+        merged_params = {**banking_params_dict, **formatted_intent_data}
+
+        # Call orchestration logic
+        orchestrated_data =  await orchestrate_banking_request(merged_params)
+
+        # Step 5: Format a final response
         result = {
             "session_id": session_id,
             "translation": translation_text,
-            "intent_data": formatted_intent_data            
+            "intent_data": formatted_intent_data,
+            "orchestrator_data": orchestrated_data
         }
-        
+
         return JSONResponse(content=result, status_code=200)
 
     except Exception as e:
-        logger.info(traceback.format_exc())
+        logger.error(f"Error in transcribe-intent: {traceback.format_exc()}")
         return JSONResponse(content={"message": str(e)}, status_code=500)
