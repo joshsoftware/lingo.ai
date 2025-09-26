@@ -31,7 +31,9 @@ async def get_balance(
                 detail=f"Customer with phone number '{phone}' not found "
             )
         customer_id = customer.id
-
+    else:
+        customer = db.query(Customer).filter(Customer.id == customer_id).first()
+        
     if not customer_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, 
@@ -49,7 +51,7 @@ async def get_balance(
             detail=f"No active account found for customer ID {customer_id}"
         )
 
-    return {"balance": account.balance,"customer_id":customer_id}
+    return {"balance": account.balance,"customer_id":customer_id,"customer_name": customer.name,}
 
 
 def resolve_conflict(to: str, matches, primary_field: str):
