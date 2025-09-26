@@ -46,6 +46,9 @@ User: "Show transactions on 10th September"
 User: "Show last 5 transactions"
 {"intent":"recent_txn","entities":{"count": 5},"language":"{lang}"}
 
+User: "Show me last transaction"
+{"intent":"recent_txn","entities":{"count": 1},"language":"{lang}"}
+
 User: "Send 1500 to AnanyaRavi"
 {"intent":"transfer_money","entities":{"recipient":"AnanyaRavi","amount":1500,"currency":"INR"},"language":"{lang}"}
 
