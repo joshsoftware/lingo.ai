@@ -23,6 +23,7 @@ TRANSACTIONS_ENDPOINT = "/bank/me/transactions"
 PAY_ENDPOINT = "/bank/me/pay"
 ORCHESTRATOR_INTERNAL_ERROR = "Sorry, I couldn't process the request at the moment. Please try again."
 BANK_API_ERROR = "We’re unable to process your request with the bank at the moment. Please try again later."
+BANK_SERVICE_UNAVAILABLE = "The banking service is currently unavailable"
 
 IS_DEBIT = lambda t: t.get("transaction_type") == "debit"
 
@@ -289,6 +290,13 @@ class BankingOrchestrator:
                     "data": {},
                     "message": "Sorry, I couldn't fetch your balance at the moment. Please try again later."
                 }
+        except (httpx.ConnectError, httpx.TimeoutException, httpx.NetworkError) as e:
+            logger.error(f"Network error fetching balance: {e}")
+            return {
+                "success": "false",
+                "data": {},
+                "message": BANK_SERVICE_UNAVAILABLE
+            }
         except Exception as e:
             logger.error(f"Error fetching balance: {e}")
             return {
@@ -356,6 +364,13 @@ class BankingOrchestrator:
                     "data": {},
                     "message": BANK_API_ERROR
                 }
+        except (httpx.ConnectError, httpx.TimeoutException, httpx.NetworkError) as e:
+            logger.error(f"Network error fetching recent transactions: {e}")
+            return {
+                "success": "false",
+                "data": {},
+                "message": BANK_SERVICE_UNAVAILABLE
+            }
         except Exception as e:
             logger.error(f"Error fetching transactions: {e}")
             return {
@@ -445,6 +460,13 @@ class BankingOrchestrator:
                         "data": {},
                         "message": BANK_API_ERROR
                     }
+            except (httpx.ConnectError, httpx.TimeoutException, httpx.NetworkError) as e:
+                logger.error(f"Network error processing transfer: {e}")
+                return {
+                    "success": "false",
+                    "data": {},
+                    "message": BANK_SERVICE_UNAVAILABLE
+                }
             except Exception as e:
                 logger.error(f"Error processing transfer: {e}")
                 return {
@@ -497,6 +519,13 @@ class BankingOrchestrator:
                     "data": {},
                     "message": BANK_API_ERROR
                 }
+        except (httpx.ConnectError, httpx.TimeoutException, httpx.NetworkError) as e:
+            logger.error(f"Network error fetching transactions for insights: {e}")
+            return {
+                "success": "false",
+                "data": {},
+                "message": BANK_SERVICE_UNAVAILABLE
+            }
         except Exception as e:
             logger.error(f"Error analyzing spending: {e}")
             return {
@@ -548,11 +577,20 @@ class BankingOrchestrator:
             params["limit"] = count
         
         # Make API call
-        response = await self.client.get(f"{self.base_url}{TRANSACTIONS_ENDPOINT}", params=params)
-        response.raise_for_status()
-        txn_data = response.json()
-
-        return txn_data.get("transactions", [])
+        try:
+            response = await self.client.get(f"{self.base_url}{TRANSACTIONS_ENDPOINT}", params=params)
+            response.raise_for_status()
+            txn_data = response.json()
+            return txn_data.get("transactions", [])
+        except httpx.HTTPStatusError as e:
+            logger.error(f"HTTP error fetching filtered transactions: {e.response.status_code} - {e.response.text}")
+            raise
+        except (httpx.ConnectError, httpx.TimeoutException, httpx.NetworkError) as e:
+            logger.error(f"Network error fetching filtered transactions: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Error fetching filtered transactions: {e}")
+            raise
 
     async def close(self):
         """Close the HTTP client."""
