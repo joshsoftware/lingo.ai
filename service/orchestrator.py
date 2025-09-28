@@ -267,6 +267,7 @@ class BankingOrchestrator:
             if phone is not None:
                 params["phone"] = phone
 
+            logger.info(f"Calling Bank URL: {self.base_url}{BALANCE_ENDPOINT} with params: {params}")
             response = await self.client.get(f"{self.base_url}{BALANCE_ENDPOINT}", params=params)
             response.raise_for_status()
             balance_data = response.json()
@@ -327,7 +328,8 @@ class BankingOrchestrator:
                 params["phone"] = phone
             if recipient:
                 params["recipient"] = recipient
-            
+
+            logger.info(f"Calling Bank URL: {self.base_url}{PAY_ENDPOINT} with params: {params}")
             response = await self.client.get(f"{self.base_url}{TRANSACTIONS_ENDPOINT}", params=params)
             response.raise_for_status()
             txn_data = response.json()
@@ -417,7 +419,8 @@ class BankingOrchestrator:
                     params["customer_id"] = customer_id
                 if phone is not None:
                     params["phone"] = phone
-                
+
+                logger.info(f"Calling Bank URL: {self.base_url}{PAY_ENDPOINT} with json: {payment_request} with params: {params}")
                 # Send payment request with JSON body
                 payment_response = await self.client.post(
                     f"{self.base_url}{PAY_ENDPOINT}",
@@ -578,6 +581,7 @@ class BankingOrchestrator:
         
         # Make API call
         try:
+            logger.info(f"Calling Bank URL: {self.base_url}{TRANSACTIONS_ENDPOINT} with params: {params}")
             response = await self.client.get(f"{self.base_url}{TRANSACTIONS_ENDPOINT}", params=params)
             response.raise_for_status()
             txn_data = response.json()
