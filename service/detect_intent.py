@@ -161,12 +161,15 @@ def translate(message:str, lang_code: str = "en"):
     logger.info(f"Model: {ollama_translation_model_name}, language: {lang_code}")
     if lang_code == "English":
         return message
-
+    SYSTEM_TRANS=f"""
+    Your are translator from English to {lang_code} and just respond with accurate translated script.
+    No translitration and should not repsond with any other language words other than {lang_code} words.
+    """
     try:
         response = ollama.Client(host=ollama_host).generate(
-            system = f"Your are translator from English to {lang_code} and just respond with accurate translated script. No translitration",
+            system=SYSTEM_TRANS,
             model=ollama_translation_model_name,
-            prompt=f"translate the following message from en to bn, with recommanded translation without any options:{message.strip()}",
+            prompt=message.strip(),
             options={"temperature": 0.0, "top_p": 0.8, "max_tokens": 300},            
             stream=False,
         )
