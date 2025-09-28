@@ -20,6 +20,21 @@ def last_month_range(base: Optional[datetime] = None) -> Tuple[datetime, datetim
     prev_month = (base.replace(day=1) - timedelta(days=1))
     return month_bounds(prev_month)
 
+def last_week_range(base: Optional[datetime] = None) -> Tuple[datetime, datetime]:
+    today = datetime.today()
+    # Find this week's Monday
+    this_week_start = today - timedelta(days=today.weekday())
+
+    # Last week's Monday
+    last_week_start = this_week_start - timedelta(days=7)
+
+    # Last week's Sunday
+    last_week_end = this_week_start - timedelta(days=1)
+
+    print("Last Week:", last_week_start.date(), "to", last_week_end.date())
+
+    return last_week_start.date(), last_week_end.date()
+
 def normalize_timeframe(entities: Dict) -> Dict:
     """
     Accepts entities that might contain:
@@ -46,6 +61,10 @@ def normalize_timeframe(entities: Dict) -> Dict:
         y = (base - timedelta(days=1)).date()
         out["start_date"] = y.isoformat()
         out["end_date"] = y.isoformat()
+    elif tf in {"last_week", "last one week", "previous week"}:
+        s, e = last_week_range(base)
+        out["start_date"] = s.isoformat()
+        out["end_date"] = e.isoformat()
     elif tf in {"today"}:
         t = base.date()
         out["start_date"] = t.isoformat()
