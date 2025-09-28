@@ -157,7 +157,11 @@ def validate_schema(result: dict) -> dict:
         "confidence": confidence,
     }
 def translate(message:str, lang_code: str = "en"):
-    lang_code = lang_map.get(lang_code,"Hindi")
+    lang_code = lang_map.get(lang_code,"English")
+    logger.info(f"Model: {ollama_translation_model_name}, language: {lang_code}")
+    if lang_code == "English":
+        return message
+
     try:
         response = ollama.Client(host=ollama_host).generate(
             system = f"Your are translator from English to {lang_code} and just respond with accurate translated script. No translitration",
