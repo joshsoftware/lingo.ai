@@ -10,7 +10,14 @@ from time_utils import normalize_timeframe
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
-
+lang_map = {
+    "en": "English", "hi": "Hindi", "bn": "Bengali", "ta": "Tamil", "te": "Telugu",
+    "mr": "Marathi", "ml": "Malayalam", "kn": "Kannada", "gu": "Gujarati", "pa": "Punjabi",
+    "or": "Odia", "ur": "Urdu", "sa": "Sanskrit", "ar": "Arabic", "fr": "French",
+    "de": "German", "es": "Spanish", "it": "Italian", "pt": "Portuguese", "zh": "Chinese",
+    "ja": "Japanese", "ko": "Korean", "ru": "Russian", "sv": "Swedish", "pl": "Polish",
+    "tr": "Turkish", "cs": "Czech", "fi": "Finnish", "he": "Hebrew"
+}
 ALLOWED_INTENTS = ["check_balance", "recent_txn", "transfer_money",  "txn_insights", "unknown"]
 
 SYSTEM = """
@@ -74,39 +81,6 @@ User: "How much I spend amazon last week"
 {"intent":"txn_insights","entities":{"count":5,"recipient":"swiggy"},"language":"{lang}"}
 
 Do NOT hallucinate.
-
-"""
-USER_TEMPLATE = """
-You are a user
-Transcript: {transcript}
-Find the intent  and extract the required entities
-Return JSON ONLY. 
-Examples:
-User: "What is my balance?" or "How much money I have in my account?"
-{{"intent":"check_balance","entities":{{}},"language":"{lang}"}}
-
-User: "Show transactions on 10th September"
-{{"intent":"txn_insights","entities":{{"date":"2025-09-10"}},"language":"{lang}"}}
-
-
-User: "Show last 5 transactions"
-{{"intent":"recent_txn","entities":{{"count": 5}},"language":"{lang}"}}
-
-User: "Send 1500 to Ananya"
-{{"intent":"transfer_money","entities":{{"recipient":"Ananya","amount":1500,"currency":"INR"}},"language":"{lang}"}}
-
-User: "Transfer 150 to Shubam"
-{{"intent":"transfer_money","entities":{{"recipient":"Shubam","amount":150,"currency":"INR"}},"language":"{lang}"}}
-
-
-User: "How much I spend food last 10 days"
-{{"intent":"txn_insights","entities":{{"timeframe":"10 days","category":"food"}},"language":"{lang}"}}
-
-User: "How much I spend amazon last week"
-{{"intent":"txn_insights","entities":{{"timeframe":"last_week","recipient":"amazon"}},"language":"{lang}"}}
-
-“Show me my last 5 Swiggy transactions”
-{{"intent":"txn_insights","entities":{{"count":5,"recipient":"Swiggy"}},"language":"{lang}"}}
 
 """
 
@@ -183,12 +157,12 @@ def validate_schema(result: dict) -> dict:
         "confidence": confidence,
     }
 def translate(message:str, lang_code: str = "en"):
-    print(lang_code)
+    lang_code = lang_map.get(lang_code,"Hindi")
     try:
         response = ollama.Client(host=ollama_host).generate(
-            system = f"Your are translator from en to {lang_code} and just respond with accurate translated script. No translitration",
+            system = f"Your are translator from English to {lang_code} and just respond with accurate translated script. No translitration",
             model=ollama_translation_model_name,
-            prompt=message.strip(),
+            prompt=f"translate the following message from en to bn, with recommanded translation without any options:{message.strip()}",
             options={"temperature": 0.0, "top_p": 0.8, "max_tokens": 300},            
             stream=False,
         )
@@ -199,7 +173,6 @@ def translate(message:str, lang_code: str = "en"):
          return message
     
 def detect_intent_with_llama(transcript: str, lang_hint: str = "en") -> Dict[str, Any]:
-    prompt = USER_TEMPLATE.format(transcript=transcript.strip(), lang=lang_hint)
     #transcript = "how much i spend on amazon last month?"
     try:
         response = ollama.Client(host=ollama_host).generate(
@@ -210,7 +183,6 @@ def detect_intent_with_llama(transcript: str, lang_hint: str = "en") -> Dict[str
             stream=False
             
         )
-       
         llama_response = response["response"].strip()
         logger.info(f"llama response: {llama_response}")
 
@@ -310,16 +282,3 @@ def determine_action(intent: str, entities: dict) -> str:
         return "To filter transactions details, need date range"
     else:
         return "unknown"
-# translation_text = "how much i spend on amazon last month?"
-#translation_text = "how much did i spend on food yester?"
-#translation_text = "what is the current balance in my account?"
-#translation_text = "Send 1000 to Ananya"
-#translation_text = "இருப்பு என்ன?"
-#translation_text = "அனன்யாவுக்கு 1000 ரூபாய் அனுப்பு"
-#translation_text = "Transfer 5002 to Ananya"
-#translation_text = "Last two transactions"
-# intent = detect_intent_with_llama(translation_text)
-# print(intent)
-#translated_message = translate("Your account balance is 7,000.00.","ta")
-#last_row = translated_message.strip().split('\n')[-1]
-#print(translated_message)

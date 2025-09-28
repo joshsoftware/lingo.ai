@@ -126,13 +126,6 @@ async def transcribe_intent(
         response = translate_with_whisper_from_upload(audio)
         translation_text = response['text']
         language = response["language"]
-        language = "ta"
-        translation_text = "how much did i spend on zomato last week?"
-        #translation_text = "what is the current balance in my account?"
-        #translation_text = "tell me my last 10 transactions"
-        #translation_text = "last 5 swiggy transactions"
-        #translation_text = "tell me my last month salary" # unknown intent
-        #translation_text = "Send 1000"
         logger.info("translation done")
         logger.info(translation_text)
 
