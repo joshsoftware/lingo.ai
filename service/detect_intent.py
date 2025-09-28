@@ -1,11 +1,10 @@
-
 from itertools import count
 import json
 #from msilib import PID_WORDCOUNT
 import re
 import logging
 import ollama
-from config import ollama_host, ollama_model_name
+from config import ollama_host, ollama_model_name, ollama_translation_model_name
 from typing import Dict, Any
 from time_utils import normalize_timeframe
 
@@ -183,7 +182,22 @@ def validate_schema(result: dict) -> dict:
         "language": language,
         "confidence": confidence,
     }
-
+def translate(message:str, lang_code: str = "en"):
+    print(lang_code)
+    try:
+        response = ollama.Client(host=ollama_host).generate(
+            system = f"Your are translator from en to {lang_code} and just respond with accurate translated script. No translitration",
+            model=ollama_translation_model_name,
+            prompt=message.strip(),
+            options={"temperature": 0.0, "top_p": 0.8, "max_tokens": 300},            
+            stream=False,
+        )
+        llama_response = response["response"].strip()
+        return llama_response
+    except Exception as e:
+         logger.error(f"Error during intent detection: {str(e)}")
+         return message
+    
 def detect_intent_with_llama(transcript: str, lang_hint: str = "en") -> Dict[str, Any]:
     prompt = USER_TEMPLATE.format(transcript=transcript.strip(), lang=lang_hint)
     #transcript = "how much i spend on amazon last month?"
@@ -193,7 +207,8 @@ def detect_intent_with_llama(transcript: str, lang_hint: str = "en") -> Dict[str
             model=ollama_model_name,
             prompt=transcript.strip(),
             options={"temperature": 0.0, "top_p": 0.8, "max_tokens": 300},            
-            stream=False,
+            stream=False
+            
         )
        
         llama_response = response["response"].strip()
@@ -305,3 +320,6 @@ def determine_action(intent: str, entities: dict) -> str:
 #translation_text = "Last two transactions"
 # intent = detect_intent_with_llama(translation_text)
 # print(intent)
+#translated_message = translate("Your account balance is 7,000.00.","ta")
+#last_row = translated_message.strip().split('\n')[-1]
+#print(translated_message)

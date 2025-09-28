@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from audio_service import translate_with_whisper
 from audio_service import translate_with_whisper_timestamped, translate_with_whisper_from_upload
-from detect_intent import detect_intent_with_llama, format_intent_response
+from detect_intent import detect_intent_with_llama, format_intent_response, translate
 from summarizer import summarize_using_openai
 from summarizer import summarize_using_ollama
 from pydantic import BaseModel
@@ -16,6 +16,7 @@ import json
 from banking.core_banking_routes import router as banking_router
 from orchestrator import orchestrate_banking_request
 from typing import Optional
+import httpx
 
 app = FastAPI()
 
@@ -125,13 +126,13 @@ async def transcribe_intent(
         response = translate_with_whisper_from_upload(audio)
         translation_text = response['text']
         language = response["language"]
-
-        # translation_text = "how much did i spend on food last week?"
-        # translation_text = "what is the current balance in my account?"
-        # translation_text = "tell me my last 10 transactions"
-        # translation_text = "tell me my last 5 swiggy transactions"
-        # translation_text = "tell me my last month salary" # unknown intent
-        # translation_text = "Send 1000"
+        language = "ta"
+        translation_text = "how much did i spend on zomato last week?"
+        #translation_text = "what is the current balance in my account?"
+        #translation_text = "tell me my last 10 transactions"
+        #translation_text = "last 5 swiggy transactions"
+        #translation_text = "tell me my last month salary" # unknown intent
+        #translation_text = "Send 1000"
         logger.info("translation done")
         logger.info(translation_text)
 
@@ -153,7 +154,7 @@ async def transcribe_intent(
         # Step 3: Format intent response
         # Map Llama response to your expected format
         formatted_intent_data = format_intent_response(intent_dict)
-
+        print(formatted_intent_data)
         # Step 4: Create a banking request params
         banking_params_dict = {
             "customer_id": customer_id,
@@ -166,6 +167,7 @@ async def transcribe_intent(
         # Call orchestration logic
         orchestrated_data =  await orchestrate_banking_request(merged_params)
 
+        orchestrated_data['message'] = translate(orchestrated_data["message"],language)
         # Step 5: Format a final response
         result = {
             "session_id": session_id,
@@ -173,7 +175,6 @@ async def transcribe_intent(
             "intent_data": formatted_intent_data,
             "orchestrator_data": orchestrated_data
         }
-
         return JSONResponse(content=result, status_code=200)
 
     except Exception as e:
