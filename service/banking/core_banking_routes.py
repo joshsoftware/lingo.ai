@@ -72,7 +72,7 @@ def find_beneficiary(db: Session, customer_id: int, to: str):
         matches = []
         for beneficiary in all_beneficiaries:
             field_value = getattr(beneficiary, field)
-            if field_value and normalize_text(field_value) == normalized_to:
+            if field_value and normalized_to in normalize_text(field_value):
                 matches.append(beneficiary)
         
         if matches:

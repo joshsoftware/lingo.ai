@@ -30,3 +30,4 @@ sentencepiece
 ninja
 sqlalchemy
 psycopg2-binary
+redis
