@@ -162,7 +162,7 @@ def translate(message:str, lang_code: str = "en"):
     if lang_code == "English":
         return message
     SYSTEM_TRANS=f"""
-    Your are translator from English to {lang_code} and just respond with accurate translated script.
+    Your are translator from English to {lang_code} and just respond with recommanded translated script.
     No translitration and should not repsond with any other language words other than {lang_code} words.
     """
     try:
@@ -170,7 +170,7 @@ def translate(message:str, lang_code: str = "en"):
             system=SYSTEM_TRANS,
             model=ollama_translation_model_name,
             prompt=message.strip(),
-            options={"temperature": 0.0, "top_p": 0.8, "max_tokens": 300},            
+            options={"temperature": 0.0, "top_p": 0.8},            
             stream=False,
         )
         llama_response = response["response"].strip()
@@ -186,7 +186,7 @@ def detect_intent_with_llama(transcript: str, lang_hint: str = "en") -> Dict[str
             system = SYSTEM,
             model=ollama_model_name,
             prompt=transcript.strip(),
-            options={"temperature": 0.0, "top_p": 0.8, "max_tokens": 300},            
+            options={"temperature": 0.0, "top_p": 0.8},            
             stream=False
             
         )
