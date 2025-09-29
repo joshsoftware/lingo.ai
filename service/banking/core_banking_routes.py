@@ -6,7 +6,6 @@ from .database import get_db
 from .models import Customer, Account, Transaction, Beneficiary
 from pydantic import BaseModel
 from typing import Optional, List
-import re
 
 router = APIRouter(prefix="/bank/me", tags=["banking"])
 
@@ -62,16 +61,11 @@ def find_beneficiary(db: Session, customer_id: int, to: str):
     """Find a beneficiary by name, nickname, or tag with smart conflict handling."""
     # Normalize the search query
     normalized_to = normalize_text(to)
-    print(f"Finding to {to}")
-    print(f"Finding beneficiary for {normalized_to}")
-
 
     # Get all beneficiaries for this customer
     all_beneficiaries = db.query(Beneficiary).filter(
         Beneficiary.customer_id == customer_id
     ).all()
-
-    print(f"Found beneficiaries: {all_beneficiaries} ")
 
     # First, try exact matches on each field using normalized comparison
     for field in ["name", "nickname", "tag"]:
