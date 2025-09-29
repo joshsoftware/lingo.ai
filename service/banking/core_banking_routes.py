@@ -6,8 +6,33 @@ from .database import get_db
 from .models import Customer, Account, Transaction, Beneficiary
 from pydantic import BaseModel
 from typing import Optional, List
+import re
 
 router = APIRouter(prefix="/bank/me", tags=["banking"])
+
+def normalize_text(text: str) -> str:
+    """Normalize text for beneficiary matching by converting to lowercase, removing spaces, 
+    and replacing textual numbers with digits."""
+    if not text:
+        return ""
+    
+    # Convert to lowercase
+    normalized = text.lower()
+    
+    # Remove spaces
+    normalized = normalized.replace(" ", "")
+    
+    # Replace textual numbers with digits
+    number_replacements = {
+        "zero": "0", "one": "1", "two": "2", "three": "3", "four": "4",
+        "five": "5", "six": "6", "seven": "7", "eight": "8", "nine": "9",
+        "ten": "10"
+    }
+    
+    for word, digit in number_replacements.items():
+        normalized = normalized.replace(word, digit)
+    
+    return normalized
 
 class PaymentRequest(BaseModel):
     to: str
@@ -35,12 +60,26 @@ def format_contact_details(contacts, limit=None):
 
 def find_beneficiary(db: Session, customer_id: int, to: str):
     """Find a beneficiary by name, nickname, or tag with smart conflict handling."""
-    # First try exact matches on each field
+    # Normalize the search query
+    normalized_to = normalize_text(to)
+    print(f"Finding to {to}")
+    print(f"Finding beneficiary for {normalized_to}")
+
+
+    # Get all beneficiaries for this customer
+    all_beneficiaries = db.query(Beneficiary).filter(
+        Beneficiary.customer_id == customer_id
+    ).all()
+
+    print(f"Found beneficiaries: {all_beneficiaries} ")
+
+    # First, try exact matches on each field using normalized comparison
     for field in ["name", "nickname", "tag"]:
-        matches = db.query(Beneficiary).filter(
-            Beneficiary.customer_id == customer_id,
-            getattr(Beneficiary, field).ilike(to)
-        ).all()
+        matches = []
+        for beneficiary in all_beneficiaries:
+            field_value = getattr(beneficiary, field)
+            if field_value and normalize_text(field_value) == normalized_to:
+                matches.append(beneficiary)
         
         if matches:
             if len(matches) == 1:
@@ -72,20 +111,19 @@ def find_beneficiary(db: Session, customer_id: int, to: str):
                 detail=f"There are multiple '{to}' exist in the beneficiaries that can't be distinguished. Please use a nickname or tag to be more specific."
             )
 
-    # No exact matches found, try partial matches
-    matches = db.query(Beneficiary).filter(
-        Beneficiary.customer_id == customer_id,
-        (
-            Beneficiary.name.ilike(f"%{to}%") |
-            Beneficiary.nickname.ilike(f"%{to}%") |
-            Beneficiary.tag.ilike(f"%{to}%")
-        )
-    ).all()
+    # No exact matches found, try partial matches using normalized comparison
+    matches = []
+    for beneficiary in all_beneficiaries:
+        # Check if a normalized search term is contained in any normalized field
+        if (beneficiary.name and normalized_to in normalize_text(beneficiary.name)) or \
+           (beneficiary.nickname and normalized_to in normalize_text(beneficiary.nickname)) or \
+           (beneficiary.tag and normalized_to in normalize_text(beneficiary.tag)):
+            matches.append(beneficiary)
 
     if not matches:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Beneficiary '{to}' does exist in your accout. Please check the beneficiary name or add them as a new contact before sending money."
+            detail=f"Beneficiary '{to}' does exist in your account. Please check the beneficiary name or add them as a new contact before sending money."
         )
 
     if len(matches) > 1:

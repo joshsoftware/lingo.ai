@@ -434,7 +434,7 @@ class BankingOrchestrator:
                     return {
                         "success": "true",
                         "data": payment_data,
-                        "message": f"Transferred {amount} {currency} to {recipient} successfully. Your current balance is {payment_data.get('balance', 0):,.2f}."
+                        "message": f"Transferred {amount}{f' {currency}' if currency is not None else ''} to {payment_data.get('to', recipient)} successfully. Your current balance is {payment_data.get('balance', 0):,.2f}."
                     }
                 else:
                     return {
