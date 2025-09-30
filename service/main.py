@@ -19,7 +19,7 @@ from typing import Optional
 import httpx
 from redis_client import session_manager
 from datetime import datetime
-from session_flow_handler import SessionFlowHandler
+from session_service import SessionService, SessionFlowProcessor
 
 app = FastAPI()
 
@@ -127,11 +127,15 @@ async def transcribe_intent(
             return JSONResponse(status_code=400, content={"message":"No audio file provided"})
 
         # Step 1: Common audio processing (transcription and intent detection)
-        response = translate_with_whisper_from_upload(audio)
-        translation_text = response['text']
-        language = response["language"]
-        logger.info("Translation done")
-        logger.info(translation_text)
+        # response = translate_with_whisper_from_upload(audio)
+        # translation_text = response['text']
+        # language = response["language"]
+        # logger.info("Translation done")
+        # logger.info(translation_text)
+
+
+        translation_text = "ramu"
+        language = "hi"
 
         # Detect intent
         intent = detect_intent_with_llama(translation_text, language)
@@ -159,76 +163,38 @@ async def transcribe_intent(
             "payment_method": payment_method
         }
 
-        # Step 3: Decision logic based on session_id
-        if session_id and session_manager.session_exists(session_id):
-            # SESSION-BASED FLOW: Use a new session flow handler
-            logger.info(f"Using session-based flow for session: {session_id}")
+        # Step 3: Initialize session flow processor
+        session_processor = SessionFlowProcessor()
+        
+        # Step 4: Decision logic - use session service to determine flow
+        if SessionService.should_use_session_flow(session_id):
+            # SESSION-BASED FLOW
+            logger.info(f"Using session flow for session: {session_id}")
             
-            session_handler = SessionFlowHandler()
-            result = await session_handler.process_session_based_request(
-                session_id=session_id,
-                formatted_intent_data=formatted_intent_data,
-                translation_text=translation_text,
-                language=language,
-                banking_params_dict=banking_params_dict
+            success, response_data = await session_processor.process_existing_session(
+                session_id, translation_text, language
             )
             
-            return JSONResponse(content=result, status_code=200)
+            if not success:
+                return JSONResponse(status_code=400, content=response_data)
+                
+            return JSONResponse(content=response_data, status_code=200)
         
         else:
-            # NEW SESSION FLOW: Use existing flow for new sessions
-            logger.info("Using new session flow")
+            # NEW SESSION FLOW
+            logger.info("Creating new session flow")
             
-            # Generate new session ID
-            current_session_id = session_manager.generate_session_id()
-            logger.info(f"Creating new session: {current_session_id}")
-
-            # Create params for orchestrator (no previous data)
-            merged_params = {**banking_params_dict, **formatted_intent_data}
-            merged_params["session_continuation"] = False
-
-            # Call orchestration logic
-            orchestrated_data = await orchestrate_banking_request(merged_params)
-
-            # Translate response message
-            orchestrated_data['message'] = translate(orchestrated_data["message"], language)
-
-            # Prepare session data for storage
-            session_data = {
-                "session_id": current_session_id,
-                "customer_id": customer_id,
-                "phone": phone,
-                "transaction_type": transaction_type,
-                "payment_method": payment_method,
-                "language": language,
-                "translations": [translation_text],
-                "intent_data": formatted_intent_data,
-                "orchestrator_data": orchestrated_data,
-                "created_at": json.dumps({"timestamp": str(datetime.now())}),
-                "updated_at": json.dumps({"timestamp": str(datetime.now())}),
-                "turn_count": 1
-            }
-
-            # Store session in Redis
-            session_manager.store_session(current_session_id, session_data)
-
-            # Check if orchestrator indicates more input is needed
-            needs_more_input = orchestrated_data.get("needs_more_input", False)
-            missing_parameters = orchestrated_data.get("missing_parameters", [])
-
-            # Format final response
-            result = {
-                "session_id": current_session_id,
-                "translation": translation_text,
-                "intent_data": formatted_intent_data,
-                "orchestrator_data": orchestrated_data,
-                "needs_more_input": needs_more_input,
-                "missing_parameters": missing_parameters,
-                "session_continuation": False,
-                "flow_type": "new_session"  # Indicate this used the new session flow
-            }
+            response_data = await session_processor.process_new_session(
+                customer_id,
+                phone, 
+                transaction_type,
+                payment_method,
+                language,
+                translation_text,
+                formatted_intent_data
+            )
             
-            return JSONResponse(content=result, status_code=200)
+            return JSONResponse(content=response_data, status_code=200)
 
     except Exception as e:
         logger.error(f"Error in transcribe-intent: {traceback.format_exc()}")

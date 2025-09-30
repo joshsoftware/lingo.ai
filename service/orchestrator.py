@@ -235,10 +235,7 @@ class BankingOrchestrator:
         phone = intent_and_banking_data.get("phone")
         transaction_type = intent_and_banking_data.get("transaction_type")
         payment_method = intent_and_banking_data.get("payment_method")
-        previous_orchestrator_data = intent_and_banking_data.get("previous_orchestrator_data")
-        session_continuation = intent_and_banking_data.get("session_continuation", False)
-
-        logger.info(f"Processing intent: {intent} with action: {action}, session_continuation: {session_continuation}")
+        logger.info(f"Processing intent: {intent} with action: {action}")
 
         if not any([customer_id, phone]):
             return {
@@ -246,24 +243,6 @@ class BankingOrchestrator:
                 "data": {},
                 "message": "Orchestrator error: Either customer_id or phone is required to check balance."
             }
-
-        # Handle session continuation - merge previous data with new entities
-        if session_continuation and previous_orchestrator_data:
-            logger.info("Processing session continuation with previous data")
-            
-            # Check if previous call had conflicts that need resolution
-            if (previous_orchestrator_data.get("success") == "false" and 
-                "multiple" in previous_orchestrator_data.get("message", "").lower() and
-                intent == "transfer_money"):
-                
-                # This is a continuation of a transfer_money that had conflicts
-                # Merge entities with refined recipient information
-                logger.info("Handling transfer_money conflict resolution")
-                
-                # Keep the original entities but update with new clarifying information
-                if "recipient" in entities:
-                    # New audio provided more specific recipient info
-                    logger.info(f"Updating recipient from '{entities.get('recipient')}' based on new audio input")
         
         # Route to the appropriate handler
         if intent == "check_balance":
@@ -277,35 +256,6 @@ class BankingOrchestrator:
         else:
             orchestrator_data = _handle_unknown_intent()
         
-        # Add session continuation metadata
-        if session_continuation and previous_orchestrator_data:
-            # Check if this resolved a previous conflict
-            if (previous_orchestrator_data.get("success") == "false" and 
-                orchestrator_data.get("success") == "true"):
-                orchestrator_data["resolved_previous_conflict"] = True
-                orchestrator_data["previous_issue"] = previous_orchestrator_data.get("message", "")
-        
-        # Determine if more input might be needed based on response
-        if orchestrator_data.get("success") == "false":
-            message = orchestrator_data.get("message", "")
-            if ("multiple" in message.lower() and "choose from" in message.lower()):
-                # This is a conflict scenario requiring additional input
-                orchestrator_data["needs_more_input"] = True
-                orchestrator_data["conflict_type"] = "multiple_beneficiaries"
-                
-                # Extract available options from the message
-                if "choose from:" in message.lower():
-                    options_part = message.split("choose from:")[-1].strip()
-                    orchestrator_data["available_options"] = options_part
-                elif "please use" in message.lower():
-                    orchestrator_data["missing_parameters"] = ["more_specific_recipient_info"]
-            elif "missing_field" in orchestrator_data.get("data", {}):
-                # Missing required fields
-                orchestrator_data["needs_more_input"] = True
-                orchestrator_data["conflict_type"] = "missing_fields"
-                orchestrator_data["missing_parameters"] = [orchestrator_data["data"]["missing_field"]]
-        else:
-            orchestrator_data["needs_more_input"] = False
         
         return orchestrator_data
 
