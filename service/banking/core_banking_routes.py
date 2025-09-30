@@ -9,6 +9,30 @@ from typing import Optional, List
 
 router = APIRouter(prefix="/bank/me", tags=["banking"])
 
+def normalize_text(text: str) -> str:
+    """Normalize text for beneficiary matching by converting to lowercase, removing spaces, 
+    and replacing textual numbers with digits."""
+    if not text:
+        return ""
+    
+    # Convert to lowercase
+    normalized = text.lower()
+    
+    # Remove spaces
+    normalized = normalized.replace(" ", "")
+    
+    # Replace textual numbers with digits
+    number_replacements = {
+        "zero": "0", "one": "1", "two": "2", "three": "3", "four": "4",
+        "five": "5", "six": "6", "seven": "7", "eight": "8", "nine": "9",
+        "ten": "10"
+    }
+    
+    for word, digit in number_replacements.items():
+        normalized = normalized.replace(word, digit)
+    
+    return normalized
+
 class PaymentRequest(BaseModel):
     to: str
     amount: float
@@ -35,12 +59,21 @@ def format_contact_details(contacts, limit=None):
 
 def find_beneficiary(db: Session, customer_id: int, to: str):
     """Find a beneficiary by name, nickname, or tag with smart conflict handling."""
-    # First try exact matches on each field
+    # Normalize the search query
+    normalized_to = normalize_text(to)
+
+    # Get all beneficiaries for this customer
+    all_beneficiaries = db.query(Beneficiary).filter(
+        Beneficiary.customer_id == customer_id
+    ).all()
+
+    # First, try exact matches on each field using normalized comparison
     for field in ["name", "nickname", "tag"]:
-        matches = db.query(Beneficiary).filter(
-            Beneficiary.customer_id == customer_id,
-            getattr(Beneficiary, field).ilike(to)
-        ).all()
+        matches = []
+        for beneficiary in all_beneficiaries:
+            field_value = getattr(beneficiary, field)
+            if field_value and normalize_text(field_value) == normalized_to:
+                matches.append(beneficiary)
         
         if matches:
             if len(matches) == 1:
@@ -53,7 +86,7 @@ def find_beneficiary(db: Session, customer_id: int, to: str):
                 nickname_options = ", ".join([f"'{nick}'" for nick in unique_nicknames if nick])
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
-                    detail=f"There are multiple '{to}' found in the beneficiaries. Please choose from: {', '.join(nicknames)}."
+                    detail=f"There are multiple '{to}' exist in the beneficiaries. Please choose from: {', '.join(nicknames)}."
                 )
             
             # Try to distinguish by tags
@@ -63,29 +96,28 @@ def find_beneficiary(db: Session, customer_id: int, to: str):
                 tag_options = ", ".join([f"'{tag}'" for tag in unique_tags if tag])
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
-                    detail=f"There are multiple '{to}' found in the beneficiaries with the same nickname but different tags. Please choose from: {', '.join(tags)}."
+                    detail=f"There are multiple '{to}' exist in the beneficiaries with the same nickname but different tags. Please choose from: {', '.join(tags)}."
                 )
             
             # Can't distinguish by either nickname or tag
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=f"There are multiple '{to}' found in the beneficiaries that can't be distinguished. Please use a nickname or tag to be more specific."
+                detail=f"There are multiple '{to}' exist in the beneficiaries that can't be distinguished. Please use a nickname or tag to be more specific."
             )
 
-    # No exact matches found, try partial matches
-    matches = db.query(Beneficiary).filter(
-        Beneficiary.customer_id == customer_id,
-        (
-            Beneficiary.name.ilike(f"%{to}%") |
-            Beneficiary.nickname.ilike(f"%{to}%") |
-            Beneficiary.tag.ilike(f"%{to}%")
-        )
-    ).all()
+    # No exact matches found, try partial matches using normalized comparison
+    matches = []
+    for beneficiary in all_beneficiaries:
+        # Check if a normalized search term is contained in any normalized field
+        if (beneficiary.name and normalized_to in normalize_text(beneficiary.name)) or \
+           (beneficiary.nickname and normalized_to in normalize_text(beneficiary.nickname)) or \
+           (beneficiary.tag and normalized_to in normalize_text(beneficiary.tag)):
+            matches.append(beneficiary)
 
     if not matches:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"We couldn't find a beneficiary matching '{to}'. Please check the beneficiary name or add them as a new contact before sending money."
+            detail=f"Beneficiary '{to}' does exist in your account. Please check the beneficiary name or add them as a new contact before sending money."
         )
 
     if len(matches) > 1:
@@ -130,7 +162,7 @@ async def get_balance(
     if not customer_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, 
-            detail="To get your balance, please provide either a customer ID or a registered phone number."
+            detail="To know your balance, please provide either a customer ID or a registered phone number."
         )
 
     account = db.query(Account).filter(
@@ -161,7 +193,7 @@ async def pay_money(
         if not customer:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"We couldn't find a customer account associated with the phone number '{phone}'. Please check the number and try again."
+                detail=f"Incorrect Phone number '{phone}'. Please check the number and try again."
             )
         customer_id = customer.id
 
@@ -207,14 +239,14 @@ async def pay_money(
     if not account:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No active account was found for customer ID {customer_id}. If you believe this is an error, please contact customer support."
+            detail=f"Customer ID {customer_id} is not valid. If you believe this is an error, please contact customer support."
         )
 
     # Balance check
     if amount > account.balance:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Your account balance of ₹{account.balance:.2f} is not enough to complete this transaction of ₹{amount:.2f}. Please add funds and try again."
+            detail=f"Insufficient balance, your account balance of ₹{account.balance:.2f} is not enough to complete this transaction of ₹{amount:.2f}."
         )
 
     # Deduct balance
@@ -324,7 +356,7 @@ async def search_txn(
         except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, 
-                detail=f"The start date you entered ('{start_date}') is not in the correct format. Please use YYYY-MM-DD (e.g., 2025-09-25) and try again."
+                detail=f"The start date ('{start_date}') is not in the correct format. Please use YYYY-MM-DD (e.g., 2025-09-25) and try again."
             )
     if end_date:
         try:
@@ -333,7 +365,7 @@ async def search_txn(
         except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, 
-                detail=f"The end date you entered ('{end_date}') is not in the correct format. Please use YYYY-MM-DD (e.g., 2025-09-25) and try again."
+                detail=f"The end date ('{end_date}') is not in the correct format. Please use YYYY-MM-DD (e.g., 2025-09-25) and try again."
             )
 
     # Apply all filters first, then apply limit if provided

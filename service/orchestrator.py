@@ -23,7 +23,7 @@ TRANSACTIONS_ENDPOINT = "/bank/me/transactions"
 PAY_ENDPOINT = "/bank/me/pay"
 ORCHESTRATOR_INTERNAL_ERROR = "Sorry, I couldn't process the request at the moment. Please try again."
 BANK_API_ERROR = "We’re unable to process your request with the bank at the moment. Please try again later."
-BANK_SERVICE_UNAVAILABLE = "The banking service is currently unavailable"
+BANK_SERVICE_UNAVAILABLE = "Regretted,Banking service is currently unavailable"
 
 IS_DEBIT = lambda t: t.get("transaction_type") == "debit"
 
@@ -434,7 +434,7 @@ class BankingOrchestrator:
                     return {
                         "success": "true",
                         "data": payment_data,
-                        "message": f"Transferred {amount} {currency} to {recipient} successfully. Your current balance is {payment_data.get('balance', 0):,.2f}."
+                        "message": f"Transferred {amount}{f' {currency}' if currency is not None else ''} to {payment_data.get('to', recipient)} successfully. Your current balance is {payment_data.get('balance', 0):,.2f}."
                     }
                 else:
                     return {
