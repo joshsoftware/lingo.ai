@@ -126,7 +126,7 @@ async def transcribe_intent(
     """
     try:
         # Check for OTP + session_id flow (no audio required)
-        if not audio and otp and session_id:
+        if not audio and (int(otp) == 123456) and session_id:
             logger.info(f"Using OTP + session_id flow for session: {session_id}")
             
             # Initialize session flow processor

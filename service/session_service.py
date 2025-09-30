@@ -250,7 +250,7 @@ class SessionFlowProcessor:
             orchestrated_data
         )
 
-        if orchestrated_data.get("success"):
+        if orchestrated_data.get("success") == "true":
             session_manager.delete_session(session_id)
 
         # Translate response message
