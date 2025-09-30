@@ -71,7 +71,7 @@ class SessionService:
         session_data["turn_count"] = session_data.get("turn_count", 1) + 1
         session_data["updated_at"] = json.dumps({"timestamp": str(datetime.now())})
         
-        # Remove missing_field since it's now resolved
+        # Remove the missing_field since it's now resolved
         if "missing_field" in session_data:
             del session_data["missing_field"]
         
@@ -80,7 +80,7 @@ class SessionService:
     
     @staticmethod
     def detect_missing_field_from_orchestrator_response(orchestrated_data: Dict[str, Any]) -> Optional[str]:
-        """Detect which field is missing based on orchestrator response."""
+        """Detect which field is missing based on the orchestrator response."""
         if orchestrated_data.get("success") == "false":
             message = orchestrated_data.get("message", "").lower()
             if "multiple" in message and ("beneficiaries" in message or "choose from" in message):
@@ -88,6 +88,38 @@ class SessionService:
             elif "missing" in message or "need" in message:
                 return "recipient"  # Default to recipient for most missing field cases
         return None
+    
+    @staticmethod
+    def update_session_after_orchestrator_response(
+        session_id: str,
+        session_data: Dict[str, Any],
+        translation_text: str,
+        updated_intent_data: Dict[str, Any],
+        orchestrated_data: Dict[str, Any]
+    ) -> None:
+        """Update session data after orchestrator response, handling both success and failure scenarios."""
+        # Update common session data
+        session_data["translations"].append(translation_text)
+        session_data["intent_data"] = updated_intent_data
+        session_data["orchestrator_data"] = orchestrated_data
+        session_data["turn_count"] = session_data.get("turn_count", 1) + 1
+        session_data["updated_at"] = json.dumps({"timestamp": str(datetime.now())})
+        
+        # Check if orchestrator response indicates missing fields
+        missing_field = SessionService.detect_missing_field_from_orchestrator_response(orchestrated_data)
+        
+        if missing_field:
+            # If there's still a missing field, update it in session data
+            session_data["missing_field"] = missing_field
+            logger.info(f"Updated session {session_id} with missing_field: {missing_field}")
+        else:
+            # If successful, remove the missing_field since it's now resolved
+            if "missing_field" in session_data:
+                del session_data["missing_field"]
+                logger.info(f"Removed missing_field from session {session_id} - successfully processed")
+        
+        # Store updated session
+        session_manager.store_session(session_id, session_data)
     
     @staticmethod
     def create_new_session_data(
@@ -151,7 +183,8 @@ class SessionFlowProcessor:
         self,
         session_id: str,
         translation_text: str,
-        language: str
+        language: str,
+        formatted_intent_data: Dict[str, Any]
     ) -> Tuple[bool, Dict[str, Any]]:
         """
         Process existing session flow.
@@ -169,12 +202,32 @@ class SessionFlowProcessor:
         if not missing_field:
             return False, {"message": "No missing field to update in session"}
         
-        # Update intent data with new transcribed text
-        updated_intent_data = self.session_service.update_intent_with_missing_field(
-            existing_session_data.get("intent_data", {}),
-            missing_field,
-            translation_text
-        )
+        # Update intent data with new transcribed text or formatted intent data
+        # Check if formatted_intent_data has an "intent" key with values (exclude "unknown" intents)
+        intent_value = formatted_intent_data.get("intent")
+        if (intent_value and intent_value.lower() != "unknown" and 
+            formatted_intent_data.get("entities")):
+            # Use value from formatted_intent_data entities for the missing field
+            new_value = formatted_intent_data["entities"].get(missing_field, translation_text)
+            updated_intent_data = self.session_service.update_intent_with_missing_field(
+                existing_session_data.get("intent_data", {}),
+                missing_field,
+                new_value
+            )
+            # Also update other entities from formatted_intent_data if present
+            existing_intent = existing_session_data.get("intent_data", {})
+            updated_intent_data = existing_intent.copy()
+            updated_intent_data["entities"] = updated_intent_data.get("entities", {})
+            for key, value in formatted_intent_data["entities"].items():
+                if value is not None and value != "":
+                    updated_intent_data["entities"][key] = value
+        else:
+            # Fallback to original behavior - use translation_text directly
+            updated_intent_data = self.session_service.update_intent_with_missing_field(
+                existing_session_data.get("intent_data", {}),
+                missing_field,
+                translation_text
+            )
         
         # Prepare parameters for orchestrator
         session_banking_params = self.session_service.prepare_session_banking_params(existing_session_data)
@@ -183,8 +236,8 @@ class SessionFlowProcessor:
         # Call orchestrator with updated data
         orchestrated_data = await orchestrate_banking_request(merged_params)
         
-        # Update session data
-        self.session_service.update_session_after_processing(
+        # Update session data - handle both success and failure scenarios
+        self.session_service.update_session_after_orchestrator_response(
             session_id,
             existing_session_data,
             translation_text,
@@ -216,7 +269,7 @@ class SessionFlowProcessor:
         formatted_intent_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Process new session flow."""
-        # Generate new session ID
+        # Generate a new session ID
         current_session_id = session_manager.generate_session_id()
         logger.info(f"Creating new session: {current_session_id}")
         

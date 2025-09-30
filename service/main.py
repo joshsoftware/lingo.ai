@@ -127,15 +127,12 @@ async def transcribe_intent(
             return JSONResponse(status_code=400, content={"message":"No audio file provided"})
 
         # Step 1: Common audio processing (transcription and intent detection)
-        # response = translate_with_whisper_from_upload(audio)
-        # translation_text = response['text']
-        # language = response["language"]
-        # logger.info("Translation done")
-        # logger.info(translation_text)
+        response = translate_with_whisper_from_upload(audio)
+        translation_text = response['text']
+        language = response["language"]
+        logger.info("Translation done")
+        logger.info(translation_text)
 
-
-        translation_text = "ramu"
-        language = "hi"
 
         # Detect intent
         intent = detect_intent_with_llama(translation_text, language)
@@ -172,7 +169,7 @@ async def transcribe_intent(
             logger.info(f"Using session flow for session: {session_id}")
             
             success, response_data = await session_processor.process_existing_session(
-                session_id, translation_text, language
+                session_id, translation_text, language, formatted_intent_data
             )
             
             if not success:
