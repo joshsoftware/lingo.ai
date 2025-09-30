@@ -184,7 +184,8 @@ class SessionFlowProcessor:
         session_id: str,
         translation_text: str,
         language: str,
-        formatted_intent_data: Dict[str, Any]
+        formatted_intent_data: Dict[str, Any],
+        otp: Optional[str] = None
     ) -> Tuple[bool, Dict[str, Any]]:
         """
         Process existing session flow.
@@ -196,42 +197,46 @@ class SessionFlowProcessor:
         existing_session_data = self.session_service.get_session_data(session_id)
         if not existing_session_data:
             return False, {"message": f"Session {session_id} not found"}
-        
-        # Check for missing field
+
         missing_field = existing_session_data.get("missing_field")
-        if not missing_field:
-            return False, {"message": "No missing field to update in session"}
-        
-        # Update intent data with new transcribed text or formatted intent data
-        # Check if formatted_intent_data has an "intent" key with values (exclude "unknown" intents)
-        intent_value = formatted_intent_data.get("intent")
-        if (intent_value and intent_value.lower() != "unknown" and 
-            formatted_intent_data.get("entities")):
-            # Use value from formatted_intent_data entities for the missing field
-            new_value = formatted_intent_data["entities"].get(missing_field, translation_text)
-            updated_intent_data = self.session_service.update_intent_with_missing_field(
-                existing_session_data.get("intent_data", {}),
-                missing_field,
-                new_value
-            )
-            # Also update other entities from formatted_intent_data if present
+
+        if otp and not missing_field:
             existing_intent = existing_session_data.get("intent_data", {})
             updated_intent_data = existing_intent.copy()
             updated_intent_data["entities"] = updated_intent_data.get("entities", {})
+            updated_intent_data["entities"]["otp"] = otp  # explicitly add otp
+
+        elif not missing_field:
+            return False, {"message": "No missing field to update in session"}
+
+        elif (
+                formatted_intent_data.get("intent")
+                and formatted_intent_data["intent"].lower() != "unknown"
+                and formatted_intent_data.get("entities")
+        ):
+            existing_intent = existing_session_data.get("intent_data", {})
+            updated_intent_data = existing_intent.copy()
+            updated_intent_data["entities"] = updated_intent_data.get("entities", {})
+
+            # Update the missing field specifically
+            new_value = formatted_intent_data["entities"].get(missing_field, translation_text)
+            updated_intent_data["entities"][missing_field] = new_value.strip()
+
+            # Also update other entities from formatted_intent_data if present
             for key, value in formatted_intent_data["entities"].items():
-                if value is not None and value != "":
+                if value:
                     updated_intent_data["entities"][key] = value
+
         else:
-            # Fallback to original behavior - use translation_text directly
             updated_intent_data = self.session_service.update_intent_with_missing_field(
                 existing_session_data.get("intent_data", {}),
                 missing_field,
                 translation_text
             )
-        
+
         # Prepare parameters for orchestrator
         session_banking_params = self.session_service.prepare_session_banking_params(existing_session_data)
-        merged_params = {**session_banking_params, **updated_intent_data}
+        merged_params = {**session_banking_params, **updated_intent_data, "otp": otp}
         
         # Call orchestrator with updated data
         orchestrated_data = await orchestrate_banking_request(merged_params)
@@ -244,7 +249,10 @@ class SessionFlowProcessor:
             updated_intent_data,
             orchestrated_data
         )
-        
+
+        if orchestrated_data.get("success"):
+            session_manager.delete_session(session_id)
+
         # Translate response message
         orchestrated_data['message'] = translate(orchestrated_data["message"], language)
         
@@ -282,7 +290,7 @@ class SessionFlowProcessor:
         }
         
         # Create params for orchestrator
-        merged_params = {**banking_params_dict, **formatted_intent_data, "session_continuation": False}
+        merged_params = {**banking_params_dict, **formatted_intent_data}
         
         # Call orchestration logic
         orchestrated_data = await orchestrate_banking_request(merged_params)

@@ -6,7 +6,6 @@ from .database import get_db
 from .models import Customer, Account, Transaction, Beneficiary
 from pydantic import BaseModel
 from typing import Optional, List
-from fastapi.responses import JSONResponse
 
 router = APIRouter(prefix="/bank/me", tags=["banking"])
 
@@ -91,7 +90,6 @@ def find_beneficiary(db: Session, customer_id: int, to: str):
                 "id": b.id,
                 "name": getattr(b, key_field) or "",
                 "account_number": b.account_number,
-                "status": "duplicate"
             })
         return result
 
@@ -109,9 +107,9 @@ def find_beneficiary(db: Session, customer_id: int, to: str):
             
             # Multiple matches - return formatted list
             beneficiary_list = format_beneficiaries(matches)
-            return JSONResponse(
+            raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                content={
+                detail={
                     "status": "duplicate",
                     "message": f"Multiple beneficiaries found matching '{to}'",
                     "beneficiaries": beneficiary_list
@@ -138,9 +136,9 @@ def find_beneficiary(db: Session, customer_id: int, to: str):
     if len(matches) > 1:
         # Multiple partial matches - return formatted list
         beneficiary_list = format_beneficiaries(matches)
-        return JSONResponse(
+        return HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            content={
+            detail={
                 "status": "duplicate",
                 "message": f"Multiple beneficiaries found matching '{to}'",
                 "beneficiaries": beneficiary_list
@@ -225,10 +223,7 @@ async def pay_money(
 
     # Resolve beneficiary
     beneficiary = find_beneficiary(db, customer_id, to)
-    
-    # If we got a JSONResponse, return it directly
-    if isinstance(beneficiary, JSONResponse):
-        return beneficiary
+
 
     # Find active account
     account = db.query(Account).filter(

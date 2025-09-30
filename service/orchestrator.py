@@ -235,6 +235,7 @@ class BankingOrchestrator:
         phone = intent_and_banking_data.get("phone")
         transaction_type = intent_and_banking_data.get("transaction_type")
         payment_method = intent_and_banking_data.get("payment_method")
+        otp = intent_and_banking_data.get("otp")
         logger.info(f"Processing intent: {intent} with action: {action}")
 
         if not any([customer_id, phone]):
@@ -250,7 +251,7 @@ class BankingOrchestrator:
         elif intent == "recent_txn":
             orchestrator_data = await self._handle_recent_transactions(entities, customer_id, phone)
         elif intent == "transfer_money":
-            orchestrator_data = await self._handle_transfer_money(entities, action, customer_id, phone, transaction_type, payment_method)
+            orchestrator_data = await self._handle_transfer_money(entities, action, customer_id, phone, transaction_type, payment_method, otp)
         elif intent == "txn_insights":
             orchestrator_data = await self._handle_txn_insights(entities, customer_id, phone)
         else:
@@ -383,7 +384,7 @@ class BankingOrchestrator:
                 "message": ORCHESTRATOR_INTERNAL_ERROR
             }
     
-    async def _handle_transfer_money(self, entities: Dict[str, Any], action: str, customer_id: Optional[int] = None, phone: Optional[str] = None, transaction_type: Optional[str] = None, payment_method: Optional[str] = None) -> Dict[str, Any]:
+    async def _handle_transfer_money(self, entities: Dict[str, Any], action: str, customer_id: Optional[int] = None, phone: Optional[str] = None, transaction_type: Optional[str] = None, payment_method: Optional[str] = None, otp: Optional[str] = None) -> Dict[str, Any]:
         """Handle transfer_money intent - requires amount, currency, and recipient validation."""
         amount = entities.get("amount")
         currency = entities.get("currency", "INR")  # Default currency
@@ -414,6 +415,8 @@ class BankingOrchestrator:
                     payment_request["payment_method"] = payment_method
                 if category:
                     payment_request["category"] = category
+                if otp:
+                    payment_request["otp"] = otp
                 
                 # Filter out None parameters for query params
                 params = {}
@@ -438,6 +441,12 @@ class BankingOrchestrator:
                         "data": payment_data,
                         "message": f"Transferred {amount}{f' {currency}' if currency is not None else ''} to {payment_data.get('to', recipient)} successfully. Your current balance is {payment_data.get('balance', 0):,.2f}."
                     }
+                elif payment_data.get("status") == "otp":
+                    return {
+                        "success": "false",
+                        "data": payment_data,
+                        "message": f"{payment_data.get('detail')}"
+                    }
                 else:
                     return {
                         "success": "false",
@@ -448,15 +457,31 @@ class BankingOrchestrator:
                 logger.error(f"HTTP error processing transfer: {e.response.status_code} - {e.response.text}")
                 try:
                     error_data = json.loads(e.response.text)
-                    error_message = error_data.get("detail", "Unknown error occurred")
+                    error_detail = error_data.get("detail", {})
+
+                    # Handle different error detail formats
+                    if isinstance(error_detail, dict):
+                        error_message = error_detail.get("message", "Unknown error occurred")
+                        error_data = error_detail
+                    else:
+                        error_message = error_detail
+                        error_data = {"detail": error_detail}
+
                 except json.JSONDecodeError:
                     # Fallback if response is not valid JSON
                     error_message = e.response.text
+                    error_data = {"detail": e.response.text}
 
-                if e.response.status_code in {400, 404, 409}:
+                if e.response.status_code in {400, 404}:
                     return {
                         "success": "false",
                         "data": {},
+                        "message": error_message
+                    }
+                elif e.response.status_code == 409:
+                    return {
+                        "success": "false",
+                        "data": error_data,
                         "message": error_message
                     }
                 else:
