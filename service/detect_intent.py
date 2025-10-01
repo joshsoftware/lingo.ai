@@ -77,6 +77,9 @@ User: "What was my expenses last year?"
 User: "How much I spend amazon last week"
 {"intent":"txn_insights","entities":{"timeframe":"last_week","recipient":"amazon", "category":"shopping"},"language":"{lang}"}
 
+User: "How much I spend on food"
+{"intent":"txn_insights","entities":{"category":"food"},"language":"{lang}"}
+
 “Show me my last 5 Swiggy transactions”
 {"intent":"txn_insights","entities":{"count":5,"recipient":"swiggy"},"language":"{lang}"}
 
@@ -187,6 +190,7 @@ def translate(message:str, lang_code: str = "en"):
     
 def detect_intent_with_llama(transcript: str, lang_hint: str = "en") -> Dict[str, Any]:
     #transcript = "how much i spend on amazon last month?"
+    # transcript="How much I spend on food"
     try:
         response = ollama.Client(host=ollama_host).generate(
             system = SYSTEM,
@@ -297,3 +301,6 @@ def determine_action(intent: str, entities: dict) -> str:
         return "respond"
     else:
         return "unknown"
+    
+# print(detect_intent_with_llama("","en"))
+

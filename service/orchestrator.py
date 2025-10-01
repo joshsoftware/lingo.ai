@@ -653,7 +653,7 @@ class BankingOrchestrator:
             params["end_date"] = end_date
             
         # Only add a limit if no date filtering is used
-        if not (start_date or end_date):
+        if not (start_date or end_date) and count is not None:
             params["limit"] = count
         
         # Make API call
