@@ -6,7 +6,6 @@ from .database import get_db
 from .models import Customer, Account, Transaction, Beneficiary
 from pydantic import BaseModel
 from typing import Optional, List
-from fastapi.responses import JSONResponse
 
 router = APIRouter(prefix="/bank/me", tags=["banking"])
 
@@ -91,7 +90,6 @@ def find_beneficiary(db: Session, customer_id: int, to: str):
                 "id": b.id,
                 "name": getattr(b, key_field) or "",
                 "account_number": b.account_number,
-                "status": "duplicate"
             })
         return result
 
@@ -100,7 +98,7 @@ def find_beneficiary(db: Session, customer_id: int, to: str):
         matches = []
         for beneficiary in all_beneficiaries:
             field_value = getattr(beneficiary, field)
-            if field_value and normalize_text(field_value) == normalized_to:
+            if field_value and normalized_to in normalize_text(field_value):
                 matches.append(beneficiary)
         
         if matches:
@@ -109,11 +107,11 @@ def find_beneficiary(db: Session, customer_id: int, to: str):
             
             # Multiple matches - return formatted list
             beneficiary_list = format_beneficiaries(matches)
-            return JSONResponse(
+            raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                content={
+                detail={
                     "status": "duplicate",
-                    "message": f"Multiple beneficiaries found matching '{to}'",
+                    "message": f"Multiple beneficiaries found matching '{to}'. Please confirm the correct beneficiary",
                     "beneficiaries": beneficiary_list
                 }
             )
@@ -138,11 +136,11 @@ def find_beneficiary(db: Session, customer_id: int, to: str):
     if len(matches) > 1:
         # Multiple partial matches - return formatted list
         beneficiary_list = format_beneficiaries(matches)
-        return JSONResponse(
+        return HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            content={
+            detail={
                 "status": "duplicate",
-                "message": f"Multiple beneficiaries found matching '{to}'",
+                "message": f"Multiple beneficiaries found matching '{to}'. Please confirm the correct beneficiary",
                 "beneficiaries": beneficiary_list
             }
         )
@@ -213,7 +211,7 @@ async def pay_money(
     if not customer_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="To make a payment, please provide either a customer ID or a registered phone number."
+            detail="To transfer money, please provide either a customer ID or a registered phone number."
         )
 
     to = request.to
@@ -225,10 +223,7 @@ async def pay_money(
 
     # Resolve beneficiary
     beneficiary = find_beneficiary(db, customer_id, to)
-    
-    # If we got a JSONResponse, return it directly
-    if isinstance(beneficiary, JSONResponse):
-        return beneficiary
+
 
     # Find active account
     account = db.query(Account).filter(
@@ -254,7 +249,7 @@ async def pay_money(
         
         return {
             "status": "otp",
-            "message": f"Please confirm that you want to pay ₹{amount:.2f} to {beneficiary.name}. Enter the OTP sent to your registered phone number to complete the transaction."
+            "message": f"Please confirm the transaction  ₹{amount:.2f} to {beneficiary.name} by entering  the OTP you have recieved on your registered mobile number"
         }
     
     
@@ -473,7 +468,9 @@ def get_beneficiaries(
         )
 
     # Return all fields dynamically
-    return [
+    beneficiaries = [
         {k: v for k, v in b.__dict__.items() if k != "_sa_instance_state"}
         for b in beneficiaries
     ]
+
+    return{"beneficiaries": beneficiaries}
