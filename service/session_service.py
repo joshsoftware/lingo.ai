@@ -185,7 +185,8 @@ class SessionFlowProcessor:
         translation_text: str,
         language: str,
         formatted_intent_data: Dict[str, Any],
-        otp: Optional[str] = None
+        otp: Optional[str] = None,
+        beneficiary_name: Optional[str] = None
     ) -> Tuple[bool, Dict[str, Any]]:
         """
         Process existing session flow.
@@ -205,6 +206,12 @@ class SessionFlowProcessor:
             updated_intent_data = existing_intent.copy()
             updated_intent_data["entities"] = updated_intent_data.get("entities", {})
             updated_intent_data["entities"]["otp"] = otp  # explicitly add otp
+
+        elif beneficiary_name:
+            existing_intent = existing_session_data.get("intent_data", {})
+            updated_intent_data = existing_intent.copy()
+            updated_intent_data["entities"] = updated_intent_data.get("entities", {})
+            updated_intent_data["entities"]["recipient"] = beneficiary_name  # explicitly add beneficiary
 
         elif not missing_field:
             return False, {"message": "No missing field to update in session"}
@@ -236,9 +243,11 @@ class SessionFlowProcessor:
 
         # Prepare parameters for orchestrator
         session_banking_params = self.session_service.prepare_session_banking_params(existing_session_data)
-        merged_params = {**session_banking_params, **updated_intent_data, "otp": otp}
+        merged_params = {**session_banking_params, **updated_intent_data}
+        if otp and not missing_field:
+            merged_params = {**merged_params, "otp": otp}
         
-        # Call orchestrator with updated data
+         # Call orchestrator with updated data
         orchestrated_data = await orchestrate_banking_request(merged_params)
         
         # Update session data - handle both success and failure scenarios
@@ -322,3 +331,8 @@ class SessionFlowProcessor:
             formatted_intent_data,
             orchestrated_data
         )
+
+    async def clean_session_data(self, session_id: str):
+        session = session_manager.get_session(session_id)
+        if session:
+            session.delete

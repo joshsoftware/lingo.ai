@@ -237,6 +237,7 @@ class BankingOrchestrator:
         transaction_type = intent_and_banking_data.get("transaction_type")
         payment_method = intent_and_banking_data.get("payment_method")
         otp = intent_and_banking_data.get("otp")
+        beneficiary_name =  intent_and_banking_data.get("beneficiary_name")
         logger.info(f"Processing intent: {intent} with action: {action}")
 
         if not any([customer_id, phone]):
@@ -252,7 +253,7 @@ class BankingOrchestrator:
         elif intent == "recent_txn":
             orchestrator_data = await self._handle_recent_transactions(entities, customer_id, phone)
         elif intent == "transfer_money":
-            orchestrator_data = await self._handle_transfer_money(entities, action, customer_id, phone, transaction_type, payment_method, otp)
+            orchestrator_data = await self._handle_transfer_money(entities, action, customer_id, phone, transaction_type, payment_method, otp, beneficiary_name)
         elif intent == "txn_insights":
             orchestrator_data = await self._handle_txn_insights(entities, customer_id, phone)
         elif intent == "list_beneficiaries":
@@ -434,7 +435,7 @@ class BankingOrchestrator:
                 "message": ORCHESTRATOR_INTERNAL_ERROR
             }
     
-    async def _handle_transfer_money(self, entities: Dict[str, Any], action: str, customer_id: Optional[int] = None, phone: Optional[str] = None, transaction_type: Optional[str] = None, payment_method: Optional[str] = None, otp: Optional[str] = None) -> Dict[str, Any]:
+    async def _handle_transfer_money(self, entities: Dict[str, Any], action: str, customer_id: Optional[int] = None, phone: Optional[str] = None, transaction_type: Optional[str] = None, payment_method: Optional[str] = None, otp: Optional[str] = None, beneficiary_name: Optional[str] = None) -> Dict[str, Any]:
         """Handle transfer_money intent - requires amount, currency, and recipient validation."""
         amount = entities.get("amount")
         currency = entities.get("currency", "INR")  # Default currency
@@ -467,6 +468,8 @@ class BankingOrchestrator:
                     payment_request["category"] = category
                 if otp:
                     payment_request["otp"] = otp
+                if beneficiary_name:
+                    payment_request["recipient"] = beneficiary_name
                 
                 # Filter out None parameters for query params
                 params = {}
