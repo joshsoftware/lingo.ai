@@ -6,6 +6,7 @@ from .database import get_db
 from .models import Customer, Account, Transaction, Beneficiary
 from pydantic import BaseModel
 from typing import Optional, List
+from fastapi.responses import JSONResponse
 
 router = APIRouter(prefix="/bank/me", tags=["banking"])
 
@@ -223,7 +224,6 @@ async def pay_money(
 
     # Resolve beneficiary
     beneficiary = find_beneficiary(db, customer_id, to)
-
 
     # Find active account
     account = db.query(Account).filter(
