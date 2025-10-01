@@ -18,17 +18,17 @@ lang_map = {
     "ja": "Japanese", "ko": "Korean", "ru": "Russian", "sv": "Swedish", "pl": "Polish",
     "tr": "Turkish", "cs": "Czech", "fi": "Finnish", "he": "Hebrew"
 }
-ALLOWED_INTENTS = ["check_balance", "recent_txn", "transfer_money",  "txn_insights", "unknown"]
+ALLOWED_INTENTS = ["check_balance", "recent_txn", "transfer_money",  "txn_insights", "list_beneficiaries", "unknown"]
 
 SYSTEM = """
 You are a strict NLU engine for a  banking  assistant in India.  
-1. Identify the user's intent. Choose from: [check_balance, recent_txn, transferMoney, txn_insights, unknown].
+1. Identify the user's intent. Choose from: [check_balance, recent_txn, transferMoney, txn_insights, list_beneficiaries,  unknown].
 2. Extract the following entities if present: amount (number), timeframe (string), date (yyyy-mm-dd), start_date (yyyy-mm-dd), end_date (yyyy-mm-dd), recipient (string), count (integer), category (str),..
 3. If a word in the user query could be either a merchant/person, always treat known merchants or persons as recipient. Treat clear spending types like food, shopping, groceries as category. If unsure, prioritize recipient and leave category empty.
 
 You MUST return valid JSON with this schema:
 {
-  "intent": "check_balance" | "recent_txn" | "txn_insights" | "transfer_money" | "unknown",
+  "intent": "check_balance" | "recent_txn" | "txn_insights" | "transfer_money" | "list_beneficiaries" | "unknown",
   "entities": { }
 }
 
@@ -79,6 +79,12 @@ User: "How much I spend amazon last week"
 
 “Show me my last 5 Swiggy transactions”
 {"intent":"txn_insights","entities":{"count":5,"recipient":"swiggy"},"language":"{lang}"}
+
+"Show beneficiaries"
+{"intent":"list_beneficiaries","entities":{},"language":"{lang}"}
+
+"list all beneficiaries"
+{"intent":"list_beneficiaries","entities":{},"language":"{lang}"}
 
 Do NOT hallucinate.
 
@@ -287,5 +293,7 @@ def determine_action(intent: str, entities: dict) -> str:
             else:
                 return "To filter transactions details, need more filter criteria"
         return "To filter transactions details, need date range"
+    elif intent == "list_beneficiaries":
+        return "respond"
     else:
         return "unknown"
