@@ -17,6 +17,9 @@ from banking.core_banking_routes import router as banking_router
 from orchestrator import orchestrate_banking_request
 from typing import Optional
 import httpx
+from redis_client import session_manager
+from datetime import datetime
+from session_service import SessionService, SessionFlowProcessor
 
 app = FastAPI()
 
@@ -106,33 +109,76 @@ app.include_router(banking_router)
 
 @app.post("/voice/transcribe-intent")
 async def transcribe_intent(
-    audio: UploadFile = File(...),
+    audio: Optional[UploadFile] = File(None),
     session_id: Optional[str] = Form(None),
     customer_id: Optional[int] = Form(None),
     phone: Optional[str] = Form(None),
     transaction_type: Optional[str] = Form(None),
-    payment_method: Optional[str] = Form(None)
+    payment_method: Optional[str] = Form(None),
+    otp: Optional[str] = Form(None)
 ):
     """
-    Transcribe audio and detect intent.
+    Transcribe audio and detect intent with session management.
 
-    Processes audio → transcription → intent detection.
+    Two flows supported:
+    1. Standard flow: Audio is provided, transcribed, and intent is detected
+    2. OTP + session_id flow: No audio, fetch transcribe_text and language from session data
     """
     try:
+        # Check for OTP + session_id flow (no audio required)
+        if not audio and (int(otp) == 123456) and session_id:
+            logger.info(f"Using OTP + session_id flow for session: {session_id}")
+            
+            # Initialize session flow processor
+            session_processor = SessionFlowProcessor()
+            
+            # Get session data to fetch stored transcribe_text and language
+            session_data = SessionService.get_session_data(session_id)
+            if not session_data:
+                return JSONResponse(status_code=400, content={"message": f"Session {session_id} not found"})
+            
+            # Extract transcribe_text and language from session data
+            translations = session_data.get("translations", [])
+            if not translations:
+                return JSONResponse(status_code=400, content={"message": "No translation data found in session"})
+            
+            # Use the first (original) translation as transcribe_text
+            translation_text = translations[0]
+            language = session_data.get("language")
+            
+            if not language:
+                return JSONResponse(status_code=400, content={"message": "No language data found in session"})
+            
+            # Use existing intent data from the session
+            formatted_intent_data = session_data.get("intent_data", {})
+            
+            logger.info(f"Retrieved from session - translation: {translation_text}, language: {language}")
+            
+            # Process existing session with OTP
+            success, response_data = await session_processor.process_existing_session(
+                session_id, translation_text, language, formatted_intent_data, otp
+            )
+            
+            if not success:
+                return JSONResponse(status_code=400, content=response_data)
+                
+            return JSONResponse(content=response_data, status_code=200)
+        
+        # Standard flow - audio is required
         if not audio:
             return JSONResponse(status_code=400, content={"message":"No audio file provided"})
 
-        # Step 1: Transcribe audio
+        # Step 1: Common audio processing (transcription and intent detection)
         response = translate_with_whisper_from_upload(audio)
         translation_text = response['text']
         language = response["language"]
-        logger.info("translation done")
+        logger.info("Translation done")
         logger.info(translation_text)
 
-        # Step 2: Detect intent
-        intent = detect_intent_with_llama(translation_text,language)
-        logger.info("intent identified")
 
+        # Detect intent
+        intent = detect_intent_with_llama(translation_text, language)
+        logger.info("Intent identified")
 
         try:
             if isinstance(intent, dict):
@@ -144,32 +190,52 @@ async def transcribe_intent(
             result = {"error": intent, "session_id": session_id, "translation": translation_text}
             return JSONResponse(content=result, status_code=200)
 
-        # Step 3: Format intent response
-        # Map Llama response to your expected format
+        # Format intent response
         formatted_intent_data = format_intent_response(intent_dict)
-        print(formatted_intent_data)
-        # Step 4: Create a banking request params
-        banking_params_dict = {
-            "customer_id": customer_id,
-            "phone": phone,
-            "transaction_type": transaction_type,
-            "payment_method": payment_method
-        }
-        merged_params = {**banking_params_dict, **formatted_intent_data}
+        logger.info(f"Formatted intent data: {formatted_intent_data}")
 
-        # Call orchestration logic
-        orchestrated_data =  await orchestrate_banking_request(merged_params)
+        # Step 2: Create banking request params
+        # banking_params_dict = {
+        #     "customer_id": customer_id,
+        #     "phone": phone,
+        #     "transaction_type": transaction_type,
+        #     "payment_method": payment_method
+        # }
 
-        orchestrated_data['message'] = translate(orchestrated_data["message"],language)
-        # Step 5: Format a final response
-        result = {
-            "session_id": session_id,
-            "translation": translation_text,
-            "intent_data": formatted_intent_data,
-            "orchestrator_data": orchestrated_data
-        }
-        return JSONResponse(content=result, status_code=200)
+        # Step 3: Initialize session flow processor
+        session_processor = SessionFlowProcessor()
+        
+        # Step 4: Decision logic - use session service to determine flow
+        if SessionService.should_use_session_flow(session_id):
+            # SESSION-BASED FLOW
+            logger.info(f"Using session flow for session: {session_id}")
+            
+            success, response_data = await session_processor.process_existing_session(
+                session_id, translation_text, language, formatted_intent_data, otp
+            )
+            
+            if not success:
+                return JSONResponse(status_code=400, content=response_data)
+                
+            return JSONResponse(content=response_data, status_code=200)
+        
+        else:
+            # NEW SESSION FLOW
+            logger.info("Creating new session flow")
+            
+            response_data = await session_processor.process_new_session(
+                customer_id,
+                phone, 
+                transaction_type,
+                payment_method,
+                language,
+                translation_text,
+                formatted_intent_data
+            )
+            
+            return JSONResponse(content=response_data, status_code=200)
 
     except Exception as e:
         logger.error(f"Error in transcribe-intent: {traceback.format_exc()}")
-        return JSONResponse(content={"message": str(e)}, status_code=500)
+        current_session_id = session_id if session_id else "unknown"
+        return JSONResponse(content={"message": str(e), "session_id": current_session_id}, status_code=500)

@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 BALANCE_ENDPOINT = "/bank/me/balance"
 TRANSACTIONS_ENDPOINT = "/bank/me/transactions"
 PAY_ENDPOINT = "/bank/me/pay"
+BENEFICIARIES_ENDPOINT = "/bank/me/beneficiaries"
 ORCHESTRATOR_INTERNAL_ERROR = "Sorry, I couldn't process the request at the moment. Please try again."
 BANK_API_ERROR = "We’re unable to process your request with the bank at the moment. Please try again later."
 BANK_SERVICE_UNAVAILABLE = "Regretted,Banking service is currently unavailable"
@@ -219,9 +220,11 @@ class BankingOrchestrator:
     async def process_intent(self, intent_and_banking_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Orchestrates intent processing and returns a structured response.
+        Supports session continuation with previous orchestrator data.
 
         Args:
             intent_and_banking_data: Dictionary containing intent, entities, and action. It also contains Bank API parameters.
+                                   Can include previous_orchestrator_data for session continuation.
 
         Returns:
             Dictionary with orchestrator_data.
@@ -233,7 +236,7 @@ class BankingOrchestrator:
         phone = intent_and_banking_data.get("phone")
         transaction_type = intent_and_banking_data.get("transaction_type")
         payment_method = intent_and_banking_data.get("payment_method")
-
+        otp = intent_and_banking_data.get("otp")
         logger.info(f"Processing intent: {intent} with action: {action}")
 
         if not any([customer_id, phone]):
@@ -249,11 +252,14 @@ class BankingOrchestrator:
         elif intent == "recent_txn":
             orchestrator_data = await self._handle_recent_transactions(entities, customer_id, phone)
         elif intent == "transfer_money":
-            orchestrator_data = await self._handle_transfer_money(entities, action, customer_id, phone, transaction_type, payment_method)
+            orchestrator_data = await self._handle_transfer_money(entities, action, customer_id, phone, transaction_type, payment_method, otp)
         elif intent == "txn_insights":
             orchestrator_data = await self._handle_txn_insights(entities, customer_id, phone)
+        elif intent == "list_beneficiaries":
+            orchestrator_data = await self._handle_list_beneficiaries(customer_id, phone)
         else:
             orchestrator_data = _handle_unknown_intent()
+        
         
         return orchestrator_data
 
@@ -306,6 +312,53 @@ class BankingOrchestrator:
                 "message": "Sorry, I couldn't fetch your balance at the moment. Please try again later."
             }
     
+    async def _handle_list_beneficiaries(self, customer_id : Optional[int] , phone : Optional[str]) -> Dict[str, Any]:
+        try:
+            # Filter out None parameters as per new API requirements
+            params = {}
+            if customer_id is not None:
+                params["customer_id"] = customer_id
+            if phone is not None:
+                params["phone"] = phone
+
+            logger.info(f"Calling Bank URL: {self.base_url}{BENEFICIARIES_ENDPOINT} with params: {params}")
+            response = await self.client.get(f"{self.base_url}{BENEFICIARIES_ENDPOINT}", params=params)
+            response.raise_for_status()
+            beneficiaries = response.json()
+
+            return {
+                "success": "true",
+                "data": beneficiaries,
+                "message": f"List of beneficiaries."
+            }
+        except httpx.HTTPStatusError as e:
+            logger.error(f"HTTP error fetching beneficiaries: {e.response.status_code} - {e.response.text}")
+            if e.response.status_code == 404:
+                return {
+                    "success": "false",
+                    "data": {},
+                    "message": "Customer or account not found. Please verify your details."
+                }
+            else:
+                return {
+                    "success": "false",
+                    "data": {},
+                    "message": "Sorry, I couldn't fetch your beneficiaries at the moment. Please try again later."
+                }
+        except (httpx.ConnectError, httpx.TimeoutException, httpx.NetworkError) as e:
+            logger.error(f"Network error fetching beneficiaries: {e}")
+            return {
+                "success": "false",
+                "data": {},
+                "message": BANK_SERVICE_UNAVAILABLE
+            }
+        except Exception as e:
+            logger.error(f"Error fetching beneficiaries: {e}")
+            return {
+                "success": "false",
+                "data": {},
+                "message": "Sorry, I couldn't fetch your beneficiaries at the moment. Please try again later."
+            }
     async def _handle_recent_transactions(self, entities: Dict[str, Any], customer_id: Optional[int] = None, phone: Optional[str] = None) -> Dict[str, Any]:
         """Handle recent_txn intent - optional count parameter."""
         try:
@@ -381,7 +434,7 @@ class BankingOrchestrator:
                 "message": ORCHESTRATOR_INTERNAL_ERROR
             }
     
-    async def _handle_transfer_money(self, entities: Dict[str, Any], action: str, customer_id: Optional[int] = None, phone: Optional[str] = None, transaction_type: Optional[str] = None, payment_method: Optional[str] = None) -> Dict[str, Any]:
+    async def _handle_transfer_money(self, entities: Dict[str, Any], action: str, customer_id: Optional[int] = None, phone: Optional[str] = None, transaction_type: Optional[str] = None, payment_method: Optional[str] = None, otp: Optional[str] = None) -> Dict[str, Any]:
         """Handle transfer_money intent - requires amount, currency, and recipient validation."""
         amount = entities.get("amount")
         currency = entities.get("currency", "INR")  # Default currency
@@ -412,6 +465,8 @@ class BankingOrchestrator:
                     payment_request["payment_method"] = payment_method
                 if category:
                     payment_request["category"] = category
+                if otp:
+                    payment_request["otp"] = otp
                 
                 # Filter out None parameters for query params
                 params = {}
@@ -436,6 +491,12 @@ class BankingOrchestrator:
                         "data": payment_data,
                         "message": f"Transferred {amount}{f' {currency}' if currency is not None else ''} to {payment_data.get('to', recipient)} successfully. Your current balance is {payment_data.get('balance', 0):,.2f}."
                     }
+                elif payment_data.get("status") == "otp":
+                    return {
+                        "success": "false",
+                        "data": payment_data,
+                        "message": f"{payment_data.get('detail')}"
+                    }
                 else:
                     return {
                         "success": "false",
@@ -446,15 +507,31 @@ class BankingOrchestrator:
                 logger.error(f"HTTP error processing transfer: {e.response.status_code} - {e.response.text}")
                 try:
                     error_data = json.loads(e.response.text)
-                    error_message = error_data.get("detail", "Unknown error occurred")
+                    error_detail = error_data.get("detail", {})
+
+                    # Handle different error detail formats
+                    if isinstance(error_detail, dict):
+                        error_message = error_detail.get("message", "Unknown error occurred")
+                        error_data = error_detail
+                    else:
+                        error_message = error_detail
+                        error_data = {"detail": error_detail}
+
                 except json.JSONDecodeError:
                     # Fallback if response is not valid JSON
                     error_message = e.response.text
+                    error_data = {"detail": e.response.text}
 
-                if e.response.status_code in {400, 404, 409}:
+                if e.response.status_code in {400, 404}:
                     return {
                         "success": "false",
                         "data": {},
+                        "message": error_message
+                    }
+                elif e.response.status_code == 409:
+                    return {
+                        "success": "false",
+                        "data": error_data,
                         "message": error_message
                     }
                 else:
