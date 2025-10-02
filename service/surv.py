@@ -1,11 +1,8 @@
 from sarvamai import SarvamAI
-from dotenv import load_dotenv
-from config import sarvam_api_key
 
 
 #SARVAM_API_KEY="sk_lz33toms_amJdXnvyWxlBQIs4OPue1yexi"
 SARVAM_API_KEY="sk_t7fvsjjb_7JsD5ZXGrEhHqjUtAQSFsCxB"
-print(sarvam_api_key)
 client = SarvamAI(
     api_subscription_key=SARVAM_API_KEY,
 )

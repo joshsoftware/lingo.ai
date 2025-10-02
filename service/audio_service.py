@@ -161,7 +161,7 @@ def translate_with_whisper_from_upload(upload_file: UploadFile):
 
         options = dict(beam_size=5, best_of=5)
         translate_options = dict(task="translate", **options)
-        result = model.transcribe(temp_file_path, **translate_options)
+        result = model.transcribe(temp_file_path, **translate_options,prompt="Only Indian langues,like, hindi, marthi,tamil,gujarti,telegu,bengali,panjabi,bengali,malayalam,kannada or Indian english voice is used as voice banking service. voice will be like, check balance, pay money to some Indian names, list of beneficiaries, transactions list or ask for transaction insights. Do not translitarate, translate to English words, do not mix other language words")
         return result
         
     except Exception as e:

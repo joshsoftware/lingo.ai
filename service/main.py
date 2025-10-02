@@ -176,8 +176,10 @@ async def transcribe_intent(
         logger.info(translation_text)
         logger.info(language)
 
+        #translation_text = "check the balance"
         #translation_text = "list all my beneficiaries"
         #translation_text = "Pay 10 to Shailesh"
+        #language = "hi"
         # Detect intent
         intent = detect_intent_with_llama(translation_text, language)
         logger.info("Intent identified")
