@@ -58,6 +58,8 @@ User: "Show me last transaction"
 User: "Send 1500 to AnanyaRavi"
 {"intent":"transfer_money","entities":{"recipient":"AnanyaRavi","amount":1500,"currency":"INR"},"language":"{lang}"}
 
+User: "Anitha will get 500"
+{"intent":"transfer_money","entities":{"recipient":"Anitha","amount":500,"currency":"INR"},"language":"{lang}"}
 
 User: "Transfer 1500 to Shubam"
 {"intent":"transfer_money","entities":{"recipient":"Shubam","amount":1500,"currency":"INR"},"language":"{lang}"}
@@ -194,7 +196,8 @@ def detect_intent_with_llama(transcript: str, lang_hint: str = "en") -> Dict[str
     try:
         response = ollama.Client(host=ollama_host).generate(
             system = SYSTEM,
-            model=ollama_model_name,
+            #model=ollama_model_name,
+            model=ollama_translation_model_name,
             prompt=transcript.strip(),
             options={"temperature": 0.0, "top_p": 0.8},            
             stream=False

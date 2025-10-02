@@ -185,7 +185,8 @@ class SessionFlowProcessor:
         translation_text: str,
         language: str,
         formatted_intent_data: Dict[str, Any],
-        otp: Optional[str] = None
+        otp: Optional[str] = None,
+        beneficiary_name: Optional[str] = None
     ) -> Tuple[bool, Dict[str, Any]]:
         """
         Process existing session flow.
@@ -206,6 +207,12 @@ class SessionFlowProcessor:
             updated_intent_data["entities"] = updated_intent_data.get("entities", {})
             updated_intent_data["entities"]["otp"] = otp  # explicitly add otp
 
+        elif beneficiary_name:
+            existing_intent = existing_session_data.get("intent_data", {})
+            updated_intent_data = existing_intent.copy()
+            updated_intent_data["entities"] = updated_intent_data.get("entities", {})
+            updated_intent_data["entities"]["recipient"] = beneficiary_name  # explicitly add beneficiary
+
         elif not missing_field:
             return False, {"message": "No missing field to update in session"}
 
@@ -219,8 +226,9 @@ class SessionFlowProcessor:
             updated_intent_data["entities"] = updated_intent_data.get("entities", {})
 
             # Update the missing field specifically
-            new_value = formatted_intent_data["entities"].get(missing_field, translation_text)
-            updated_intent_data["entities"][missing_field] = new_value.strip()
+            _value = formatted_intent_data["entities"].get(missing_field, translation_text)
+            if new_value is not None:
+                updated_intent_data["entities"][missing_field] = new_value.strip()
 
             # Also update other entities from formatted_intent_data if present
             for key, value in formatted_intent_data["entities"].items():
@@ -236,9 +244,11 @@ class SessionFlowProcessor:
 
         # Prepare parameters for orchestrator
         session_banking_params = self.session_service.prepare_session_banking_params(existing_session_data)
-        merged_params = {**session_banking_params, **updated_intent_data, "otp": otp}
+        merged_params = {**session_banking_params, **updated_intent_data}
+        if otp and not missing_field:
+            merged_params = {**merged_params, "otp": otp}
         
-        # Call orchestrator with updated data
+         # Call orchestrator with updated data
         orchestrated_data = await orchestrate_banking_request(merged_params)
         
         # Update session data - handle both success and failure scenarios
@@ -254,7 +264,11 @@ class SessionFlowProcessor:
             session_manager.delete_session(session_id)
 
         # Translate response message
-        orchestrated_data['message'] = translate(orchestrated_data["message"], language)
+        message = orchestrated_data.get('data', {}).get('message')
+        if not message:
+            message = orchestrated_data['message']
+        orchestrated_data['message'] = translate(message, language)
+        orchestrated_data['data']['message'] = orchestrated_data['message']
         
         # Return success response
         response = self.session_service.format_api_response(
@@ -313,7 +327,11 @@ class SessionFlowProcessor:
         session_manager.store_session(current_session_id, session_data)
         
         # Translate response message
-        orchestrated_data['message'] = translate(orchestrated_data["message"], language)
+        message = orchestrated_data.get('data', {}).get('message')
+        if not message:
+            message = orchestrated_data['message']
+        orchestrated_data['message'] = translate(message, language)
+        orchestrated_data['data']['message'] = orchestrated_data['message']
         
         # Format response
         return self.session_service.format_api_response(
@@ -322,3 +340,8 @@ class SessionFlowProcessor:
             formatted_intent_data,
             orchestrated_data
         )
+
+    async def clean_session_data(self, session_id: str):
+        session = session_manager.get_session(session_id)
+        if session:
+            session.delete
