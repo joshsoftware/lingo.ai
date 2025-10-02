@@ -18,6 +18,7 @@ db_host = os.getenv("DB_HOST")
 db_port = os.getenv("DB_PORT")
 db_name = os.getenv("DB_NAME")
 
+sarvam_api_key = os.getenv("SARVAM_API_KEY","")
 # Redis configuration
 redis_host = os.getenv("REDIS_HOST", "localhost")
 redis_port = int(os.getenv("REDIS_PORT", 6379))
