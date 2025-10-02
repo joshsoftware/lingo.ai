@@ -111,11 +111,11 @@ beneficiaries = [
         is_active=True
     ),
     Beneficiary(
-        name="Shailesh Kumar",
+        name="Shailesh Gupta",
         account_number="5240780198765432",  # HDFC format
         bank_name="HDFC Bank",
         customer_id=customers[0].id,
-        nickname="harsh",
+        nickname="kumar",
         tag="colleague",
         ifsc_code="HDFC0002345",
         is_active=True

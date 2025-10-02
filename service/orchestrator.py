@@ -144,7 +144,7 @@ def _calculate_category_insights(transactions: list, category: str, period_desc:
 
 
 def _calculate_general_insights(transactions: list, period_desc: str) -> Dict[str, Any]:
-    """Calculate general spending insights."""
+    """Calculate general spending insights with focus on top category and merchant."""
     total_spent = sum(abs(t.get("amount", 0)) for t in transactions if IS_DEBIT(t))
 
     if not transactions:
@@ -153,41 +153,35 @@ def _calculate_general_insights(transactions: list, period_desc: str) -> Dict[st
             "message": f"No spending data found for {period_desc}."
         }
 
-    # Find a top-spending recipient
+    # Find spending by recipient
     recipient_totals = {}
     for t in transactions:
         if IS_DEBIT(t):  # Only debits
             recipient_name = t.get("recipient", "Unknown")
             recipient_totals[recipient_name] = recipient_totals.get(recipient_name, 0) + abs(t.get("amount", 0))
 
-    # Find the top-spending category
+    # Find spending by category
     category_totals = {}
     for t in transactions:
         if IS_DEBIT(t):  # Only debits
             category_name = t.get("category", "Unknown")
             category_totals[category_name] = category_totals.get(category_name, 0) + abs(t.get("amount", 0))
-
-    # Build a message with both recipient and category insights
-    message_parts = []
-    if recipient_totals:
-        top_recipient = max(recipient_totals.items(), key=lambda x: x[1])
-        message_parts.append(f"Your top spending recipient {period_desc} was {top_recipient[0]} at {top_recipient[1]:,.2f} INR")
     
-    if category_totals:
+    message = f"No spending data found for {period_desc}."
+    
+    if category_totals and recipient_totals:
+        # Get top category and amount
         top_category = max(category_totals.items(), key=lambda x: x[1])
-        message_parts.append(f"Your top spending category {period_desc} was {top_category[0]} at {top_category[1]:,.2f} INR")
+        
+        # Get top recipient overall
+        top_recipient = max(recipient_totals.items(), key=lambda x: x[1])
+        
+        message = f"{period_desc}, you highest spent ₹{top_category[1]:,.2f} on {top_category[0]}, especially ₹{top_recipient[1]:,.2f} on {top_recipient[0]}"
     
-    if message_parts:
-        message = ". ".join(message_parts) + f". Total spent: {total_spent:,.2f} INR."
-    else:
-        message = f"You've spent {total_spent:,.2f} INR {period_desc}."
-
     return {
         "total_spent": total_spent,
         "message": message
     }
-
-
 def _calculate_spending_insights(transactions: list, entities: Dict[str, Any]) -> Dict[str, Any]:
     """Calculate spending insights based on transactions and filter criteria."""
     recipient = entities.get("recipient")
