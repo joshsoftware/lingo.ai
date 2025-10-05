@@ -126,9 +126,14 @@ def _calculate_recipient_insights(transactions: list, recipient: str, period_des
     recipient_txns = [t for t in transactions if recipient.lower() in t.get("recipient", "").lower()]
     total_spent = sum(abs(t.get("amount", 0)) for t in recipient_txns if IS_DEBIT(t))
 
+    if total_spent == 0:
+        message = f"No spending data found for {period_desc}."
+    else:
+        message =  f"You've spent {total_spent:,.2f} INR on {recipient} {period_desc}."
+
     return {
         "total_spent": total_spent,
-        "message": f"You've spent {total_spent:,.2f} INR on {recipient} {period_desc}."
+        "message": message
     }
 
 
@@ -136,10 +141,14 @@ def _calculate_category_insights(transactions: list, category: str, period_desc:
     """Calculate insights for a specific category."""
     category_txns = [t for t in transactions if category.lower() in t.get("category", "").lower()]
     total_spent = sum(abs(t.get("amount", 0)) for t in category_txns if IS_DEBIT(t))
+    if total_spent == 0:
+        message = f"No spending data found for {period_desc}."
+    else:
+        message = f"You've spent {total_spent:,.2f} INR on {category} category {period_desc}."
 
     return {
         "total_spent": total_spent,
-        "message": f"You've spent {total_spent:,.2f} INR on {category} category {period_desc}."
+        "message": message
     }
 
 

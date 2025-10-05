@@ -177,7 +177,7 @@ def validate_schema(result: dict) -> dict:
 def translate(message:str, lang_code: str = "en"):
     #lang_code = lang_map.get(lang_code,"English")
     logger.info(f"Model: {ollama_translation_model_name}, language: {lang_code}")
-    if lang_code == "en":
+    if lang_code == "en-IN":
         return message
     try:
         id,response,lang = client.text.translate(
