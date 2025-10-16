@@ -20,3 +20,6 @@ python-dotenv
 whisper-timestamped
 silero-vad
 fastapi_versionizer
+sarvamai
+dateparser
+psycopg2-binary

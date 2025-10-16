@@ -8,11 +8,11 @@ from logging.handlers import RotatingFileHandler
 import os
 
 # --- Configuration ---
-PG_USER = "postgres"
-PG_PASS = "postgres"
+PG_USER = "lingo"
+PG_PASS = "password"
 PG_HOST = "localhost"
 PG_PORT = "5432"
-DB_NAME = "lingo_ai"
+DB_NAME = "lingo_dev"
 API_URL = "http://localhost:8001/meetings/"
 SQL_QUERY = 'SELECT "accessToken", "refreshToken", "botName" FROM bot;'
 PG_CONN_STRING = f"postgresql://{PG_USER}:{PG_PASS}@{PG_HOST}:{PG_PORT}/{DB_NAME}"

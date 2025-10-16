@@ -1,24 +1,28 @@
 // src/app/api/auth/google/route.ts
+
 import { google } from 'googleapis';
 import { NextRequest } from 'next/server';
 
-// Create OAuth client
-const oauth2Client = new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET,
-    process.env.GOOGLE_REDIRECT_URI // Should be http://localhost:3000/api/oauth2callback
-);
-
 export async function GET(request: NextRequest) {
-    // Get the origin for CORS
-    const origin = request.headers.get('origin') || '*';
+    // Compute origin for CORS and redirect URI
+    const origin = request.headers.get('origin') || request.nextUrl.origin;
+
+    // Build redirect URI dynamically to ensure it's always provided and matches the request origin
+    const redirectUri = `${request.nextUrl.origin}/api/oauth2callback`;
+
+    // Create OAuth client per-request so redirect_uri is set correctly
+    const oauth2Client = new google.auth.OAuth2(
+        process.env.GOOGLE_CLIENT_ID,
+        process.env.GOOGLE_CLIENT_SECRET,
+        redirectUri
+    );
 
     const authUrl = oauth2Client.generateAuthUrl({
         access_type: 'offline',
         scope: [
             'https://www.googleapis.com/auth/calendar.readonly',
             'https://www.googleapis.com/auth/userinfo.profile',
-            'https://www.googleapis.com/auth/userinfo.email'  // Add this scope to get email
+            'https://www.googleapis.com/auth/userinfo.email' // Add this scope to get email
         ],
         prompt: 'consent',
     });
