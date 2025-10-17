@@ -41,6 +41,7 @@ import requests
 from urllib.parse import urlparse
 import tempfile
 import os
+from detect_intent import client
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -159,11 +160,20 @@ def translate_with_whisper_from_upload(upload_file: UploadFile):
             temp_file.write(content)
             temp_file.flush()
 
-        options = dict(beam_size=5, best_of=5)
+        '''options = dict(beam_size=5, best_of=5)
         translate_options = dict(task="translate", **options)
         result = model.transcribe(temp_file_path, **translate_options,prompt="Only Indian langues,like, hindi, marthi,tamil,gujarti,telegu,bengali,panjabi,bengali,malayalam,kannada or Indian english voice is used as voice banking service. voice will be like, check balance, pay money to some Indian names, list of beneficiaries, transactions list or ask for transaction insights. Do not translitarate, translate to English words, do not mix other language words")
-        return result
-        
+        return result'''
+        if temp_file_path:
+            with open(temp_file_path, "rb") as audio_file:
+                response = client.speech_to_text.translate(
+                file=audio_file,
+                model="saaras:v2.5",
+                prompt="Voice Banking"
+            )
+        else:
+            repsonse = "Unclear command"
+        return response
     except Exception as e:
         logger.error(f"Translation from upload failed: {str(e)}")
         raise HTTPException(

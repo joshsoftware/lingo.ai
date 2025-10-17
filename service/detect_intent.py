@@ -1,13 +1,15 @@
 from itertools import count
+from fastapi import  HTTPException, UploadFile
 import json
 #from msilib import PID_WORDCOUNT
 import re
 import logging
 import ollama
-from config import ollama_host, ollama_model_name, ollama_translation_model_name
+from config import ollama_host, ollama_model_name, ollama_translation_model_name, sarvam_api_key
 from typing import Dict, Any
 from time_utils import normalize_timeframe
 import requests
+import os
 from sarvamai import SarvamAI
 
 logger = logging.getLogger(__name__)
@@ -97,9 +99,8 @@ Do NOT hallucinate.
 
 """
 
-SARVAM_API_KEY="sk_t7fvsjjb_7JsD5ZXGrEhHqjUtAQSFsCxB"
 client = SarvamAI(
-    api_subscription_key=SARVAM_API_KEY,
+    api_subscription_key=sarvam_api_key,
 )
 def safe_json_parse(s: str) -> Dict[str, Any]:
     # Try direct parse
@@ -176,13 +177,13 @@ def validate_schema(result: dict) -> dict:
 def translate(message:str, lang_code: str = "en"):
     #lang_code = lang_map.get(lang_code,"English")
     logger.info(f"Model: {ollama_translation_model_name}, language: {lang_code}")
-    if lang_code == "en":
+    if lang_code == "en-IN":
         return message
     try:
         id,response,lang = client.text.translate(
             input=message,
             source_language_code="en-IN",
-            target_language_code=f"{lang_code}-IN",
+            target_language_code=f"{lang_code}",
             speaker_gender="Female"
         )
         return response[1]
@@ -190,7 +191,6 @@ def translate(message:str, lang_code: str = "en"):
         logger.error(f"Error during translation: {str(e)}")
         return message
 
-    
 def detect_intent_with_llama(transcript: str, lang_hint: str = "en") -> Dict[str, Any]:
     #transcript = "how much i spend on amazon last month?"
     # transcript="How much I spend on food"
@@ -198,7 +198,7 @@ def detect_intent_with_llama(transcript: str, lang_hint: str = "en") -> Dict[str
         response = ollama.Client(host=ollama_host).generate(
             system = SYSTEM,
             #model=ollama_model_name,
-            model=ollama_translation_model_name,
+            model=ollama_model_name,
             prompt=transcript.strip(),
             options={"temperature": 0.0, "top_p": 0.8},            
             stream=False
@@ -307,4 +307,3 @@ def determine_action(intent: str, entities: dict) -> str:
         return "unknown"
     
 # print(detect_intent_with_llama("","en"))
-

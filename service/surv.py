@@ -8,16 +8,19 @@ client = SarvamAI(
 )
 
 response = client.text.translate(
-    input="Your current account balance is 2000.35",
+    #input="Please confirm your the transaction 10by entring the OTP you have recieved on your registered mobile number"
+    input="Please confirm the transaction ₹10.00 to Suresh Patil by entering the OTP you have recieved on your registered mobile number",
     source_language_code="auto",
-    target_language_code="ta-IN",
-    speaker_gender="Male"
+    target_language_code="hi-IN",
+    speaker_gender="Female",
+    numerals_format="native"
 )
 print(response)
+'''
 response = client.text_to_speech.convert(
     text="Your account balacne is 2000.35",
     target_language_code="ta-IN",
 
 )
 print(response)
-
+'''
