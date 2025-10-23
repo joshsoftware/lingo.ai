@@ -30,11 +30,9 @@ export const GET = withAdmin(async function (
 // PATCH /api/admin/subscriptions/:id
 export const PATCH = withAdmin(async function (
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const data = await req.json();
-  const { id } = params;
-
+  const { id } = await params;
   if (!id) {
     return NextResponse.json(
       { error: "Subscription ID is required" },
@@ -42,10 +40,17 @@ export const PATCH = withAdmin(async function (
     );
   }
 
+  const data = await req.json();
+
+  const { id: _ignore, createdAt, updatedAt, ...safeData } = data;
+
   try {
     const [updated] = await db
       .update(subscriptionTable)
-      .set(data)
+      .set({
+        ...safeData,
+        updatedAt: new Date(),
+      })
       .where(eq(subscriptionTable.id, id))
       .returning();
 
@@ -58,14 +63,14 @@ export const PATCH = withAdmin(async function (
 
     return NextResponse.json(updated);
   } catch (error: any) {
-    // Handle unique constraint error (PostgreSQL code 23505)
-    if (error.code === "23505") {
-      if (error.constraint === "subscriptions_name_unique") {
-        return NextResponse.json(
-          { error: "Subscription name already exists" },
-          { status: 409 }
-        );
-      }
+    if (
+      error.code === "23505" &&
+      error.constraint === "subscriptions_name_unique"
+    ) {
+      return NextResponse.json(
+        { error: "Subscription name already exists" },
+        { status: 409 }
+      );
     }
 
     // Generic DB error fallback
