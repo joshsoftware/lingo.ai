@@ -222,7 +222,7 @@ async def pay_money(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="To transfer money, please provide either a customer ID or a registered phone number."
         )
-
+    print(request)
     to = request.to
     amount = request.amount
     transaction_type = request.transaction_type or "debit"

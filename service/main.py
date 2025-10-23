@@ -1,11 +1,13 @@
-from fastapi import FastAPI, UploadFile, File, Form, Depends
+from fastapi import FastAPI, UploadFile, File, Form, Depends, BackgroundTasks
 from fastapi.responses import JSONResponse
 from logger import logger
 from dotenv import load_dotenv
+from config import langflow_api_url, langflow_flow_id, langflow_api_key, langflow_timeout
 from starlette.middleware.cors import CORSMiddleware
 from audio_service import translate_with_whisper
 from audio_service import translate_with_whisper_timestamped, translate_with_whisper_from_upload
 from detect_intent import detect_intent_with_llama, format_intent_response, translate
+from typing import Dict, Any, List, Optional
 from summarizer import summarize_using_openai
 from summarizer import summarize_using_ollama
 from pydantic import BaseModel
@@ -13,15 +15,23 @@ import traceback
 from util import generate_timestamp_json
 from fastapi_versionizer.versionizer import Versionizer, api_version
 import json
-from banking.core_banking_routes import router as banking_router
+from banking.core_banking_routes_v2 import router as banking_router
 from orchestrator import orchestrate_banking_request
 from typing import Optional
 import httpx
 from redis_client import session_manager
 from datetime import datetime
 from session_service import SessionService, SessionFlowProcessor
+from contextlib import asynccontextmanager
 
-app = FastAPI()
+# Set up async HTTP client for Langflow API
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app.state.langflow_client = httpx.AsyncClient()
+    yield
+    await app.state.langflow_client.aclose()
+
+app = FastAPI(lifespan=lifespan)
 
 # Add CORS middleware to the application
 app.add_middleware(
@@ -232,3 +242,165 @@ async def transcribe_intent(
         logger.error(f"Error in transcribe-intent: {traceback.format_exc()}")
         current_session_id = session_id if session_id else "unknown"
         return JSONResponse(content={"message": str(e), "session_id": current_session_id}, status_code=500)
+
+
+@app.post("/voice/process-with-langflow")
+async def process_with_langflow(
+    audio: Optional[UploadFile] = File(None),
+    session_id: Optional[str] = Form(None),
+    customer_id: Optional[int] = Form(None),
+    phone: Optional[str] = Form(None),
+    api_key: Optional[str] = Form(None)
+):
+    """
+    Process audio through Langflow for intent detection and API execution.
+    
+    Steps:
+    1. Audio is transcribed using Whisper
+    2. Transcribed text is sent to Langflow for processing
+    3. Langflow processes the intent and calls necessary APIs
+    4. Results are returned to the client
+    """
+    try:
+        if not audio:
+            return JSONResponse(status_code=400, content={"message": "No audio file provided"})
+        
+        # Step 1: Transcribe audio
+        id, response, lang, dia = translate_with_whisper_from_upload(audio)
+        translation_text = response[1]
+        language = lang[1]
+        
+        logger.info("Translation done")
+        logger.info(f"Translated text: {translation_text}")
+        logger.info(f"Detected language: {language}")
+        
+        # # Verify request has required authentication
+        # server_api_key = langflow_api_key
+        # if server_api_key:
+        #     return JSONResponse(
+        #         status_code=401, 
+        #         content={"message": "Invalid API key. Please provide a valid API key to access this endpoint."}
+        #     )
+        
+        # Step 2: Send to Langflow
+        langflow_response = await call_langflow_api(translation_text, language, customer_id, phone, session_id, api_key)
+        
+        # Step 3: Format and return response
+        return JSONResponse(content={
+            "status": "success",
+            "message": "Audio processed through Langflow successfully",
+            "translation": translation_text,
+            "language": language,
+            "response": langflow_response,
+            "session_id": session_id
+        }, status_code=200)
+        
+    except Exception as e:
+        logger.error(f"Error in process-with-langflow: {traceback.format_exc()}")
+        current_session_id = session_id if session_id else "unknown"
+        
+        # Categorize errors for better client handling
+        status_code = 500
+        error_type = "server_error"
+        
+        if "Invalid API key" in str(e):
+            status_code = 401
+            error_type = "authentication_error"
+        elif "timed out" in str(e):
+            status_code = 504
+            error_type = "timeout_error"
+        elif "rate limit" in str(e):
+            status_code = 429
+            error_type = "rate_limit_error"
+        
+        return JSONResponse(content={
+            "message": str(e),
+            "session_id": current_session_id,
+            "error_type": error_type
+        }, status_code=status_code)
+
+
+async def call_langflow_api(text: str, language: str, customer_id: Optional[int] = None, 
+                          phone: Optional[str] = None, session_id: Optional[str] = None,
+                          client_api_key: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Call the Langflow API with the translated text.
+    
+    Args:
+        text: The translated text
+        language: Detected language code
+        customer_id: Optional customer ID
+        phone: Optional phone number
+        session_id: Optional session ID
+        
+    Returns:
+        Processed response from Langflow
+    """
+    try:
+        # Construct the URL for the Langflow API
+        url = f"{langflow_api_url}/api/v1/run/{langflow_flow_id}"
+        
+        # Prepare the payload
+        payload = {
+            "inputs": {
+                "text": text,
+                "language": language,
+                "customer_id": customer_id,
+                "phone": phone,
+                "session_id": session_id
+            },
+            "tweaks": {}
+        }
+        
+        # Set up headers
+        headers = {
+            "Content-Type": "application/json"
+        }
+        
+        # Add API key if available - prioritize client API key over server API key
+        api_key_to_use = client_api_key or langflow_api_key
+        if api_key_to_use:
+            # Set the x-api-key header as required by Langflow v1.5+
+            headers["x-api-key"] = api_key_to_use
+        
+        logger.info(f"Calling Langflow API at {url}")
+        # Make the API call
+        async with httpx.AsyncClient(timeout=langflow_timeout) as client:
+            response = await client.post(url, json=payload, headers=headers)
+            
+        # Check if the request was successful
+        response.raise_for_status()
+        
+        # Additional validation for empty responses
+        if response.status_code == 204 or not response.text:
+            logger.warning("Langflow API returned an empty response")
+            return {"warning": "Langflow returned an empty response. The flow might not be configured correctly."}
+            
+        # Handle rate limiting
+        if response.status_code == 429:
+            logger.warning("Langflow API rate limit reached")
+            raise Exception("Langflow API rate limit reached. Please try again later.")
+        
+        # Parse the response
+        result = response.json()
+        logger.info(f"Langflow API response: {result}")
+        # Sanitize the result to avoid exposing sensitive information
+        if isinstance(result, dict):
+            # Remove any potential sensitive information
+            result.pop("api_key", None)
+            result.pop("auth_token", None)
+            result.pop("password", None)
+            
+        logger.info(f"Langflow API response processed successfully")
+        
+        return result
+    except httpx.TimeoutException:
+        logger.error("Langflow API call timed out")
+        raise Exception("Langflow processing timed out. Please try again later.")
+    except httpx.HTTPStatusError as e:
+        logger.error(f"Langflow API HTTP error: {e}")
+        raise Exception(f"Error calling Langflow API: {e.response.status_code} - {e.response.text}")
+    except Exception as e:
+        logger.error(f"Error calling Langflow API: {str(e)}")
+        raise Exception(f"Error processing with Langflow: {str(e)}")
+
