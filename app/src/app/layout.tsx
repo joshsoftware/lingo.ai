@@ -6,6 +6,7 @@ import { secondaryFont } from "@/fonts";
 import { CookiesProvider } from "next-client-cookies/server";
 import Header from "@/components/Header";
 import { isSignedIn } from "@/actions/auth";
+import { validateRequest } from "@/auth";
 
 export const metadata: Metadata = {
   title: "Lingo.ai",
@@ -17,6 +18,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const isUserSignedIn = await isSignedIn();
+  const { user } = await validateRequest();
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -24,7 +26,7 @@ export default async function RootLayout({
       <body className={`h-screen flex flex-col overflow-y-auto `}>
         <CookiesProvider>
           <TanstackQueryProvider>
-            <Header isSignedIn={isUserSignedIn} />
+            <Header isSignedIn={isUserSignedIn} userRole={user?.role ?? "guest"}/>
             <section className="flex-1 overflow-y-auto">
               <div className="w-full h-full">{children}</div>
             </section>

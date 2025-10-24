@@ -41,6 +41,7 @@ type NavItem = {
 
 type NavigationProps = {
   isSignedIn?: boolean;
+  userRole?: string;
 };
 
 export type ProfileMenuItems = {
@@ -55,7 +56,7 @@ export type StateType = {
   isProfileModalOpen: boolean;
   recordsLabel: string;
 };
-const Navigation = ({ isSignedIn }: NavigationProps) => {
+const Navigation = ({ isSignedIn, userRole }: NavigationProps) => {
   const pathname = usePathname() as string;
   const router = useRouter();
   const [uiState, setUIState] = useState<StateType>({
@@ -222,7 +223,21 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
               </Button>
             )}
 
-            {isSignedIn && (
+            {isSignedIn && userRole === "ADMIN" && (
+              <Button
+                variant={"greenTheme"}
+                className={`${pathname === "/new" ? "" : "hidden"}`}
+              >
+                <Link
+                  href={"/admin/users"}
+                  className="flex justify-center items-center"
+                >
+                  <span className="text-md">Dashboard</span>
+                </Link>
+              </Button>
+            )}
+
+            {isSignedIn && userRole !== "ADMIN" && (
               <Button
                 variant={"greenTheme"}
                 className={`${pathname === "/new" ? "hidden" : ""}`}
@@ -236,7 +251,7 @@ const Navigation = ({ isSignedIn }: NavigationProps) => {
                 </Link>
               </Button>
             )}
-            {pathname !== "/transcriptions" && (
+            {pathname !== "/transcriptions" && userRole !== "ADMIN" && (
               <Button variant={"greenTheme"}>
                 <Files className="mr-2 w-4 h-4" />
                 <Link href={"/transcriptions"}>{uiState.recordsLabel}</Link>

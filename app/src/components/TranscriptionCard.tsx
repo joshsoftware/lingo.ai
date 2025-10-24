@@ -4,26 +4,30 @@ import { useEffect, useRef, useState } from "react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileAudio, Pause, Play } from "lucide-react";
+import { FileAudio, Pause, Play, Trash2 } from "lucide-react"; // Added Trash icon
 import Link from "next/link";
 import { getAudioDuration, getFileSize } from "@/utils/recording";
 import { userTranscriptions } from "@/types/transcriptions";
 
 interface TranscriptionRowProps {
   transcription: userTranscriptions;
-  index: number;
   isPlaying: boolean;
+  userRole: string | null;
   onPlayPause: () => void;
   onAudioEnd: () => void;
+  onDelete?: () => void;
+  onToggleDefault?: (checked: boolean) => void;
   rowRef?: (node: HTMLTableRowElement | null) => void;
 }
 
 const TranscriptionRow = ({
   transcription,
-  index,
   isPlaying,
+  userRole,
   onPlayPause,
   onAudioEnd,
+  onDelete,
+  onToggleDefault,
   rowRef,
 }: TranscriptionRowProps) => {
   const [audioDuration, setAudioDuration] = useState<string | null>(null);
@@ -76,6 +80,18 @@ const TranscriptionRow = ({
 
   return (
     <tr className="border-b border-gray-200 mt-4" ref={rowRef}>
+      {userRole === "ADMIN" && (
+        <td className="py-3 px-2">
+          <input
+            type="checkbox"
+            className="h-4 w-4"
+            checked={transcription?.isDefault}
+            onChange={(e) => {
+              if (onToggleDefault) onToggleDefault(e.target.checked);
+            }}
+          />
+        </td>
+      )}
       <td className="py-3 px-2">
         <Button
           variant="ghost"
@@ -99,9 +115,7 @@ const TranscriptionRow = ({
         </Link>
       </td>
       <td className="text-muted-foreground ">
-        <div className="ml-4">
-          {fileSize ? fileSize : "Loading..."}
-        </div>
+        <div className="ml-4">{fileSize ? fileSize : "Loading..."}</div>
       </td>
       <td>
         <Badge className="ml-4" variant="secondary">
@@ -117,6 +131,19 @@ const TranscriptionRow = ({
           ? format(new Date(transcription.createdAt), "dd MMM yyyy | hh:mm a")
           : "N/A"}
       </td>
+
+      {userRole === "ADMIN" && (
+        <td className="py-3 px-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onDelete}
+            className="w-8 h-8 p-2 rounded-full flex items-center justify-center shadow-xl hover:bg-red-500 cursor-pointer hover:text-white"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </td>
+      )}
     </tr>
   );
 };

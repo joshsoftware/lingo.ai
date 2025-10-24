@@ -36,6 +36,7 @@ const page = async () => {
       <TranscriptionItem
         initialTranscriptionsData={userTranscriptions}
         userId={user?.id || null}
+        userRole={user?.role || null}
       />
     </div>
   );
