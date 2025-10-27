@@ -54,6 +54,7 @@ const SubscriptionEdit = ({ recording, onClose }: Props) => {
       </label>
       <div className="flex items-center gap-2">
         <input
+          type={key === "name" ? "text" : "number"}
           className="border border-gray-300 rounded px-2 py-1 w-full"
           value={editData[key]}
           onChange={(e) =>
