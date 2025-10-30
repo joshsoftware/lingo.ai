@@ -22,6 +22,9 @@ export default async function AdminLayout({
           <Link href="/admin/subscriptions" className="block hover:underline">
             Subscriptions
           </Link>
+          <Link href="/transcriptions" className="block hover:underline">
+            Sample Recordings
+          </Link>
         </nav>
       </aside>
       <main className="flex-1 bg-gray-50 p-6 overflow-auto">{children}</main>

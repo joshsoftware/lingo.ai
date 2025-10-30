@@ -14,14 +14,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+import { toast } from "sonner";
+import { API } from "@/lib/axios";
+import { Button } from "./ui/button";
 
 interface TranscriptionItemProps {
   initialTranscriptionsData: userTranscriptions[];
   userId: string | null;
+  userRole: string | null;
 }
 
 const TranscriptionItem = (props: TranscriptionItemProps) => {
-  const { initialTranscriptionsData, userId } = props;
+  const { initialTranscriptionsData, userId, userRole } = props;
 
   const [defaultTranscriptionFilter, setDefaultTranscriptionFilter] =
     useState<string>(userId ? "user" : "true");
@@ -30,7 +34,7 @@ const TranscriptionItem = (props: TranscriptionItemProps) => {
   );
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
     useTranscriptions(
       initialTranscriptionsData,
       defaultTranscriptionFilter,
@@ -79,6 +83,36 @@ const TranscriptionItem = (props: TranscriptionItemProps) => {
       (page: { transcriptions: userTranscriptions[] }) => page.transcriptions
     ) || [];
 
+  const handleDeleteRecording = async (recordingId: String) => {
+    try {
+      const confirmDelete = confirm(
+        "Are you sure you want to delete this recording?"
+      );
+      if (!confirmDelete) return;
+
+      await API.delete(`/admin/transcriptions/${recordingId}`);
+      refetch();
+      toast.success("Recording deleted successfully");
+    } catch (error) {
+      console.error("Failed to delete recording:", error);
+      toast.error("Failed to delete recording");
+    }
+  };
+
+  const handleMakeDefault = async (recordingId: String) => {
+    console.log("Make default clicked for recording ID:", recordingId);
+    // try {
+    //   await API.post(`/admin/transcriptions/${recordingId}/make-default`);
+    //   refetch();
+    //   toast.success("Recording set as default successfully");
+    // } catch (error) {
+    //   console.error("Failed to set recording as default:", error);
+    //   toast.error("Failed to set recording as default");
+    // }
+  };
+
+  console.log("Filtered Transcriptions:", filteredTranscriptions);
+
   return (
     <div>
       <div className="container mx-auto px-4 pt-4 pb-8 max-w-7xl">
@@ -116,11 +150,23 @@ const TranscriptionItem = (props: TranscriptionItemProps) => {
           </div>
         ) : (
           <>
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold mb-2">Audio Recordings</h1>
-              <p className="text-muted-foreground">
-                Manage and play your uploaded audio recordings
-              </p>
+            <div className="flex">
+              <div className="mb-8">
+                <h1 className="text-3xl font-bold mb-2">Audio Recordings</h1>
+                <p className="text-muted-foreground">
+                  Manage and play your uploaded audio recordings
+                </p>
+              </div>
+              <div className="ml-auto mt-3">
+                {userRole === "ADMIN" && (
+                  <Button
+                    variant={"greenTheme"}
+                    onClick={() => (window.location.href = "/new")}
+                  >
+                    Add Sample Recording
+                  </Button>
+                )}
+              </div>
             </div>
             <Card>
               <CardHeader>
@@ -133,12 +179,16 @@ const TranscriptionItem = (props: TranscriptionItemProps) => {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      {userRole === "ADMIN" && (
+                        <TableHead className="w-12">Sample</TableHead>
+                      )}
                       <TableHead className="w-12"></TableHead>
                       <TableHead>File Name</TableHead>
                       <TableHead>File Size</TableHead>
                       <TableHead>Language</TableHead>
                       <TableHead>Duration</TableHead>
                       <TableHead>Upload Date</TableHead>
+                      {userRole === "ADMIN" && <TableHead>Actions</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -146,7 +196,6 @@ const TranscriptionItem = (props: TranscriptionItemProps) => {
                       <TranscriptionRow
                         key={idx}
                         transcription={transcription}
-                        index={idx}
                         isPlaying={currentPlayingIndex === idx}
                         onPlayPause={() => handlePlayPause(idx)}
                         onAudioEnd={handleAudioEnd}
@@ -155,6 +204,11 @@ const TranscriptionItem = (props: TranscriptionItemProps) => {
                             ? lastItemRef
                             : undefined
                         }
+                        onDelete={() => handleDeleteRecording(transcription.id)}
+                        onToggleDefault={() =>
+                          handleMakeDefault(transcription.id)
+                        }
+                        userRole={userRole}
                       />
                     ))}
                   </TableBody>
