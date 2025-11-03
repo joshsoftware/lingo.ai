@@ -12,7 +12,7 @@ services:
       - lingo_network
 
     depends_on:
-      - fastapi
+      - lingo-ai
         #- postgres
 
   lingo-ai:
