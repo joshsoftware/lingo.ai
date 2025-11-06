@@ -25,7 +25,7 @@ redis_client = redis.Redis(host='redis', port=6379, db=0, decode_responses=True)
 
 router = APIRouter(prefix="/meetings", tags=["Meetings"])
 
-LINGO_API_URL = "http://localhost:3000"
+LINGO_API_URL = "https://lingo.ai.joshsoftware.com"
 
 class LingoRequest(BaseModel):
     key: str
