@@ -122,7 +122,7 @@ export async function GET(request: Request) {
     }
 
     // Redirect to the calendar events page
-    return Response.redirect(new URL("/", request.url));
+    return Response.redirect(new URL("/", process.env.GOOGLE_REDIRECT_URI));
   } catch (error) {
     console.error("OAuth error:", error);
     const errorMessage =
