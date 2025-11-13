@@ -10,13 +10,18 @@ import { botTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { lucia } from "@/auth";
 
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URI
-);
-
 export async function GET(request: Request) {
+  // Build redirect URI from request origin to match the one used when generating the auth URL
+  const url = new URL(request.url);
+  const redirectUri = `${url.origin}/api/oauth2callback`;
+
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    process.env.GOOGLE_REDIRECT_URI
+  );
+
+  // Continue handling the request
   // Get the code from the query parameters
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
@@ -29,8 +34,8 @@ export async function GET(request: Request) {
   }
 
   try {
-    // Exchange the code for tokens
-    const { tokens } = await oauth2Client.getToken(code);
+  // Exchange the code for tokens
+  const { tokens } = await oauth2Client.getToken(code);
 
     // Set the credentials on the OAuth client
     oauth2Client.setCredentials(tokens);
@@ -117,7 +122,7 @@ export async function GET(request: Request) {
     }
 
     // Redirect to the calendar events page
-    return Response.redirect(new URL("/", request.url));
+    return Response.redirect(new URL("/", process.env.GOOGLE_REDIRECT_URI));
   } catch (error) {
     console.error("OAuth error:", error);
     const errorMessage =

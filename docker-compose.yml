@@ -1,6 +1,6 @@
 services:
-  nextjs:
-    container_name: app
+  lingo-ui:
+    container_name: lingo-ui
     build:
       context: ./app
       dockerfile: Dockerfile
@@ -8,15 +8,15 @@ services:
       - ./app/.env
     ports:
       - "3000:3000"
+    networks:
+      - lingo_network
 
     depends_on:
-      - fastapi
-      - postgres
-    volumes:
-      - ./app:/lingo/app
+      - lingo-ai
+        #- postgres
 
-  fastapi:
-    container_name: service
+  lingo-ai:
+    container_name: lingo-ai
     build:
       context: ./service
       dockerfile: Dockerfile
@@ -26,24 +26,23 @@ services:
       - ollama
     ports:
       - "8000:8000"
+    networks:
+      - lingo_network
     volumes:
       - ./service:/lingo/service
-  postgres:
-    container_name: lingo-db
+  postgres-lingo-db:
+    container_name: postgres-lingo-db
     image: postgres:16
     restart: always
     environment:
-      POSTGRES_USER_FILE:  /run/secrets/db_user
-      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
-      POSTGRES_DB_FILE: /run/secrets/db_name
+      POSTGRES_USER:  postgres
+      POSTGRES_PASSWORD: password
     ports:
      - "5432:5432"
+    networks:
+      - lingo_network
     volumes:
     - postgres_data:/var/lib/postgresql/data
-    secrets:
-      - db_user
-      - db_name
-      - db_password
 
   ollama:
     container_name: ollama
@@ -51,16 +50,15 @@ services:
     restart: always
     ports:
       - "11434:11434"
+    networks:
+      - lingo_network
     volumes:
       - ollama_data:/root/.ollama
 
-secrets:
-  db_user:
-    file: ./secrets/pg/db_user.txt
-  db_name:
-    file: ./secrets/pg/db_name.txt
-  db_password:
-    file: ./secrets/pg/db_password.txt
+networks:
+  lingo_network:
+    name: lingo_network
+    driver: bridge
 
 volumes:
   postgres_data:
