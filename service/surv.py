@@ -2,7 +2,7 @@ from sarvamai import SarvamAI
 
 
 #SARVAM_API_KEY="sk_lz33toms_amJdXnvyWxlBQIs4OPue1yexi"
-SARVAM_API_KEY="sk_t7fvsjjb_7JsD5ZXGrEhHqjUtAQSFsCxB"
+SARVAM_API_KEY="sk_t7fvsjjb_7JsD5ZXGrEhHqjUtAQSFsCxB"  #should not harcode an API key in code
 client = SarvamAI(
     api_subscription_key=SARVAM_API_KEY,
 )

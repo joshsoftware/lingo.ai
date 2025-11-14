@@ -42,22 +42,22 @@ class PaymentRequest(BaseModel):
     category: Optional[str] = None
     otp: Optional[str] = None
 
-def format_contact_details(contacts, limit=None):
-    """Helper function to format contact details for error messages"""
-    details = []
-    for b in contacts:
-        identifier = f"'{b.name}'"
-        if b.nickname:
-            identifier += f" (nickname: {b.nickname})"
-        if b.tag:
-            identifier += f" (tag: {b.tag})"
-        details.append(identifier)
+# def format_contact_details(contacts, limit=None):     #not used elsewhere
+#     """Helper function to format contact details for error messages"""
+#     details = []
+#     for b in contacts:
+#         identifier = f"'{b.name}'"
+#         if b.nickname:
+#             identifier += f" (nickname: {b.nickname})"
+#         if b.tag:
+#             identifier += f" (tag: {b.tag})"
+#         details.append(identifier)
     
-    if limit and len(details) > limit:
-        displayed = details[:limit]
-        more_count = len(details) - limit
-        return f"{', '.join(displayed)} and {more_count} more"
-    return ', '.join(details)
+#     if limit and len(details) > limit:
+#         displayed = details[:limit]
+#         more_count = len(details) - limit
+#         return f"{', '.join(displayed)} and {more_count} more"
+#     return ', '.join(details)
 
 def find_beneficiary(db: Session, customer_id: int, to: str):
     """Find a beneficiary by name, nickname, or tag with smart conflict handling."""
@@ -433,7 +433,7 @@ async def search_txn(
     return {"transactions": db_transactions}
 
 @router.get("/beneficiaries")
-def get_beneficiaries(
+def get_beneficiaries(  
     customer_id: int = None,
     phone: str = None,
     db: Session = Depends(get_db)
