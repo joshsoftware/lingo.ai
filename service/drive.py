@@ -34,23 +34,23 @@ def get_credentials():
         os.getenv("SERVICE_ACCOUNT_FILE"), scopes=SCOPES)
     return credentials
 
-def user_account_creds():
-    '''Get user account credentials'''
-    creds = None
-    if os.path.exists("token.json"):
-        creds = Credentials.from_authorized_user_file("token.json", SCOPES)
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                os.getenv("GOOGLE_ACCOUNT_FILE"),
-                SCOPES
-            )
-            creds = flow.run_local_server(port=0)
-        with open("token.json", "w") as token:
-            token.write(creds.to_json())
-    return creds
+# def user_account_creds():  # not used in service package
+#     '''Get user account credentials'''
+#     creds = None
+#     if os.path.exists("token.json"):
+#         creds = Credentials.from_authorized_user_file("token.json", SCOPES)
+#     if not creds or not creds.valid:
+#         if creds and creds.expired and creds.refresh_token:
+#             creds.refresh(Request())
+#         else:
+#             flow = InstalledAppFlow.from_client_secrets_file(
+#                 os.getenv("GOOGLE_ACCOUNT_FILE"),
+#                 SCOPES
+#             )
+#             creds = flow.run_local_server(port=0)
+#         with open("token.json", "w") as token:
+#             token.write(creds.to_json())
+#     return creds
     
 def get_folder_id(service, folder_name):
     """Get the ID of a folder by name."""
@@ -222,4 +222,4 @@ def main():
 
 
 if __name__ == "__main__":
-    files = main()
+    files = main()  #not imported/used elsewhere (ask if it used in any script)

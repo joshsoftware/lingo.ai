@@ -50,7 +50,7 @@ def generate_timestamp_json(translation, summary, detected_language=None):
     }
 
 @api_version(1)
-@app.post("/upload-audio")
+@app.post("/upload-audio")    #2 definations of upload_audio , we can keep the latest version or which is getting used and remove another
 async def upload_audio(body: Body):
     try:
         if body.audio_file_link == "":

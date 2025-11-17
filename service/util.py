@@ -1,6 +1,6 @@
 import json
 
-def generate_timestamp_json(translation,summary,detected_language):
+def generate_timestamp_json(translation,summary,detected_language): #same name function is used in main.py , can we write logic in such a way that only one function used everywhere
     segs = []
     seg = {}
     segments = translation["segments"]
