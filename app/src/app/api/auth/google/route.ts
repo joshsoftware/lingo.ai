@@ -6,11 +6,8 @@ import { lucia } from '@/auth';
 import { cookies } from 'next/headers';
 
 export async function GET(request: NextRequest) {
-    // Compute origin for CORS and redirect URI
-    const origin = request.headers.get('origin') || request.nextUrl.origin;
-
-    // Build redirect URI dynamically to ensure it's always provided and matches the request origin
-    const redirectUri = `${request.nextUrl.origin}/api/oauth2callback`;
+    // Get origin from request headers
+    const origin = request.headers.get('origin');
 
     // Validate current session and extract user ID
     const cookieStore = await cookies();
@@ -19,7 +16,13 @@ export async function GET(request: NextRequest) {
     if (!sessionCookie) {
         return new Response(JSON.stringify({ error: 'No active session' }), {
             status: 401,
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': origin || '*',
+                'Access-Control-Allow-Credentials': 'true',
+                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+            }
         });
     }
 
@@ -27,7 +30,13 @@ export async function GET(request: NextRequest) {
     if (!sessionResult.session || !sessionResult.user) {
         return new Response(JSON.stringify({ error: 'Invalid or expired session' }), {
             status: 401,
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': origin || '*',
+                'Access-Control-Allow-Credentials': 'true',
+                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+            }
         });
     }
 
@@ -56,7 +65,8 @@ export async function GET(request: NextRequest) {
         status: 200,
         headers: {
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Origin': origin || '*',
+            'Access-Control-Allow-Credentials': 'true',
             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization'
         },
@@ -71,6 +81,7 @@ export async function OPTIONS(request: NextRequest) {
         status: 204,
         headers: {
             'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Credentials': 'true',
             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization',
             'Access-Control-Max-Age': '86400', // 24 hours
