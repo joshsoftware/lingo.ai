@@ -34,8 +34,17 @@ export async function GET(request: Request) {
   }
 
   try {
-  // Exchange the code for tokens
-  const { tokens } = await oauth2Client.getToken(code);
+    // Get the state parameter (which contains the user ID)
+    const state = searchParams.get("state");
+    if (!state) {
+      return new Response(JSON.stringify({ error: "State parameter missing" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Exchange the code for tokens
+    const { tokens } = await oauth2Client.getToken(code);
 
     // Set the credentials on the OAuth client
     oauth2Client.setCredentials(tokens);
@@ -90,19 +99,8 @@ export async function GET(request: Request) {
       expires: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days to match frontend
     });
 
-    // Get current session cookie
-    const sessionCookie = cookieStore.get(lucia.sessionCookieName); // e.g. auth_session
-    if (!sessionCookie) {
-      return new Response("No active session", { status: 401 });
-    }
-
-    // Validate session and extract user ID
-    const sessionResult = await lucia.validateSession(sessionCookie.value);
-    if (!sessionResult.session) {
-      return new Response("Invalid session", { status: 401 });
-    }
-
-    const userId = sessionResult.user.id; // Assuming 'id' is the correct property in the 'User' type
+    // Use the user ID from the state parameter (passed during OAuth flow)
+    const userId = state;
 
     try {
       await db.insert(botTable).values({
