@@ -104,6 +104,17 @@ export async function GET(request: Request) {
 
     const userId = sessionResult.user.id; // Assuming 'id' is the correct property in the 'User' type
 
+    // Create Lucia session for the user and set auth_session cookie
+    const session = await lucia.createSession(userId, {});
+    const sessionCookie = lucia.createSessionCookie(session.id);
+    cookieStore.set(sessionCookie.name, sessionCookie.value, {
+      httpOnly: false, // Allow JavaScript access
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      expires: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days to match frontend
+    });
+
     try {
       await db.insert(botTable).values({
         id: userInfo.id || crypto.randomUUID(),
