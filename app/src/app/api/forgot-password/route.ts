@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { passwordResetTokens, userTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { randomBytes } from "crypto";
-import nodemailer from "nodemailer";
+// import nodemailer from "nodemailer";
 import { forgotPasswordSchema } from "@/Validators/resetPassword";
 
 const RESET_TOKEN_EXPIRY_MINUTES = 60; // 1 hour
@@ -34,31 +34,31 @@ export async function POST(req: NextRequest) {
       set: { token, expiresAt },
     });
 
-    // Send email
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT),
-      secure: process.env.SMTP_SECURE === "true", // true for 465, false for other ports
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
+    // Email sending code commented out for now
+    // const transporter = nodemailer.createTransport({
+    //   host: process.env.SMTP_HOST,
+    //   port: Number(process.env.SMTP_PORT),
+    //   secure: process.env.SMTP_SECURE === "true", // true for 465, false for other ports
+    //   auth: {
+    //     user: process.env.SMTP_USER,
+    //     pass: process.env.SMTP_PASS,
+    //   },
+    // });
 
-    if (!process.env.APP_URL) {
-      return NextResponse.json({ success: false, error: "APP_URL not set" }, { status: 422 });
-    }
+    // if (!process.env.APP_URL) {
+    //   return NextResponse.json({ success: false, error: "APP_URL not set" }, { status: 422 });
+    // }
 
-    const appUrl = process.env.APP_URL
-    const resetLink = `${appUrl}/reset-password?token=${token}&email=${encodeURIComponent(userEmail)}`;
-    await transporter.sendMail({
-      from: process.env.SMTP_FROM || process.env.SMTP_USER,
-      to: userEmail,
-      subject: "Reset your Lingo.ai password",
-      html: `<p>You requested a password reset for Lingo.ai.</p>
-             <p><a href="${resetLink}">Click here to reset your password</a></p>
-             <p>This link will expire in 1 hour.</p>`
-    });
+    // const appUrl = process.env.APP_URL
+    // const resetLink = `${appUrl}/reset-password?token=${token}&email=${encodeURIComponent(userEmail)}`;
+    // await transporter.sendMail({
+    //   from: process.env.SMTP_FROM || process.env.SMTP_USER,
+    //   to: userEmail,
+    //   subject: "Reset your Lingo.ai password",
+    //   html: `<p>You requested a password reset for Lingo.ai.</p>
+    //          <p><a href="${resetLink}">Click here to reset your password</a></p>
+    //          <p>This link will expire in 1 hour.</p>`
+    // });
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -7,7 +7,7 @@ openai_api_key = os.getenv("OPENAI_API_KEY")
 #model_id = os.getenv('MODEL_ID', 'large-v3')
 model_id = os.getenv('MODEL_ID','small')
 model_path = os.getenv('MODEL_PATH', './models')
-ollama_host = os.getenv("OLLAMA_HOST", "http://ollama:11434")
+ollama_host = os.getenv("OLLAMA_HOST", "http://localhost:11434")
 ollama_model_name = os.getenv("OLLAMA_MODEL_NAME", "llama3.2")
 open_ai_model_name = os.getenv("OPENAI_MODEL_NAME", "gpt-4")
 ollama_translation_model_name = os.getenv("OLLAMA_TRANS_MODEL","gemma2:latest")
@@ -24,3 +24,10 @@ redis_host = os.getenv("REDIS_HOST", "localhost")
 redis_port = int(os.getenv("REDIS_PORT", 6379))
 redis_db = int(os.getenv("REDIS_DB", 0))
 redis_password = os.getenv("REDIS_PASSWORD", None)
+
+# Error-log audio storage (failed /voice/transcribe-intent requests; for admin playback)
+# Default: next to this config file (service/error_audio). Override with ERROR_AUDIO_DIR for absolute path.
+error_audio_dir = os.getenv(
+    "ERROR_AUDIO_DIR",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "error_audio"),
+)
