@@ -31,4 +31,3 @@ ninja
 sqlalchemy
 psycopg2-binary
 redis
-sarvamai
