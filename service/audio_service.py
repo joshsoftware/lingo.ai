@@ -34,6 +34,7 @@ from fastapi import  HTTPException, UploadFile
 import openai
 from dotenv import load_dotenv
 from config import openai_api_key, model_id, model_path, zaban_base_url, zaban_api_key
+from constants import ZABAN_LANG_TO_CODE, ZABAN_API_PATH_STT, ZABAN_STT_MODEL
 from load_model import load_model
 import logging
 import whisper_timestamped as whisper_ts
@@ -41,14 +42,6 @@ import requests
 from urllib.parse import urlparse
 import tempfile
 import os
-
-# Map Zaban/BCP-47 language codes to short codes (e.g. hin_Deva -> hi)
-ZABAN_LANG_TO_CODE = {
-    "hin_Deva": "hi", "eng_Latn": "en", "ben_Beng": "bn", "tam_Taml": "ta",
-    "tel_Telu": "te", "mar_Deva": "mr", "mal_Mlym": "ml", "kan_Knda": "kn",
-    "guj_Gujr": "gu", "pan_Guru": "pa", "ory_Orya": "or", "urd_Arab": "ur",
-    "san_Deva": "sa",
-}
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -186,13 +179,13 @@ def translate_with_whisper_from_upload(upload_file: UploadFile):
         if not temp_file_path:
             return (None, [None, "Unclear command"], [None, "en"], None)
 
-        url = f"{zaban_base_url.rstrip('/')}/api/v1/stt"
+        url = f"{zaban_base_url.rstrip('/')}{ZABAN_API_PATH_STT}"
         headers = {}
         if zaban_api_key:
             headers["X-API-Key"] = zaban_api_key
         with open(temp_file_path, "rb") as audio_file:
             files = {"audio": (upload_file.filename or "audio.wav", audio_file, "audio/wav")}
-            data = {"model": "whisper"}
+            data = {"model": ZABAN_STT_MODEL}
             r = requests.post(url, files=files, data=data, headers=headers, timeout=60)
         r.raise_for_status()
         result = r.json()

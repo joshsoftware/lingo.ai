@@ -11,22 +11,12 @@ from time_utils import normalize_timeframe
 import requests
 import os
 
+from constants import ZABAN_LANG_TO_CODE, ZABAN_API_PATH_TRANSLATE
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
-lang_map = {
-    "en": "English", "hi": "Hindi", "bn": "Bengali", "ta": "Tamil", "te": "Telugu",
-    "mr": "Marathi", "ml": "Malayalam", "kn": "Kannada", "gu": "Gujarati", "pa": "Punjabi",
-    "or": "Odia", "ur": "Urdu", "sa": "Sanskrit", "ar": "Arabic", "fr": "French",
-    "de": "German", "es": "Spanish", "it": "Italian", "pt": "Portuguese", "zh": "Chinese",
-    "ja": "Japanese", "ko": "Korean", "ru": "Russian", "sv": "Swedish", "pl": "Polish",
-    "tr": "Turkish", "cs": "Czech", "fi": "Finnish", "he": "Hebrew"
-}
-# Zaban Translation API uses BCP-47 (IndicTrans2). Map short codes to BCP-47.
-LANG_CODE_TO_BCP47 = {
-    "en": "eng_Latn", "hi": "hin_Deva", "bn": "ben_Beng", "ta": "tam_Taml", "te": "tel_Telu",
-    "mr": "mar_Deva", "ml": "mal_Mlym", "kn": "kan_Knda", "gu": "guj_Gujr", "pa": "pan_Guru",
-    "or": "ory_Orya", "ur": "urd_Arab", "sa": "san_Deva", "as": "asm_Beng",
-}
+# Derived from single constant in constants to avoid mismatches.
+LANG_CODE_TO_BCP47 = {v: k for k, v in ZABAN_LANG_TO_CODE.items()}
 ALLOWED_INTENTS = ["check_balance", "recent_txn", "transfer_money",  "txn_insights", "list_beneficiaries", "unknown"]
 
 SYSTEM = """
@@ -190,7 +180,7 @@ def translate(message: str, lang_code: str = "en") -> str:
         logger.warning("ZABAN_API_KEY not set; translation requires it. Returning original.")
         return message
     try:
-        url = f"{zaban_base_url.rstrip('/')}/api/v1/translate"
+        url = f"{zaban_base_url.rstrip('/')}{ZABAN_API_PATH_TRANSLATE}"
         headers = {
             "Content-Type": "application/json",
             "X-API-Key": zaban_api_key,
