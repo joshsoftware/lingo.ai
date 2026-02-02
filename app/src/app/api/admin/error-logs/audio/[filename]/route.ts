@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateRequest } from "@/auth";
+import { getAdminBasicAuthHeaders } from "@/lib/admin-auth";
 
 export async function GET(
   req: NextRequest,
@@ -19,7 +20,14 @@ export async function GET(
     const microserviceUrl = process.env.NEXT_PUBLIC_MICROSERVICE_URL || "http://localhost:8000";
     const url = `${microserviceUrl}/admin/error-logs/audio/${encodeURIComponent(filename)}`;
 
-    const response = await fetch(url, { cache: "no-store" });
+    const authHeader = req.headers.get("authorization");
+    const headers = authHeader
+      ? { Authorization: authHeader }
+      : getAdminBasicAuthHeaders();
+    const response = await fetch(url, {
+      cache: "no-store",
+      headers,
+    });
     if (!response.ok) {
       return NextResponse.json(
         { error: "Audio not found" },

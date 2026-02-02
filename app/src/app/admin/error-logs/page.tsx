@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
@@ -16,70 +16,159 @@ import {
 } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Modal } from "@/components/ui/modal";
-import { Download, RefreshCw, AlertCircle, Eye } from "lucide-react";
+import { Download, RefreshCw, AlertCircle, Eye, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-
-interface ErrorLog {
-  id: number;
-  endpoint: string;
-  audio_file_name: string | null;
-  audio_storage_path: string | null;
-  translated_text: string | null;
-  detected_language: string | null;
-  error_type: string;
-  error_message: string;
-  error_traceback: string | null;
-  failure_stage: string | null;
-  preprocessing_logs_text: string | null;
-  intent_data: any;
-  created_at: string;
-}
-
-interface ErrorStats {
-  total_errors: number;
-  by_failure_stage: Record<string, number>;
-  top_error_types: Record<string, number>;
-  by_endpoint: Record<string, number>;
-}
+import type { ErrorLog, ErrorStats } from "@/types/error-logs";
+import { ADMIN_CREDENTIALS_STORAGE_KEY, ADMIN_ERROR_LOGS_PAGE_SIZE } from "@/constants/admin";
+import { getBasicAuthHeaders } from "@/lib/admin-error-logs-auth";
+import AdminErrorLogsLoginForm from "@/components/AdminErrorLogsLoginForm";
+import type { AdminCredentialsRequest } from "@/Validators/admin";
 
 export default function ErrorLogsPage() {
+  // Always start as null so server and first client render match (avoids hydration error).
+  // Restore from sessionStorage in useEffect after mount.
+  const [credentials, setCredentials] = useState<{ username: string; password: string } | null>(null);
+  const [loginError, setLoginError] = useState<string | null>(null);
+
   const [filters, setFilters] = useState({
     endpoint: "",
     failure_stage: "",
     error_type: "",
   });
   const [page, setPage] = useState(0);
-  const [pageSize] = useState(50);
   const [selectedLog, setSelectedLog] = useState<ErrorLog | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [audioBlobUrl, setAudioBlobUrl] = useState<string | null>(null);
+  const audioBlobUrlRef = useRef<string | null>(null);
 
-  // Fetch error logs
+  const authHeaders = getBasicAuthHeaders(credentials);
+
+  // Restore credentials from sessionStorage after mount (client-only) to avoid hydration mismatch.
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem(ADMIN_CREDENTIALS_STORAGE_KEY);
+      if (!stored) return;
+      const parsed = JSON.parse(stored) as { username: string; password: string };
+      if (parsed?.username && parsed?.password) {
+        setCredentials(parsed);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const saveCredentials = useCallback((user: string, pass: string) => {
+    const c = { username: user, password: pass };
+    setCredentials(c);
+    try {
+      sessionStorage.setItem(ADMIN_CREDENTIALS_STORAGE_KEY, JSON.stringify(c));
+    } catch {}
+  }, []);
+
+  const clearCredentials = useCallback(() => {
+    setCredentials(null);
+    setLoginError(null);
+    try {
+      sessionStorage.removeItem(ADMIN_CREDENTIALS_STORAGE_KEY);
+    } catch {}
+  }, []);
+
+  // Fetch error logs (only when credentials are set)
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ["error-logs", page, pageSize, filters],
+    queryKey: ["error-logs", page, ADMIN_ERROR_LOGS_PAGE_SIZE, filters, credentials],
     queryFn: async () => {
       const params = new URLSearchParams({
-        skip: String(page * pageSize),
-        limit: String(pageSize),
+        skip: String(page * ADMIN_ERROR_LOGS_PAGE_SIZE),
+        limit: String(ADMIN_ERROR_LOGS_PAGE_SIZE),
       });
-      
       if (filters.endpoint) params.append("endpoint", filters.endpoint);
       if (filters.failure_stage) params.append("failure_stage", filters.failure_stage);
       if (filters.error_type) params.append("error_type", filters.error_type);
-
-      const response = await axios.get(`/api/admin/error-logs?${params.toString()}`);
+      const response = await axios.get(`/api/admin/error-logs?${params.toString()}`, {
+        headers: authHeaders,
+      });
       return response.data;
     },
+    enabled: !!credentials?.username && !!credentials?.password,
   });
 
   // Fetch stats
   const { data: stats } = useQuery({
-    queryKey: ["error-stats"],
+    queryKey: ["error-stats", credentials],
     queryFn: async () => {
-      const response = await axios.get("/api/admin/error-logs/stats");
+      const response = await axios.get("/api/admin/error-logs/stats", {
+        headers: authHeaders,
+      });
       return response.data as ErrorStats;
     },
+    enabled: !!credentials?.username && !!credentials?.password,
   });
+
+  // Clear credentials on 401
+  useEffect(() => {
+    if (error && axios.isAxiosError(error) && error.response?.status === 401) {
+      clearCredentials();
+      toast.error("Session expired. Please sign in again.");
+    }
+  }, [error, clearCredentials]);
+
+  // Load audio as blob when modal opens with audio (so we can send auth header)
+  useEffect(() => {
+    if (!selectedLog?.audio_storage_path || !credentials) {
+      if (audioBlobUrlRef.current) {
+        URL.revokeObjectURL(audioBlobUrlRef.current);
+        audioBlobUrlRef.current = null;
+        setAudioBlobUrl(null);
+      }
+      return;
+    }
+    const path = selectedLog.audio_storage_path;
+    const headers = getBasicAuthHeaders(credentials);
+    let cancelled = false;
+    fetch(`/api/admin/error-logs/audio/${encodeURIComponent(path)}`, { headers })
+      .then((res) => (res.ok ? res.blob() : Promise.reject(new Error("Failed to load audio"))))
+      .then((blob) => {
+        if (cancelled) return;
+        if (audioBlobUrlRef.current) URL.revokeObjectURL(audioBlobUrlRef.current);
+        const url = URL.createObjectURL(blob);
+        audioBlobUrlRef.current = url;
+        setAudioBlobUrl(url);
+      })
+      .catch(() => {
+        if (!cancelled) setAudioBlobUrl(null);
+      });
+    return () => {
+      cancelled = true;
+      if (audioBlobUrlRef.current) {
+        URL.revokeObjectURL(audioBlobUrlRef.current);
+        audioBlobUrlRef.current = null;
+        setAudioBlobUrl(null);
+      }
+    };
+  }, [selectedLog?.audio_storage_path, credentials?.username, credentials?.password]);
+
+  const handleLogin = async (data: AdminCredentialsRequest) => {
+    setLoginError(null);
+    try {
+      const testRes = await axios.get("/api/admin/error-logs?skip=0&limit=1", {
+        headers: getBasicAuthHeaders({ username: data.username, password: data.password }),
+      });
+      if (testRes.status === 200) {
+        saveCredentials(data.username, data.password);
+        toast.success("Signed in successfully.");
+      }
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        const data = err.response?.data as { error?: string; detail?: string } | undefined;
+        const detail = data?.error ?? data?.detail ?? "Invalid credentials.";
+        setLoginError(status === 401 ? "Invalid username or password." : detail);
+      } else {
+        setLoginError("Invalid credentials.");
+      }
+    }
+  };
 
   const handleExport = async () => {
     try {
@@ -90,6 +179,7 @@ export default function ErrorLogsPage() {
 
       const response = await axios.get(`/api/admin/error-logs/export?${params.toString()}`, {
         responseType: "blob",
+        headers: authHeaders,
       });
 
       // Create download link
@@ -103,11 +193,21 @@ export default function ErrorLogsPage() {
       window.URL.revokeObjectURL(url);
 
       toast.success("Error logs exported successfully");
-    } catch (error: any) {
+    } catch (err: unknown) {
       toast.error("Failed to export error logs");
-      console.error(error);
+      console.error(err);
     }
   };
+
+  // Show login form when no credentials (or after 401 clear)
+  if (!credentials?.username || !credentials?.password) {
+    return (
+      <AdminErrorLogsLoginForm
+        onLogin={handleLogin}
+        loginError={loginError}
+      />
+    );
+  }
 
   if (error) {
     return (
@@ -127,6 +227,10 @@ export default function ErrorLogsPage() {
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">API Error Logs</h1>
         <div className="flex gap-2">
+          <Button onClick={clearCredentials} variant="ghost" size="sm" title="Use different credentials">
+            <LogOut className="h-4 w-4 mr-2" />
+            Sign out
+          </Button>
           <Button onClick={() => refetch()} variant="outline">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
@@ -286,10 +390,10 @@ export default function ErrorLogsPage() {
         </div>
 
         {/* Pagination */}
-        {data && data.total > pageSize && (
+        {data && data.total > ADMIN_ERROR_LOGS_PAGE_SIZE && (
           <div className="flex justify-between items-center p-4 border-t">
             <div className="text-sm text-muted-foreground">
-              Showing {page * pageSize + 1} to {Math.min((page + 1) * pageSize, data.total)} of{" "}
+              Showing {page * ADMIN_ERROR_LOGS_PAGE_SIZE + 1} to {Math.min((page + 1) * ADMIN_ERROR_LOGS_PAGE_SIZE, data.total)} of{" "}
               {data.total} errors
             </div>
             <div className="flex gap-2">
@@ -303,7 +407,7 @@ export default function ErrorLogsPage() {
               <Button
                 variant="outline"
                 onClick={() => setPage((p) => p + 1)}
-                disabled={(page + 1) * pageSize >= data.total}
+                disabled={(page + 1) * ADMIN_ERROR_LOGS_PAGE_SIZE >= data.total}
               >
                 Next
               </Button>
@@ -372,11 +476,12 @@ export default function ErrorLogsPage() {
                 <label className="text-sm font-semibold text-muted-foreground">Recorded Audio</label>
                 <audio
                   controls
-                  src={`/api/admin/error-logs/audio/${selectedLog.audio_storage_path}`}
+                  src={audioBlobUrl ?? undefined}
                   className="mt-1 w-full max-w-md"
                 >
                   Your browser does not support the audio element.
                 </audio>
+                {!audioBlobUrl && <p className="text-xs text-muted-foreground mt-1">Loading audio…</p>}
               </div>
             )}
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateRequest } from "@/auth";
+import { getAdminBasicAuthHeaders } from "@/lib/admin-auth";
 import axios from "axios";
 
 export async function GET(req: NextRequest) {
@@ -26,7 +27,11 @@ export async function GET(req: NextRequest) {
     const microserviceUrl = process.env.NEXT_PUBLIC_MICROSERVICE_URL || "http://localhost:8000";
     const url = `${microserviceUrl}/admin/error-logs?${params.toString()}`;
 
-    const response = await axios.get(url);
+    const authHeader = req.headers.get("authorization");
+    const headers = authHeader
+      ? { Authorization: authHeader }
+      : getAdminBasicAuthHeaders();
+    const response = await axios.get(url, { headers });
     return NextResponse.json(response.data);
   } catch (error: any) {
     console.error("Error fetching error logs:", error);

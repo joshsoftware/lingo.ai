@@ -14,6 +14,7 @@ from logger import logger
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
+
 def get_db():
     db = SessionLocal()
     try:
@@ -21,13 +22,12 @@ def get_db():
     finally:
         db.close()
 
+
 def check_admin_role():
     """
     TODO: Implement proper admin authentication/authorization
     For now, this is a placeholder - you should add proper JWT/auth checks
     """
-    # Example: Check if user has admin role from token
-    # For now, we'll skip auth check - add proper implementation
     return True
 
 @router.get("/error-logs")

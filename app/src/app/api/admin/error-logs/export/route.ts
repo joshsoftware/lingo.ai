@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateRequest } from "@/auth";
+import { getAdminBasicAuthHeaders } from "@/lib/admin-auth";
 import axios from "axios";
 
 export async function GET(req: NextRequest) {
@@ -26,8 +27,13 @@ export async function GET(req: NextRequest) {
     const microserviceUrl = process.env.NEXT_PUBLIC_MICROSERVICE_URL || "http://localhost:8000";
     const url = `${microserviceUrl}/admin/error-logs/export?${params.toString()}`;
 
+    const authHeader = req.headers.get("authorization");
+    const headers = authHeader
+      ? { Authorization: authHeader }
+      : getAdminBasicAuthHeaders();
     const response = await axios.get(url, {
-      responseType: "arraybuffer", // Important for binary data
+      responseType: "arraybuffer",
+      headers,
     });
 
     // Get filename from Content-Disposition header or generate one
