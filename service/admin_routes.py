@@ -23,13 +23,6 @@ def get_db():
         db.close()
 
 
-def check_admin_role():
-    """
-    TODO: Implement proper admin authentication/authorization
-    For now, this is a placeholder - you should add proper JWT/auth checks
-    """
-    return True
-
 @router.get("/error-logs")
 async def get_error_logs(
     skip: int = Query(0, ge=0),
@@ -41,11 +34,10 @@ async def get_error_logs(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     db = Depends(get_db),
-    _admin_check = Depends(check_admin_role),
 ):
     """
     Get paginated list of error logs with optional filters.
-    Only accessible by admin users.
+    Access controlled by Next.js middleware and API route session auth.
     """
     try:
         query = db.query(APIErrorLog)
@@ -94,7 +86,6 @@ async def get_error_logs(
 @router.get("/error-logs/stats")
 async def get_error_stats(
     db = Depends(get_db),
-    _admin_check = Depends(check_admin_role),
 ):
     """
     Get statistics about error logs.
@@ -139,7 +130,6 @@ async def export_error_logs_csv(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     db = Depends(get_db),
-    _admin_check = Depends(check_admin_role),
 ):
     """
     Export error logs as CSV file.
@@ -214,7 +204,6 @@ async def export_error_logs_csv(
 @router.get("/error-logs/audio/{filename}")
 async def get_error_log_audio(
     filename: str,
-    _admin_check = Depends(check_admin_role),
 ):
     """
     Serve stored audio file for an error log (for playback in admin UI).
@@ -234,7 +223,6 @@ async def get_error_log_audio(
 async def get_error_log_detail(
     log_id: int,
     db = Depends(get_db),
-    _admin_check = Depends(check_admin_role),
 ):
     """
     Get detailed information about a specific error log.
