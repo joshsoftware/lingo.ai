@@ -1,3 +1,11 @@
+# Silero VAD: threshold 0.2 = require speech above this probability (-20 interpreted as 0.2)
+SILERO_VAD_THRESHOLD = 0.2
+MIN_AUDIO_SIZE_BYTES = 100  # bytes
+MIN_SPEECH_DURATION_SEC = 2  # seconds
+SILERO_SAMPLING_RATE = 16000  # Hz (samples per second)
+SILERO_VAD_REPO = "snakers4/silero-vad"
+SILERO_VAD_MODEL = "silero_vad"
+
 # Zaban API path segments (base URL from config). Model name for STT.
 ZABAN_API_PATH_STT = "/api/v1/stt"
 ZABAN_API_PATH_TRANSLATE = "/api/v1/translate"
