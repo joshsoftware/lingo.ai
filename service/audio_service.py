@@ -37,7 +37,6 @@ from config import openai_api_key, model_id, model_path, zaban_base_url, zaban_a
 from constants import ZABAN_LANG_TO_CODE, ZABAN_API_PATH_STT, ZABAN_STT_MODEL
 from load_model import load_model
 import logging
-import whisper_timestamped as whisper_ts
 import requests
 from urllib.parse import urlparse
 import tempfile
@@ -100,48 +99,26 @@ def translate_with_whisper(audioPath):
             detail=f"Translation failed: {str(e)}"
         )
 
-#translate the audio file to English language using whisper timestamp model
-def translate_with_whisper_timestamped(audioPath):
-    """Translate audio file to English language using whisper timestamp model."""
-    logger.info("Translation started")
+# Transcribe via Zaban STT (model=whisper) with segment timestamps. Used for URL audio.
+def translate_with_whisper_timestamped(audio_url: str):
+    """Transcribe audio from URL via Zaban STT: send link directly (no download). Returns text, segments, detected_language."""
+    logger.info("Transcription started (Zaban)")
     try:
-        validate_audio_url(audioPath)
-        options = dict(beam_size=5, best_of=5, temperature=(0.0, 0.2, 0.4, 0.6, 0.8, 1.0))
-        translate_options = dict(task="translate", **options)
-        result = whisper_ts.transcribe_timestamped(
-            model,
-            audioPath,            
-            condition_on_previous_text=False,
-            vad=False,
-            trust_whisper_timestamps=False,
-            **translate_options
-        )
-        
-        # Extract detected language
-        detected_language = (
-            result.get('language') or 
-            result.get('detected_language') or 
-            'unknown'
-        )
-        
-        # Check if language_probs exists
-        if 'language_probs' in result:
-            logger.info("Language probabilities: %s", result['language_probs'])
-        
-        return {
-            "text": result.get("text", ""),
-            "segments": result.get("segments", []),
-            "detected_language": detected_language,
-            "transcription_result": result
-        }
-        
+        validate_audio_url(audio_url)
+        return _transcribe_with_zaban_by_url(audio_url)
     except HTTPException:
         raise
+    except requests.RequestException as e:
+        logger.error(f"Zaban STT request failed: {str(e)}")
+        raise HTTPException(
+            status_code=502,
+            detail=f"Transcription failed: {str(e)}"
+        )
     except Exception as e:
-        logger.error(f"Translation failed: {str(e)}")
+        logger.error(f"Transcription failed: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Translation failed: {str(e)}"
+            detail=f"Transcription failed: {str(e)}"
         )
 
 def _zaban_lang_to_code(lang: str) -> str:
@@ -160,8 +137,73 @@ def _zaban_lang_to_code(lang: str) -> str:
     return "en"
 
 
+def _normalize_segments(segments: list) -> list:
+    """Normalize Zaban/whisper segments to {start, end, text}."""
+    if not segments:
+        return []
+    out = []
+    for s in segments:
+        if isinstance(s, dict):
+            out.append({
+                "start": float(s.get("start", 0)),
+                "end": float(s.get("end", 0)),
+                "text": s.get("text", ""),
+            })
+        else:
+            out.append({"start": 0.0, "end": 0.0, "text": str(s)})
+    return out
+
+
+def _parse_zaban_stt_response(result: dict) -> dict:
+    """Parse Zaban STT JSON response into unified dict with text, segments, detected_language, language."""
+    text = result.get("text", "").strip() or ""
+    raw_lang = result.get("language", "en")
+    lang_code = _zaban_lang_to_code(raw_lang)
+    segments = _normalize_segments(result.get("segments", []))
+    return {
+        "text": text,
+        "segments": segments,
+        "detected_language": raw_lang,
+        "language": lang_code,
+    }
+
+
+def _transcribe_with_zaban_by_url(audio_url: str) -> dict:
+    """
+    Transcribe audio via Zaban STT by sending the audio URL (no download).
+    POST JSON with audio_url and model=whisper. Returns same shape as _transcribe_with_zaban.
+    """
+    url = f"{zaban_base_url.rstrip('/')}{ZABAN_API_PATH_STT}"
+    headers = {"Content-Type": "application/json"}
+    if zaban_api_key:
+        headers["X-API-Key"] = zaban_api_key
+    payload = {"audio_url": audio_url, "model": ZABAN_STT_MODEL}
+    r = requests.post(url, json=payload, headers=headers, timeout=300)
+    r.raise_for_status()
+    result = r.json()
+    return _parse_zaban_stt_response(result)
+
+
+def _transcribe_with_zaban(audio_path: str, filename: str = "audio.wav") -> dict:
+    """
+    Transcribe audio file via Zaban STT (model=whisper). Used for upload flow.
+    Returns dict with text, segments (whisper-style timestamps), detected_language.
+    """
+    url = f"{zaban_base_url.rstrip('/')}{ZABAN_API_PATH_STT}"
+    headers = {}
+    if zaban_api_key:
+        headers["X-API-Key"] = zaban_api_key
+    with open(audio_path, "rb") as audio_file:
+        files = {"audio": (filename, audio_file, "audio/wav")}
+        data = {"model": ZABAN_STT_MODEL}
+        r = requests.post(url, files=files, data=data, headers=headers, timeout=300)
+    r.raise_for_status()
+    result = r.json()
+    return _parse_zaban_stt_response(result)
+
+
 def translate_with_whisper_from_upload(upload_file: UploadFile):
-    """Transcribe uploaded audio via Zaban STT. Returns (id, [_, text], [_, lang_code], _) for main.py compatibility."""
+    """Transcribe uploaded audio via Zaban STT (whisper timestamps). Returns (id, [_, text], [_, lang_code], _) for main.py compatibility."""
     logger.info("STT from upload started (Zaban)")
     temp_file_path = None
     try:
@@ -179,20 +221,9 @@ def translate_with_whisper_from_upload(upload_file: UploadFile):
         if not temp_file_path:
             return (None, [None, "Unclear command"], [None, "en"], None)
 
-        url = f"{zaban_base_url.rstrip('/')}{ZABAN_API_PATH_STT}"
-        headers = {}
-        if zaban_api_key:
-            headers["X-API-Key"] = zaban_api_key
-        with open(temp_file_path, "rb") as audio_file:
-            files = {"audio": (upload_file.filename or "audio.wav", audio_file, "audio/wav")}
-            data = {"model": ZABAN_STT_MODEL}
-            r = requests.post(url, files=files, data=data, headers=headers, timeout=60)
-        r.raise_for_status()
-        result = r.json()
-        text = result.get("text", "").strip() or "Unclear command"
-        raw_lang = result.get("language", "en")
-        lang_code = _zaban_lang_to_code(raw_lang)
-        # main.py expects: id, response, lang, dia = ...; response[1] = text; lang[1] = language
+        data = _transcribe_with_zaban(temp_file_path, upload_file.filename or "audio.wav")
+        text = data["text"] or "Unclear command"
+        lang_code = data["language"]
         return (None, [None, text], [None, lang_code], None)
     except requests.RequestException as e:
         logger.error(f"Zaban STT request failed: {str(e)}")
