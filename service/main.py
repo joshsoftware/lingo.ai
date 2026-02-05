@@ -167,9 +167,23 @@ async def transcribe_intent(
             return JSONResponse(status_code=400, content={"message":"No audio file provided"})
 
         # Step 1: Common audio processing (transcription and intent detection)
-        id,response,lang,dia = translate_with_whisper_from_upload(audio)
-        translation_text = response[1]
-        language = lang[1]
+        stt_result = translate_with_whisper_from_upload(audio)
+
+        # Handle Sarvam STT response in a duck-typed way:
+        # it may be a dict-like object or a response model.
+        transcript = None
+        lang_code = None
+
+        if isinstance(stt_result, dict):
+            transcript = stt_result.get("transcript")
+            lang_code = stt_result.get("language_code")
+        else:
+            # Fallback to attribute-style access
+            transcript = getattr(stt_result, "transcript", None)
+            lang_code = getattr(stt_result, "language_code", None)
+
+        translation_text = transcript or ""
+        language = lang_code
         logger.info("Translation done")
         logger.info(translation_text)
         logger.info(language)
