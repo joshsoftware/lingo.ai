@@ -100,12 +100,18 @@ def translate_with_whisper(audioPath):
         )
 
 # Transcribe via Zaban STT (model=whisper) with segment timestamps. Used for URL audio.
-def translate_with_whisper_timestamped(audio_url: str):
-    """Transcribe audio from URL via Zaban STT: send link directly (no download). Returns text, segments, detected_language."""
+def translate_with_whisper_timestamped(audio_url: str, translate_to_english: bool = True):
+    """
+    Transcribe audio from URL via Zaban STT: send link directly (no download).
+
+    By default, uses `translate_to_english=True` to mirror previous whisper_ts behaviour:
+    English text + segment timestamps, while still allowing callers to opt-out.
+    Returns dict with text, segments, detected_language.
+    """
     logger.info("Transcription started (Zaban)")
     try:
         validate_audio_url(audio_url)
-        return _transcribe_with_zaban_by_url(audio_url)
+        return _transcribe_with_zaban_by_url(audio_url, translate_to_english=translate_to_english)
     except HTTPException:
         raise
     except requests.RequestException as e:
@@ -154,10 +160,20 @@ def _normalize_segments(segments: list) -> list:
     return out
 
 
-def _parse_zaban_stt_response(result: dict) -> dict:
-    """Parse Zaban STT JSON response into unified dict with text, segments, detected_language, language."""
-    text = result.get("text", "").strip() or ""
-    raw_lang = result.get("language", "en")
+def _parse_zaban_stt_response(result: dict, translate_to_english: bool = False) -> dict:
+    """
+    Parse Zaban STT JSON response into unified dict with text, segments, detected_language, language.
+
+    When translate_to_english is True and the backend returns `translated_text` / `target_lang`,
+    we surface the English translation as `text` to preserve previous whisper_ts behaviour.
+    """
+    if translate_to_english and result.get("translated_text"):
+        # Prefer translated text and target language if available
+        text = result.get("translated_text", "").strip() or result.get("text", "").strip() or ""
+        raw_lang = result.get("target_lang", "eng_Latn")
+    else:
+        text = result.get("text", "").strip() or ""
+        raw_lang = result.get("language", "en")
     lang_code = _zaban_lang_to_code(raw_lang)
     segments = _normalize_segments(result.get("segments", []))
     return {
@@ -168,7 +184,7 @@ def _parse_zaban_stt_response(result: dict) -> dict:
     }
 
 
-def _transcribe_with_zaban_by_url(audio_url: str) -> dict:
+def _transcribe_with_zaban_by_url(audio_url: str, translate_to_english: bool = True) -> dict:
     """
     Transcribe audio via Zaban STT by sending the audio URL (no download).
     POST JSON with audio_url and model=whisper. Returns same shape as _transcribe_with_zaban.
@@ -177,14 +193,19 @@ def _transcribe_with_zaban_by_url(audio_url: str) -> dict:
     headers = {"Content-Type": "application/json"}
     if zaban_api_key:
         headers["X-API-Key"] = zaban_api_key
-    payload = {"audio_url": audio_url, "model": ZABAN_STT_MODEL}
+    payload = {
+        "audio_url": audio_url,
+        "model": ZABAN_STT_MODEL,
+        # Preserve previous whisper_ts semantics: translate to English by default
+        "translate_to_english": translate_to_english,
+    }
     r = requests.post(url, json=payload, headers=headers, timeout=300)
     r.raise_for_status()
     result = r.json()
-    return _parse_zaban_stt_response(result)
+    return _parse_zaban_stt_response(result, translate_to_english=translate_to_english)
 
 
-def _transcribe_with_zaban(audio_path: str, filename: str = "audio.wav") -> dict:
+def _transcribe_with_zaban(audio_path: str, filename: str = "audio.wav", translate_to_english: bool = True) -> dict:
     """
     Transcribe audio file via Zaban STT (model=whisper). Used for upload flow.
     Returns dict with text, segments (whisper-style timestamps), detected_language.
@@ -195,15 +216,19 @@ def _transcribe_with_zaban(audio_path: str, filename: str = "audio.wav") -> dict
         headers["X-API-Key"] = zaban_api_key
     with open(audio_path, "rb") as audio_file:
         files = {"audio": (filename, audio_file, "audio/wav")}
-        data = {"model": ZABAN_STT_MODEL}
+        data = {
+            "model": ZABAN_STT_MODEL,
+            # For upload flow we default to transcription-only unless explicitly changed
+            "translate_to_english": str(translate_to_english).lower(),
+        }
         r = requests.post(url, files=files, data=data, headers=headers, timeout=300)
     r.raise_for_status()
     result = r.json()
-    return _parse_zaban_stt_response(result)
+    return _parse_zaban_stt_response(result, translate_to_english=translate_to_english)
 
 
 def translate_with_whisper_from_upload(upload_file: UploadFile):
-    """Transcribe uploaded audio via Zaban STT (whisper timestamps). Returns (id, [_, text], [_, lang_code], _) for main.py compatibility."""
+    """Transcribe uploaded audio via Zaban STT (English + whisper timestamps). Returns (id, [_, text], [_, lang_code], _) for main.py compatibility."""
     logger.info("STT from upload started (Zaban)")
     temp_file_path = None
     try:
@@ -221,7 +246,7 @@ def translate_with_whisper_from_upload(upload_file: UploadFile):
         if not temp_file_path:
             return (None, [None, "Unclear command"], [None, "en"], None)
 
-        data = _transcribe_with_zaban(temp_file_path, upload_file.filename or "audio.wav")
+        data = _transcribe_with_zaban(temp_file_path, upload_file.filename or "audio.wav", translate_to_english=True)
         text = data["text"] or "Unclear command"
         lang_code = data["language"]
         return (None, [None, text], [None, lang_code], None)
