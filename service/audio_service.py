@@ -164,16 +164,16 @@ def _parse_zaban_stt_response(result: dict, translate_to_english: bool = False) 
     """
     Parse Zaban STT JSON response into unified dict with text, segments, detected_language, language.
 
-    When translate_to_english is True and the backend returns `translated_text` / `target_lang`,
-    we surface the English translation as `text` to preserve previous whisper_ts behaviour.
+    When translate_to_english is True we use translated_text as text (English), but we always use
+    the detected (source) language for detected_language and language so downstream (intent,
+    session, response translation) get the user's spoken language.
     """
     if translate_to_english and result.get("translated_text"):
-        # Prefer translated text and target language if available
         text = result.get("translated_text", "").strip() or result.get("text", "").strip() or ""
-        raw_lang = result.get("target_lang", "eng_Latn")
     else:
         text = result.get("text", "").strip() or ""
-        raw_lang = result.get("language", "en")
+    # Always use detected (source) language for lang_code and detected_language, not target_lang
+    raw_lang = result.get("language", "en")
     lang_code = _zaban_lang_to_code(raw_lang)
     segments = _normalize_segments(result.get("segments", []))
     return {
