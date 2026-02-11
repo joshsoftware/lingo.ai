@@ -74,3 +74,4 @@ secrets:
 volumes:
   postgres_data:
   ollama_data:
+  app_node_modules:
