@@ -14,6 +14,7 @@ services:
       - postgres
     volumes:
       - ./app:/lingo/app
+      - app_node_modules:/lingo/app/node_modules
 
   fastapi:
     container_name: service
