@@ -5,23 +5,18 @@ import json
 import re
 import logging
 import ollama
-from config import ollama_host, ollama_model_name, ollama_translation_model_name, sarvam_api_key
+from config import ollama_host, ollama_model_name, zaban_base_url, zaban_api_key
 from typing import Dict, Any
 from time_utils import normalize_timeframe
 import requests
 import os
-from sarvamai import SarvamAI
+
+from constants import ZABAN_LANG_TO_CODE, ZABAN_API_PATH_TRANSLATE
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
-lang_map = {
-    "en": "English", "hi": "Hindi", "bn": "Bengali", "ta": "Tamil", "te": "Telugu",
-    "mr": "Marathi", "ml": "Malayalam", "kn": "Kannada", "gu": "Gujarati", "pa": "Punjabi",
-    "or": "Odia", "ur": "Urdu", "sa": "Sanskrit", "ar": "Arabic", "fr": "French",
-    "de": "German", "es": "Spanish", "it": "Italian", "pt": "Portuguese", "zh": "Chinese",
-    "ja": "Japanese", "ko": "Korean", "ru": "Russian", "sv": "Swedish", "pl": "Polish",
-    "tr": "Turkish", "cs": "Czech", "fi": "Finnish", "he": "Hebrew"
-}
+# Derived from single constant in constants to avoid mismatches.
+LANG_CODE_TO_BCP47 = {v: k for k, v in ZABAN_LANG_TO_CODE.items()}
 ALLOWED_INTENTS = ["check_balance", "recent_txn", "transfer_money",  "txn_insights", "list_beneficiaries", "unknown"]
 
 SYSTEM = """
@@ -99,9 +94,7 @@ Do NOT hallucinate.
 
 """
 
-client = SarvamAI(
-    api_subscription_key=sarvam_api_key,
-)
+
 def safe_json_parse(s: str) -> Dict[str, Any]:
     # Try direct parse
     try:
@@ -174,19 +167,37 @@ def validate_schema(result: dict) -> dict:
         "language": language,
         "confidence": confidence,
     }
-def translate(message:str, lang_code: str = "en"):
-    #lang_code = lang_map.get(lang_code,"English")
-    logger.info(f"Model: {ollama_translation_model_name}, language: {lang_code}")
-    if lang_code == "en-IN":
+def translate(message: str, lang_code: str = "en") -> str:
+    """Translate message from English to target language using Zaban Translation API. No-op for English."""
+    short = (lang_code or "en").split("-")[0].strip().lower()
+    if short == "en":
+        return message
+    target_bcp = LANG_CODE_TO_BCP47.get(short)
+    if not target_bcp:
+        logger.warning(f"Unsupported translation target: {lang_code}, returning original")
+        return message
+    if not zaban_api_key:
+        logger.warning("ZABAN_API_KEY not set; translation requires it. Returning original.")
         return message
     try:
-        id,response,lang = client.text.translate(
-            input=message,
-            source_language_code="en-IN",
-            target_language_code=f"{lang_code}",
-            speaker_gender="Female"
-        )
-        return response[1]
+        url = f"{zaban_base_url.rstrip('/')}{ZABAN_API_PATH_TRANSLATE}"
+        headers = {
+            "Content-Type": "application/json",
+            "X-API-Key": zaban_api_key,
+        }
+        payload = {
+            "text": message,
+            "source_lang": "eng_Latn",
+            "target_lang": target_bcp,
+        }
+        r = requests.post(url, json=payload, headers=headers, timeout=30)
+        r.raise_for_status()
+        result = r.json()
+        out = (result.get("translated_text") or "").strip()
+        return out if out else message
+    except requests.RequestException as e:
+        logger.error(f"Zaban translation failed: {str(e)}")
+        return message
     except Exception as e:
         logger.error(f"Error during translation: {str(e)}")
         return message

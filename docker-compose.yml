@@ -24,6 +24,7 @@ services:
       - ./service/.env
     depends_on:
       - ollama
+      - redis
     ports:
       - "8000:8000"
     volumes:
@@ -53,6 +54,13 @@ services:
       - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
+
+  redis:
+    container_name: lingo-redis
+    image: redis:latest
+    restart: always
+    ports:
+      - "6379:6379"
 
 secrets:
   db_user:
