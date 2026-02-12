@@ -33,6 +33,7 @@ RUN npm ci --omit=dev --legacy-peer-deps
 COPY --from=builder /lingo/app/.next ./.next
 COPY --from=builder /lingo/app/public ./public
 COPY --from=builder /lingo/app/scripts ./scripts
+COPY --from=builder /lingo/app/migrations ./migrations
 
 # Copy other necessary config files
 COPY next.config.* ./
