@@ -49,8 +49,8 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 openai.api_key = openai_api_key
 #Load whisher model
-logger.info("Loading model...")
-model = load_model(model_id, model_path=model_path, is_ts=True)
+# logger.info("Loading model...")
+# model = load_model(model_id, model_path=model_path, is_ts=True)
 
 def validate_audio_url(url):
     """Validate if the URL is accessible and returns audio content."""
@@ -81,23 +81,24 @@ def validate_audio_url(url):
 
 
 #translate the audio file to English language using whisper model
-def translate_with_whisper(audioPath):
-    """Translate audio file to English language using whisper model."""
-    logger.info("Translation started")
-    try:
-        validate_audio_url(audioPath)
-        options = dict(beam_size=5, best_of=5)
-        translate_options = dict(task="translate", **options)
-        result = model.transcribe(audioPath, **translate_options)
-        return result["text"]
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Translation failed: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Translation failed: {str(e)}"
-        )
+# DEPRECATED: Now using Zaban API instead of local Whisper model
+# def translate_with_whisper(audioPath):
+#     """Translate audio file to English language using whisper model."""
+#     logger.info("Translation started")
+#     try:
+#         validate_audio_url(audioPath)
+#         options = dict(beam_size=5, best_of=5)
+#         translate_options = dict(task="translate", **options)
+#         result = model.transcribe(audioPath, **translate_options)
+#         return result["text"]
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         logger.error(f"Translation failed: {str(e)}")
+#         raise HTTPException(
+#             status_code=500,
+#             detail=f"Translation failed: {str(e)}"
+#         )
 
 # Transcribe via Zaban STT (model=whisper) with segment timestamps. Used for URL audio.
 def translate_with_whisper_timestamped(audio_url: str, translate_to_english: bool = True):
