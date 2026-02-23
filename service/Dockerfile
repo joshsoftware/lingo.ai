@@ -30,7 +30,10 @@ RUN apt-get update && \
 COPY --from=builder /usr/local/lib/python3.9/site-packages /usr/local/lib/python3.9/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Copy application code
+# Ensure New Relic CLI is available (newrelic-admin); builder cache may omit it
+RUN pip install --no-cache-dir newrelic
+
+# Copy application code (includes newrelic.ini when present)
 COPY . .
 
 # Create non-root user for security
@@ -40,5 +43,6 @@ USER appuser
 
 EXPOSE 8000
 
-# Production uvicorn with multiple workers
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+# Run uvicorn under New Relic agent (config: /lingo/service/newrelic.ini)
+ENV NEW_RELIC_CONFIG_FILE=/lingo/service/newrelic.ini
+CMD ["newrelic-admin", "run-program", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
