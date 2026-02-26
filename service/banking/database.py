@@ -19,8 +19,14 @@ DB_NAME = config.db_name
 
 SQLALCHEMY_DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
-# Create PostgreSQL engine
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
+# Create PostgreSQL engine with SSL for AWS RDS
+# AWS RDS requires SSL - this configuration accepts AWS certificates
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL,
+    connect_args={
+        "sslmode": "require",
+    }
+)
 
 # Create a SessionLocal class for database session
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

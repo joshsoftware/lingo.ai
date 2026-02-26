@@ -7,8 +7,16 @@ if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL is not set");
 }
 
+// SSL configuration for AWS RDS
+const sslConfig = {
+  // AWS RDS requires SSL but uses self-signed certificates
+  // This keeps encryption enabled while accepting AWS certificates
+  rejectUnauthorized: false,
+};
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  ssl: sslConfig,
 });
 
 const db = drizzle(pool);

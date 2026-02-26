@@ -8,12 +8,9 @@ services:
       - ./app/.env
     ports:
       - "3000:3000"
-
     depends_on:
       - fastapi
-      - postgres
-    volumes:
-      - ./app:/lingo/app
+    restart: unless-stopped
 
   fastapi:
     container_name: service
@@ -23,37 +20,10 @@ services:
     env_file:
       - ./service/.env
     depends_on:
-      - ollama
       - redis
     ports:
       - "8000:8000"
-    volumes:
-      - ./service:/lingo/service
-  postgres:
-    container_name: lingo-db
-    image: postgres:16
-    restart: always
-    environment:
-      POSTGRES_USER_FILE:  /run/secrets/db_user
-      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
-      POSTGRES_DB_FILE: /run/secrets/db_name
-    ports:
-     - "5432:5432"
-    volumes:
-    - postgres_data:/var/lib/postgresql/data
-    secrets:
-      - db_user
-      - db_name
-      - db_password
-
-  ollama:
-    container_name: ollama
-    image: ollama/ollama:0.6.6
-    restart: always
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
+    restart: unless-stopped
 
   redis:
     container_name: lingo-redis
@@ -61,16 +31,3 @@ services:
     restart: always
     ports:
       - "6379:6379"
-
-secrets:
-  db_user:
-    file: ./secrets/pg/db_user.txt
-  db_name:
-    file: ./secrets/pg/db_name.txt
-  db_password:
-    file: ./secrets/pg/db_password.txt
-
-volumes:
-  postgres_data:
-  ollama_data:
-  app_node_modules:
