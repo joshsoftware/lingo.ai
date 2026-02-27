@@ -18,7 +18,10 @@ db_host = os.getenv("DB_HOST")
 db_port = os.getenv("DB_PORT")
 db_name = os.getenv("DB_NAME")
 
-sarvam_api_key = os.getenv("SARVAM_API_KEY","")
+# Zaban STT/TTS API (replaces Sarvam for speech). Use https to avoid redirect (POST→GET causes 405).
+zaban_base_url = os.getenv("ZABAN_BASE_URL", "")
+zaban_api_key = os.getenv("ZABAN_API_KEY", "")
+
 # Redis configuration
 redis_host = os.getenv("REDIS_HOST", "localhost")
 redis_port = int(os.getenv("REDIS_PORT", 6379))

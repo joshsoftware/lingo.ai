@@ -7,7 +7,7 @@ import os
 from dotenv import load_dotenv
 from google.oauth2 import service_account
 from datetime import datetime, timezone
-from audio_service import translate_with_whisper
+from audio_service import translate_with_whisper_timestamped
 from summarizer import summarize_using_openai
 from logger import logger
 import ssl
@@ -153,7 +153,7 @@ def get_transcription_and_summary(file, drive_service, existing_file_ids, new_ro
         
         mime_type = file.get('mimeType', '')
         if mime_type.startswith('audio/') or mime_type.startswith('video/'):
-            translation = translate_with_whisper(public_link)
+            translation = translate_with_whisper_timestamped(public_link)
             logger.info(f"Translation for file '{file['name']}' completed.")
             logger.info("Translation: %s", translation)
             

@@ -200,47 +200,65 @@ class SessionFlowProcessor:
             return False, {"message": f"Session {session_id} not found"}
 
         missing_field = existing_session_data.get("missing_field")
+        existing_intent_data = existing_session_data.get("intent_data", {})
+        existing_intent = existing_intent_data.get("intent", "").lower()
+        new_intent = formatted_intent_data.get("intent", "").lower()
 
+        # Handle OTP flow (when OTP is provided without missing_field - e.g., confirming a transaction)
         if otp and not missing_field:
-            existing_intent = existing_session_data.get("intent_data", {})
-            updated_intent_data = existing_intent.copy()
-            updated_intent_data["entities"] = updated_intent_data.get("entities", {})
+            updated_intent_data = existing_intent_data.copy()
+            updated_intent_data["entities"] = existing_intent_data.get("entities", {}).copy()
             updated_intent_data["entities"]["otp"] = otp  # explicitly add otp
 
+        # Handle beneficiary_name flow
         elif beneficiary_name:
-            existing_intent = existing_session_data.get("intent_data", {})
-            updated_intent_data = existing_intent.copy()
-            updated_intent_data["entities"] = updated_intent_data.get("entities", {})
+            updated_intent_data = existing_intent_data.copy()
+            updated_intent_data["entities"] = existing_intent_data.get("entities", {}).copy()
             updated_intent_data["entities"]["recipient"] = beneficiary_name  # explicitly add beneficiary
 
-        elif not missing_field:
-            return False, {"message": "No missing field to update in session"}
-
-        elif (
+        # Handle case where there's a missing field to update
+        elif missing_field:
+            if (
                 formatted_intent_data.get("intent")
                 and formatted_intent_data["intent"].lower() != "unknown"
                 and formatted_intent_data.get("entities")
-        ):
-            existing_intent = existing_session_data.get("intent_data", {})
-            updated_intent_data = existing_intent.copy()
-            updated_intent_data["entities"] = updated_intent_data.get("entities", {})
+            ):
+                updated_intent_data = existing_intent_data.copy()
+                updated_intent_data["entities"] = existing_intent_data.get("entities", {}).copy()
 
-            # Update the missing field specifically
-            _value = formatted_intent_data["entities"].get(missing_field, translation_text)
-            if new_value is not None:
-                updated_intent_data["entities"][missing_field] = new_value.strip()
+                # Update the missing field specifically
+                new_value = formatted_intent_data["entities"].get(missing_field, translation_text)
+                if new_value is not None:
+                    updated_intent_data["entities"][missing_field] = str(new_value).strip()
 
-            # Also update other entities from formatted_intent_data if present
-            for key, value in formatted_intent_data["entities"].items():
-                if value:
-                    updated_intent_data["entities"][key] = value
+                # Also update other entities from formatted_intent_data if present
+                for key, value in formatted_intent_data["entities"].items():
+                    if value:
+                        updated_intent_data["entities"][key] = value
+            else:
+                updated_intent_data = self.session_service.update_intent_with_missing_field(
+                    existing_intent_data,
+                    missing_field,
+                    translation_text
+                )
 
-        else:
-            updated_intent_data = self.session_service.update_intent_with_missing_field(
-                existing_session_data.get("intent_data", {}),
-                missing_field,
-                translation_text
-            )
+        # Handle case where there's no missing_field - allow new intent if it's different or complete
+        elif not missing_field:
+            # If new intent is different from existing intent, process it as a new transaction
+            # OR if new intent has entities (even if same intent, user might be providing complete info)
+            new_entities = formatted_intent_data.get("entities", {})
+            has_entities = new_entities and any(v is not None and v != "" for v in new_entities.values())
+            
+            if (
+                formatted_intent_data.get("intent")
+                and formatted_intent_data["intent"].lower() != "unknown"
+                and (new_intent != existing_intent or has_entities)
+            ):
+                # Use the new intent data directly (new transaction in same session)
+                updated_intent_data = formatted_intent_data.copy()
+                updated_intent_data["entities"] = formatted_intent_data.get("entities", {}).copy()
+            else:
+                return False, {"message": "No missing field to update in session and new intent is incomplete or same as existing"}
 
         # Prepare parameters for orchestrator
         session_banking_params = self.session_service.prepare_session_banking_params(existing_session_data)

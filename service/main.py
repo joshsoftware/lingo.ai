@@ -3,7 +3,6 @@ from fastapi.responses import JSONResponse
 from logger import logger
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
-from audio_service import translate_with_whisper
 from audio_service import translate_with_whisper_timestamped, translate_with_whisper_from_upload
 from detect_intent import detect_intent_with_llama, format_intent_response, translate
 from summarizer import summarize_using_openai

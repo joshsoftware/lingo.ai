@@ -1,26 +1,14 @@
-from sarvamai import SarvamAI
+"""Example: text translation via detect_intent.translate (Ollama). No Sarvam."""
+from detect_intent import translate
 
-
-#SARVAM_API_KEY="sk_lz33toms_amJdXnvyWxlBQIs4OPue1yexi"
-SARVAM_API_KEY="sk_t7fvsjjb_7JsD5ZXGrEhHqjUtAQSFsCxB"
-client = SarvamAI(
-    api_subscription_key=SARVAM_API_KEY,
+# Uses Ollama (ollama_translation_model_name) for text translation
+message = (
+    "Please confirm the transaction ₹10.00 to Suresh Patil by entering the OTP "
+    "you have received on your registered mobile number"
 )
-
-response = client.text.translate(
-    #input="Please confirm your the transaction 10by entring the OTP you have recieved on your registered mobile number"
-    input="Please confirm the transaction ₹10.00 to Suresh Patil by entering the OTP you have recieved on your registered mobile number",
-    source_language_code="auto",
-    target_language_code="hi-IN",
-    speaker_gender="Female",
-    numerals_format="native"
-)
+response = translate(message, "hi")
 print(response)
-'''
-response = client.text_to_speech.convert(
-    text="Your account balacne is 2000.35",
-    target_language_code="ta-IN",
 
-)
-print(response)
-'''
+# For TTS (text-to-speech), call Zaban TTS API:
+#   POST {ZABAN_BASE_URL}/api/v1/tts with X-API-Key, JSON body: {"text": "...", "language": "hi"}
+#   Returns WAV bytes.
