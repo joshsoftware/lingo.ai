@@ -1,7 +1,8 @@
-from fastapi import FastAPI, UploadFile, File, Form, Depends
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, UploadFile, File, Form, Depends, HTTPException, Header
+from fastapi.responses import JSONResponse, Response
 from logger import logger
 from dotenv import load_dotenv
+import os
 from starlette.middleware.cors import CORSMiddleware
 from audio_service import translate_with_whisper_timestamped, translate_with_whisper_from_upload
 from detect_intent import detect_intent_with_llama, format_intent_response, translate
@@ -19,8 +20,17 @@ import httpx
 from redis_client import session_manager
 from datetime import datetime
 from session_service import SessionService, SessionFlowProcessor
+from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
+from prometheus_client import multiprocess
+from prometheus_client import CollectorRegistry
 
 app = FastAPI()
+
+# Load environment variables
+load_dotenv()
+
+# Prometheus API key from environment
+PROMETHEUS_API_KEY = os.getenv("PROMETHEUS_API_KEY")
 
 # Add CORS middleware to the application
 app.add_middleware(
@@ -231,3 +241,22 @@ async def transcribe_intent(
         logger.error(f"Error in transcribe-intent: {traceback.format_exc()}")
         current_session_id = session_id if session_id else "unknown"
         return JSONResponse(content={"message": str(e), "session_id": current_session_id}, status_code=500)
+
+@app.get("/metrics")
+def metrics(x_api_key: str = Header(None)):
+    # Validate API key
+    if not PROMETHEUS_API_KEY:
+        logger.warning("PROMETHEUS_API_KEY not configured")
+        raise HTTPException(status_code=500, detail="Metrics API key not configured")
+    
+    if not x_api_key or x_api_key != PROMETHEUS_API_KEY:
+        logger.warning(f"Unauthorized metrics access attempt with key: {x_api_key[:10]}..." if x_api_key else "No API key provided")
+        raise HTTPException(status_code=401, detail="Invalid or missing API key")
+    
+    try:
+        registry = CollectorRegistry()
+        multiprocess.MultiProcessCollector(registry)
+        return Response(generate_latest(registry), mimetype=CONTENT_TYPE_LATEST)
+    except Exception as e:
+        logger.error(f"Error generating metrics: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail="Failed to generate metrics")
