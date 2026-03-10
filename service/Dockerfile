@@ -35,12 +35,9 @@ COPY . .
 
 # Create non-root user for security
 RUN useradd -m -u 1000 appuser && \
-    chown -R appuser:appuser /lingo/service
-
-# Create prometheus metrics directory with proper permissions
-RUN mkdir -p /tmp/prometheus && \
-    chown -R appuser:appuser /tmp/prometheus
-
+    chown -R appuser:appuser /lingo/service && \
+    mkdir -p /tmp/prometheus && \
+    chmod 777 /tmp/prometheus
 USER appuser
 
 EXPOSE 8000
