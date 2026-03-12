@@ -105,7 +105,7 @@ jobs:
 
           RESPONSE=$(curl -s -H "Content-Type: application/json" \
             -d "${JSON}" \
-            http://13.200.202.10611434/api/generate)
+                        http://13.200.202.106:11434/api/generate)
 
           MODEL_OUTPUT=$(echo "${RESPONSE}" | jq -r '.response')
 
