@@ -1,0 +1,179 @@
+name: AI Code Review + Test Coverage (GLM via Ollama)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  ai-review:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    env:
+      MODEL: glm-4.7:cloud
+      TEMPERATURE: 0.2
+      MAX_DIFF_SIZE: 20000
+      STRICT_TEST_ENFORCEMENT: "false"
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq curl
+
+      - name: Capture PR Diff
+        id: diff
+        run: |
+          git fetch origin "${{ github.base_ref }}"
+          git diff origin/"${{ github.base_ref }}" | head -c "${MAX_DIFF_SIZE}" > pr.diff
+
+          if [ ! -s pr.diff ]; then
+            echo "empty_diff=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "empty_diff=false" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Detect Source/Test Changes
+        if: steps.diff.outputs.empty_diff == 'false'
+        id: changes
+        run: |
+          git fetch origin "${{ github.base_ref }}"
+          CHANGED=$(git diff --name-only origin/"${{ github.base_ref }}")
+
+          SOURCE_CHANGED=false
+          TEST_CHANGED=false
+
+          for file in ${CHANGED}; do
+            if [[ "${file}" == src/* ]]; then
+              SOURCE_CHANGED=true
+            fi
+            if [[ "${file}" == tests/* ]]; then
+              TEST_CHANGED=true
+            fi
+          done
+
+          echo "source_changed=${SOURCE_CHANGED}" >> "${GITHUB_OUTPUT}"
+          echo "test_changed=${TEST_CHANGED}" >> "${GITHUB_OUTPUT}"
+
+      - name: Run AI Review
+        if: steps.diff.outputs.empty_diff == 'false'
+        id: ai
+        run: |
+          DIFF=$(cat pr.diff)
+
+          PROMPT=$(cat <<'EOF'
+          You are a principal backend engineer.
+          
+          Review this pull request diff.
+          
+          Return STRICT JSON:
+          {
+            "summary": "",
+            "critical_issues": [],
+            "security_issues": [],
+            "performance_issues": [],
+            "readability_suggestions": [],
+            "test_coverage_assessment": "Sufficient | Partial | Missing",
+            "test_recommendations": []
+          }
+          
+          PR DIFF:
+          EOF
+          )
+          
+          PROMPT="${PROMPT}
+          ${DIFF}"
+
+          JSON=$(jq -n \
+            --arg model "${MODEL}" \
+            --arg prompt "${PROMPT}" \
+            --argjson temperature "${TEMPERATURE}" \
+            '{
+              model: $model,
+              temperature: $temperature,
+              stream: false,
+              prompt: $prompt
+            }')
+
+          RESPONSE=$(curl -s -H "Content-Type: application/json" \
+            -d "${JSON}" \
+                        http://13.200.202.106:11434/api/generate)
+
+          MODEL_OUTPUT=$(echo "${RESPONSE}" | jq -r '.response')
+
+          # Clean markdown wrappers
+          MODEL_OUTPUT=$(echo "${MODEL_OUTPUT}" | sed 's/```json//g' | sed 's/```//g')
+
+          echo "${MODEL_OUTPUT}" > review.json
+
+      - name: Score + Evaluate
+        if: steps.diff.outputs.empty_diff == 'false'
+        id: score
+        run: |
+          if ! jq empty review.json 2>/dev/null; then
+            echo "invalid_json=true" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          CRITICAL=$(jq '.critical_issues | length' review.json)
+          SECURITY=$(jq '.security_issues | length' review.json)
+          PERFORMANCE=$(jq '.performance_issues | length' review.json)
+          READABILITY=$(jq '.readability_suggestions | length' review.json)
+          TEST_ASSESS=$(jq -r '.test_coverage_assessment' review.json)
+
+          SCORE=100
+          SCORE=$((SCORE - CRITICAL*20))
+          SCORE=$((SCORE - SECURITY*10))
+          SCORE=$((SCORE - PERFORMANCE*5))
+          SCORE=$((SCORE - READABILITY*2))
+
+          if [[ "${TEST_ASSESS}" == "Missing" ]]; then
+            SCORE=$((SCORE - 20))
+          fi
+
+          if [ "${SCORE}" -lt 0 ]; then SCORE=0; fi
+
+          echo "score=${SCORE}" >> "${GITHUB_OUTPUT}"
+          echo "critical=${CRITICAL}" >> "${GITHUB_OUTPUT}"
+
+      - name: Build PR Comment
+        run: |
+          SCORE="${{ steps.score.outputs.score }}"
+      
+          {
+            echo "### 🤖 AI Code Review (GLM via Ollama)"
+            echo ""
+            echo '```json'
+            cat review.json
+            echo '```'
+            echo ""
+            echo "**📊 AI Quality Score:** ${SCORE}/100"
+          } > comment.md
+
+      - name: Post PR Comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('comment.md', 'utf8');
+      
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
+
+      - name: Fail on Critical Issues
+        if: steps.score.outputs.critical != '0'
+        run: |
+          echo "❌ Critical issues detected. Failing workflow."
+          exit 1
