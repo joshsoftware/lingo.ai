@@ -32,36 +32,36 @@ jobs:
       - name: Capture PR Diff
         id: diff
         run: |
-          git fetch origin ${{ github.base_ref }}
-          git diff origin/${{ github.base_ref }} | head -c $MAX_DIFF_SIZE > pr.diff
+          git fetch origin "${{ github.base_ref }}"
+          git diff origin/"${{ github.base_ref }}" | head -c "${MAX_DIFF_SIZE}" > pr.diff
 
           if [ ! -s pr.diff ]; then
-            echo "empty_diff=true" >> $GITHUB_OUTPUT
+            echo "empty_diff=true" >> "${GITHUB_OUTPUT}"
           else
-            echo "empty_diff=false" >> $GITHUB_OUTPUT
+            echo "empty_diff=false" >> "${GITHUB_OUTPUT}"
           fi
 
       - name: Detect Source/Test Changes
         if: steps.diff.outputs.empty_diff == 'false'
         id: changes
         run: |
-          git fetch origin ${{ github.base_ref }}
-          CHANGED=$(git diff --name-only origin/${{ github.base_ref }})
+          git fetch origin "${{ github.base_ref }}"
+          CHANGED=$(git diff --name-only origin/"${{ github.base_ref }}")
 
           SOURCE_CHANGED=false
           TEST_CHANGED=false
 
-          for file in $CHANGED; do
-            if [[ $file == src/* ]]; then
+          for file in ${CHANGED}; do
+            if [[ "${file}" == src/* ]]; then
               SOURCE_CHANGED=true
             fi
-            if [[ $file == tests/* ]]; then
+            if [[ "${file}" == tests/* ]]; then
               TEST_CHANGED=true
             fi
           done
 
-          echo "source_changed=$SOURCE_CHANGED" >> $GITHUB_OUTPUT
-          echo "test_changed=$TEST_CHANGED" >> $GITHUB_OUTPUT
+          echo "source_changed=${SOURCE_CHANGED}" >> "${GITHUB_OUTPUT}"
+          echo "test_changed=${TEST_CHANGED}" >> "${GITHUB_OUTPUT}"
 
       - name: Run AI Review
         if: steps.diff.outputs.empty_diff == 'false'
@@ -89,14 +89,13 @@ jobs:
           EOF
           )
           
-              PROMPT="$PROMPT
-          $DIFF"
-          "
+          PROMPT="${PROMPT}
+          ${DIFF}"
 
           JSON=$(jq -n \
-            --arg model "$MODEL" \
-            --arg prompt "$PROMPT" \
-            --argjson temperature $TEMPERATURE \
+            --arg model "${MODEL}" \
+            --arg prompt "${PROMPT}" \
+            --argjson temperature "${TEMPERATURE}" \
             '{
               model: $model,
               temperature: $temperature,
@@ -105,22 +104,22 @@ jobs:
             }')
 
           RESPONSE=$(curl -s -H "Content-Type: application/json" \
-            -d "$JSON" \
-            http://localhost:13.200.202.10611434/api/generate)
+            -d "${JSON}" \
+            http://13.200.202.10611434/api/generate)
 
-          MODEL_OUTPUT=$(echo "$RESPONSE" | jq -r '.response')
+          MODEL_OUTPUT=$(echo "${RESPONSE}" | jq -r '.response')
 
           # Clean markdown wrappers
-          MODEL_OUTPUT=$(echo "$MODEL_OUTPUT" | sed 's/```json//g' | sed 's/```//g')
+          MODEL_OUTPUT=$(echo "${MODEL_OUTPUT}" | sed 's/```json//g' | sed 's/```//g')
 
-          echo "$MODEL_OUTPUT" > review.json
+          echo "${MODEL_OUTPUT}" > review.json
 
       - name: Score + Evaluate
         if: steps.diff.outputs.empty_diff == 'false'
         id: score
         run: |
           if ! jq empty review.json 2>/dev/null; then
-            echo "invalid_json=true" >> $GITHUB_OUTPUT
+            echo "invalid_json=true" >> "${GITHUB_OUTPUT}"
             exit 0
           fi
 
@@ -136,26 +135,28 @@ jobs:
           SCORE=$((SCORE - PERFORMANCE*5))
           SCORE=$((SCORE - READABILITY*2))
 
-          if [[ "$TEST_ASSESS" == "Missing" ]]; then
+          if [[ "${TEST_ASSESS}" == "Missing" ]]; then
             SCORE=$((SCORE - 20))
           fi
 
-          if [ "$SCORE" -lt 0 ]; then SCORE=0; fi
+          if [ "${SCORE}" -lt 0 ]; then SCORE=0; fi
 
-          echo "score=$SCORE" >> $GITHUB_OUTPUT
-          echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
+          echo "score=${SCORE}" >> "${GITHUB_OUTPUT}"
+          echo "critical=${CRITICAL}" >> "${GITHUB_OUTPUT}"
 
       - name: Build PR Comment
         run: |
           SCORE="${{ steps.score.outputs.score }}"
       
-          echo "### 🤖 AI Code Review (GLM via Ollama)" > comment.md
-          echo "" >> comment.md
-          echo '```json' >> comment.md
-          cat review.json >> comment.md
-          echo '```' >> comment.md
-          echo "" >> comment.md
-          echo "**📊 AI Quality Score:** ${SCORE}/100" >> comment.md
+          {
+            echo "### 🤖 AI Code Review (GLM via Ollama)"
+            echo ""
+            echo '```json'
+            cat review.json
+            echo '```'
+            echo ""
+            echo "**📊 AI Quality Score:** ${SCORE}/100"
+          } > comment.md
 
       - name: Post PR Comment
         uses: actions/github-script@v7
