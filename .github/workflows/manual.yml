@@ -104,8 +104,9 @@ jobs:
             }')
 
           RESPONSE=$(curl -s -H "Content-Type: application/json" \
+                             -H "X-API-Key: 646ad5d3360ae625f8ae02a4443ce269" \
             -d "${JSON}" \
-                        http://13.200.202.106:11434/api/generate)
+                        https://grafana.joshsoftware.com/ollama/api/generate)
 
           MODEL_OUTPUT=$(echo "${RESPONSE}" | jq -r '.response')
 
