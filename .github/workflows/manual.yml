@@ -15,7 +15,7 @@ jobs:
     env:
       MODEL: glm-4.7:cloud
       TEMPERATURE: 0.2
-      MAX_DIFF_SIZE: 5000
+      MAX_DIFF_SIZE: 20000
       STRICT_TEST_ENFORCEMENT: "false"
 
     steps:
