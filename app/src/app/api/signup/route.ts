@@ -7,24 +7,26 @@ import { eq } from "drizzle-orm";
 import { generateIdFromEntropySize } from "lucia";
 import { cookies } from "next/headers";
 import { z } from "zod";
+import { withHttpMetrics } from "@/lib/metrics";
+import { trackDb } from "@/lib/trackDb";
 
-export async function POST(req: Request) {
+async function handler(req: Request) {
   try {
     const body = await req.json();
     const { password, userEmail, userName, contact } =
       signupUserSchema.parse(body);
 
-    // Check if user already exists
-    const existingUser = await db
-      .select({ id: userTable.id })
-      .from(userTable)
-      .where(eq(userTable.username, userEmail));
+    const existingUser = await trackDb("select", "User", () =>
+      db
+        .select({ id: userTable.id })
+        .from(userTable)
+        .where(eq(userTable.username, userEmail))
+    );
 
     if (existingUser.length > 0) {
       return new Response("User already exists", { status: 409 });
     }
 
-    // Hash password
     const passwordHash = await hash(password, {
       memoryCost: 19456,
       timeCost: 2,
@@ -32,32 +34,33 @@ export async function POST(req: Request) {
       parallelism: 1,
     });
 
-    // Generate user ID
     const userId = generateIdFromEntropySize(10);
 
-    // ✅ Get FREE subscription ID
-    const [freeSubscription] = await db
-      .select({ id: subscriptionTable.id })
-      .from(subscriptionTable)
-      .where(eq(subscriptionTable.name, "FREE"));
+    const [freeSubscription] = await trackDb("select", "Subscription", () =>
+      db
+        .select({ id: subscriptionTable.id })
+        .from(subscriptionTable)
+        .where(eq(subscriptionTable.name, "FREE"))
+    );
 
     if (!freeSubscription) {
       return new Response("Default subscription not found", { status: 500 });
     }
-    // Insert user with subscriptionId
-    const insertedUser = await db
-      .insert(userTable)
-      .values({
-        id: userId,
-        username: userEmail,
-        password_hash: passwordHash,
-        name: userName || "",
-        contactNumber: contact || "",
-        subscriptionId: freeSubscription.id, // 👈 Set default FREE subscription
-      })
-      .returning();
 
-    // Create session & set cookie
+    const insertedUser = await trackDb("insert", "User", () =>
+      db
+        .insert(userTable)
+        .values({
+          id: userId,
+          username: userEmail,
+          password_hash: passwordHash,
+          name: userName || "",
+          contactNumber: contact || "",
+          subscriptionId: freeSubscription.id,
+        })
+        .returning()
+    );
+
     const session = await lucia.createSession(userId, {});
     const sessionCookie = lucia.createSessionCookie(session.id);
     (await cookies()).set(
@@ -79,3 +82,5 @@ export async function POST(req: Request) {
     return new Response("Failed to Register User", { status: 500 });
   }
 }
+
+export const POST = withHttpMetrics("api/signup", handler);

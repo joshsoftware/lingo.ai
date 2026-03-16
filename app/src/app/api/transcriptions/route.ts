@@ -3,12 +3,14 @@ import { transcriptions } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { NextRequest } from "next/server";
 import { PAGINATION_LIMIT } from "@/constants/pagination";
+import { withHttpMetrics } from "@/lib/metrics";
+import { trackDb } from "@/lib/trackDb";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 export const revalidate = 0;
 
-export async function GET(req: NextRequest) {
+async function handler(req: NextRequest) {
   try {
     const cursor = parseInt(req.nextUrl.searchParams.get("cursor") || "0");
     const filter = req.nextUrl.searchParams.get("filter") || "false";
@@ -26,27 +28,27 @@ export async function GET(req: NextRequest) {
     const isFilter = filter === "true";
     const limit = PAGINATION_LIMIT;
 
-    let query = db
-      .select({
-        id: transcriptions.id,
-        documentName: transcriptions.documentName,
-        createdAt: transcriptions.createdAt,
-        documentUrl: transcriptions.documentUrl,
-        isDefault: transcriptions.isDefault,
-        audioDuration: transcriptions.audioDuration,
-        detectedLanguage: transcriptions.detectedLanguage, // Add this
-      })
-      .from(transcriptions)
-      .where(
-        filter === "user" && userId
-          ? eq(transcriptions.userID, userId)
-          : eq(transcriptions.isDefault, isFilter)
-      )
-      .orderBy(desc(transcriptions.createdAt))
-      .offset(cursor)
-      .limit(limit);
-
-    const transcriptionsData = await query;
+    const transcriptionsData = await trackDb("select", "Transcription", () =>
+      db
+        .select({
+          id: transcriptions.id,
+          documentName: transcriptions.documentName,
+          createdAt: transcriptions.createdAt,
+          documentUrl: transcriptions.documentUrl,
+          isDefault: transcriptions.isDefault,
+          audioDuration: transcriptions.audioDuration,
+          detectedLanguage: transcriptions.detectedLanguage,
+        })
+        .from(transcriptions)
+        .where(
+          filter === "user" && userId
+            ? eq(transcriptions.userID, userId)
+            : eq(transcriptions.isDefault, isFilter)
+        )
+        .orderBy(desc(transcriptions.createdAt))
+        .offset(cursor)
+        .limit(limit)
+    );
 
     const nextCursor =
       transcriptionsData.length === limit ? cursor + limit : null;
@@ -65,3 +67,5 @@ export async function GET(req: NextRequest) {
     return new Response(JSON.stringify(error), { status: 500 });
   }
 }
+
+export const GET = withHttpMetrics("api/transcriptions", handler);

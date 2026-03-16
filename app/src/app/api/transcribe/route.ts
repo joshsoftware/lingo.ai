@@ -1,8 +1,9 @@
 import { transcribeDocumentSchema } from "@/Validators/document";
 import axios from "axios";
 import { z } from "zod";
+import { withHttpMetrics } from "@/lib/metrics";
 
-export async function POST(req: Request) {
+async function handler(req: Request) {
   try {
     const body = await req.json();
     const { documentUrl } = transcribeDocumentSchema.parse(body);
@@ -12,15 +13,13 @@ export async function POST(req: Request) {
       return new Response("Microservice URL not found", { status: 500 });
     }
 
-    const response = await axios.post(BASE_URL + '/upload-audio', {
+    const response = await axios.post(BASE_URL + "/upload-audio", {
       audio_file_link: documentUrl,
     });
     const { data } = response;
     const transcriptionStatus = response.status;
 
-
-
-    if(transcriptionStatus !== 200){
+    if (transcriptionStatus !== 200) {
       return new Response("Internal server error", { status: 500 });
     }
 
@@ -33,3 +32,6 @@ export async function POST(req: Request) {
     return new Response("Internal Server Error", { status: 500 });
   }
 }
+
+export const POST = withHttpMetrics("api/transcribe", handler);
+

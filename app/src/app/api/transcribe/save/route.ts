@@ -1,8 +1,10 @@
 import { db } from "@/db";
 import { transcriptions, TranscriptionsPayload, userTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { withHttpMetrics } from "@/lib/metrics";
+import { trackDb } from "@/lib/trackDb";
 
-export async function POST(req: Request) {
+async function handler(req: Request) {
   try {
     const body = await req.json();
     const {
@@ -13,35 +15,40 @@ export async function POST(req: Request) {
       translation,
       audioDuration,
       segments,
-      detectedLanguage
+      detectedLanguage,
     }: TranscriptionsPayload = body;
 
-
-
-    const userResponse = await db
-      .select({
-        userName: userTable.name
-      })
-      .from(userTable)
-      .where(eq(userTable.id, userID))
+    const userResponse = await trackDb("select", "User", () =>
+      db
+        .select({
+          userName: userTable.name,
+        })
+        .from(userTable)
+        .where(eq(userTable.id, userID))
+    );
 
     if (!userResponse[0]) {
       return new Response("User not found", {
         status: 404,
-      })
+      });
     }
 
-    const response = await db.insert(transcriptions).values({
-      documentUrl,
-      documentName,
-      userID,
-      summary,
-      translation,
-      audioDuration,
-      userName: userResponse[0].userName,
-      segments,
-      detectedLanguage
-    }).returning();
+    const response = await trackDb("insert", "Transcription", () =>
+      db
+        .insert(transcriptions)
+        .values({
+          documentUrl,
+          documentName,
+          userID,
+          summary,
+          translation,
+          audioDuration,
+          userName: userResponse[0].userName,
+          segments,
+          detectedLanguage,
+        })
+        .returning()
+    );
 
     return new Response(JSON.stringify(response), { status: 200 });
   } catch (error) {
@@ -49,3 +56,6 @@ export async function POST(req: Request) {
     return new Response(JSON.stringify(error), { status: 500 });
   }
 }
+
+export const POST = withHttpMetrics("api/transcribe/save", handler);
+

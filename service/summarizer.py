@@ -1,6 +1,5 @@
-from langchain.chains import LLMChain
 from langchain_openai import ChatOpenAI
-from langchain.schema.runnable.base import RunnableSequence
+from langchain_core.runnables import RunnableSequence
 from template_config import get_summarization_template
 import logging
 import ollama

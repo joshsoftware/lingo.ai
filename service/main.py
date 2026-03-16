@@ -1,5 +1,5 @@
-from fastapi import FastAPI, UploadFile, File, Form, Depends
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, UploadFile, File, Form, Depends, Request
+from fastapi.responses import JSONResponse, Response, PlainTextResponse
 from logger import logger
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -19,6 +19,11 @@ import httpx
 from redis_client import session_manager
 from datetime import datetime
 from session_service import SessionService, SessionFlowProcessor
+from metrics import (
+    http_requests_total,
+    http_request_duration_seconds,
+    generate_metrics,
+)
 
 app = FastAPI()
 
@@ -31,9 +36,41 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
+@app.middleware("http")
+async def prometheus_http_middleware(request: Request, call_next):
+    path = request.url.path
+    method = request.method
+    start_time = datetime.now().timestamp()
+    try:
+        response = await call_next(request)
+    except Exception:
+        duration = datetime.now().timestamp() - start_time
+        logger.info(
+            f"HTTP {method} {path} -> 500 in {duration:.4f}s"
+        )
+        http_requests_total.labels(method=method, path=path, status_code="500").inc()
+        http_request_duration_seconds.labels(method=method, path=path).observe(duration)
+        raise
+
+    status_code = str(response.status_code)
+    duration = datetime.now().timestamp() - start_time
+    logger.info(
+        f"HTTP {method} {path} -> {status_code} in {duration:.4f}s"
+    )
+    http_requests_total.labels(method=method, path=path, status_code=status_code).inc()
+    http_request_duration_seconds.labels(method=method, path=path).observe(duration)
+    return response
+
+
 @app.get("/")
 def root_route():
-    return 'Hello, this is the root route for lingo ai server'
+    return "Hello, this is the root route for lingo ai server"
+
+
+@app.get("/metrics")
+def metrics_endpoint() -> Response:
+    body, content_type = generate_metrics()
+    return PlainTextResponse(body, media_type=content_type)
 
 class Body(BaseModel):
     audio_file_link: str

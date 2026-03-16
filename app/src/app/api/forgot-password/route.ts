@@ -5,17 +5,20 @@ import { eq } from "drizzle-orm";
 import { randomBytes } from "crypto";
 import nodemailer from "nodemailer";
 import { forgotPasswordSchema } from "@/Validators/resetPassword";
+import { withHttpMetrics } from "@/lib/metrics";
+import { trackDb } from "@/lib/trackDb";
 
-const RESET_TOKEN_EXPIRY_MINUTES = 60; // 1 hour
+const RESET_TOKEN_EXPIRY_MINUTES = 60;
 
-export async function POST(req: NextRequest) {
+async function handler(req: NextRequest) {
   try {
     const body = await req.json();
     const { userEmail } = forgotPasswordSchema.parse({ userEmail: body.email });
     if (!userEmail) return NextResponse.json({ success: false, error: "Email required" }, { status: 400 });
 
-    // Check if user exists
-    const [user] = await db.select().from(userTable).where(eq(userTable.username, userEmail));
+    const [user] = await trackDb("select", "User", () =>
+      db.select().from(userTable).where(eq(userTable.username, userEmail))
+    );
     if (!user) {
       return NextResponse.json({ success: false, error: "Email not found. Please sign up first." }, { status: 404 });
     }
@@ -24,15 +27,19 @@ export async function POST(req: NextRequest) {
     const token = randomBytes(32).toString("hex");
     const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRY_MINUTES * 60 * 1000);
 
-    // Upsert the token for this email
-    await db.insert(passwordResetTokens).values({
-      username: userEmail,
-      token,
-      expiresAt,
-    }).onConflictDoUpdate({
-      target: passwordResetTokens.username,
-      set: { token, expiresAt },
-    });
+    await trackDb("upsert", "PasswordResetToken", () =>
+      db
+        .insert(passwordResetTokens)
+        .values({
+          username: userEmail,
+          token,
+          expiresAt,
+        })
+        .onConflictDoUpdate({
+          target: passwordResetTokens.username,
+          set: { token, expiresAt },
+        })
+    );
 
     // Send email
     const transporter = nodemailer.createTransport({
@@ -65,4 +72,6 @@ export async function POST(req: NextRequest) {
     console.error(error);
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
   }
-} 
+}
+
+export const POST = withHttpMetrics("api/forgot-password", handler);
