@@ -89,8 +89,9 @@ jobs:
           EOF
           )
 
-          PROMPT="${PROMPT}
-          ${DIFF}"
+              PROMPT="$PROMPT
+          $DIFF"
+          "
 
           JSON=$(jq -n \
             --arg model "${MODEL}" \
