@@ -9,6 +9,8 @@ import { db } from "@/db";
 import { botTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { lucia } from "@/auth";
+import { withHttpMetrics } from "@/lib/metrics";
+import { trackDb } from "@/lib/trackDb";
 
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
@@ -16,7 +18,7 @@ const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_REDIRECT_URI
 );
 
-export async function GET(request: Request) {
+async function handler(request: Request) {
   // Get the code from the query parameters
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
@@ -100,18 +102,22 @@ export async function GET(request: Request) {
     const userId = sessionResult.user.id; // Assuming 'id' is the correct property in the 'User' type
 
     try {
-      await db.insert(botTable).values({
-        id: userInfo.id || crypto.randomUUID(),
-        userId: userId,
-        botName: userInfo.name ? `${userInfo.name}'s lingo.ai bot` : "lingo.ai bot",
-        botEmail: userInfo.email || null,
-        botHd: userInfo.hd || "",
-        botPicture: userInfo.picture || "",
-        accessToken: tokens.access_token || "",
-        refreshToken: tokens.refresh_token || "",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+      await trackDb("insert", "Bot", () =>
+        db.insert(botTable).values({
+          id: userInfo.id || crypto.randomUUID(),
+          userId: userId,
+          botName: userInfo.name
+            ? `${userInfo.name}'s lingo.ai bot`
+            : "lingo.ai bot",
+          botEmail: userInfo.email || null,
+          botHd: userInfo.hd || "",
+          botPicture: userInfo.picture || "",
+          accessToken: tokens.access_token || "",
+          refreshToken: tokens.refresh_token || "",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+      );
     } catch (dbError) {
       console.error("Database error:", dbError);
     }
@@ -131,3 +137,5 @@ export async function GET(request: Request) {
     );
   }
 }
+
+export const GET = withHttpMetrics("api/oauth2callback", handler);

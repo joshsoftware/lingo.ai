@@ -4,6 +4,7 @@ gradio
 load_dotenv
 fastapi
 uvicorn
+prometheus-client
 pytest
 pytest-asyncio
 httpx

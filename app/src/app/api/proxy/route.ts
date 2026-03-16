@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withHttpMetrics } from "@/lib/metrics";
 
-export async function GET(req: NextRequest) {
+async function handler(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const url = searchParams.get('url');
@@ -45,6 +46,8 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
+export const GET = withHttpMetrics("api/proxy", handler);
 
 export async function OPTIONS(req: NextRequest) {
   return new NextResponse(null, {

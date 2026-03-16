@@ -23,9 +23,6 @@ SQLALCHEMY_DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_P
 # AWS RDS requires SSL - this configuration accepts AWS certificates
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
-    connect_args={
-        "sslmode": "require",
-    }
 )
 
 # Create a SessionLocal class for database session

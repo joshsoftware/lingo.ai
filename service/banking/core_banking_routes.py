@@ -4,6 +4,7 @@ from sqlalchemy import desc
 from datetime import datetime, timedelta
 from .database import get_db
 from .models import Customer, Account, Transaction, Beneficiary
+from metrics import track_db
 from pydantic import BaseModel
 from typing import Optional, List
 from fastapi.responses import JSONResponse
@@ -156,7 +157,10 @@ async def get_balance(
 ):
     """Get balance for a customer account (by customer_id or phone)"""
     if phone:
-        customer = db.query(Customer).filter(Customer.phone == phone).first()
+        with track_db("select", "Customer"):
+            customer = (
+                db.query(Customer).filter(Customer.phone == phone).first()
+            )
         if not customer:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, 
@@ -177,10 +181,15 @@ async def get_balance(
             detail="To know your balance, please provide either a customer ID or a registered phone number."
         )
 
-    account = db.query(Account).filter(
-        Account.customer_id == customer_id,
-        Account.is_active == True
-    ).first()
+    with track_db("select", "Account"):
+        account = (
+            db.query(Account)
+            .filter(
+                Account.customer_id == customer_id,
+                Account.is_active == True,
+            )
+            .first()
+        )
 
     if not account:
         raise HTTPException(
@@ -201,7 +210,10 @@ async def pay_money(
 
     # Identify customer
     if phone:
-        customer = db.query(Customer).filter(Customer.phone == phone).first()
+        with track_db("select", "Customer"):
+            customer = (
+                db.query(Customer).filter(Customer.phone == phone).first()
+            )
         if not customer:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -226,10 +238,15 @@ async def pay_money(
     beneficiary = find_beneficiary(db, customer_id, to)
 
     # Find active account
-    account = db.query(Account).filter(
-        Account.customer_id == customer_id,
-        Account.is_active == True
-    ).first()
+    with track_db("select", "Account"):
+        account = (
+            db.query(Account)
+            .filter(
+                Account.customer_id == customer_id,
+                Account.is_active == True,
+            )
+            .first()
+        )
 
     if not account:
         raise HTTPException(
@@ -287,20 +304,32 @@ async def pay_money(
         transaction_date=datetime.now()  # Explicitly set current time
     )
 
-    db.add(transaction)
-    db.commit()
+    with track_db("insert", "Transaction"):
+        db.add(transaction)
+        db.commit()
     
     # Refresh the transaction to get its ID and other database-generated values
     db.refresh(transaction)
     # Get 5 most recent transactions from the current date for this specific account
     current_datetime = datetime.now()
     
-    recent_transactions = db.query(Transaction).filter(
-        Transaction.from_account_id == account.id,  # Filter by the current account ID
-        Transaction.transaction_date <= current_datetime  # Filter by current datetime or before
-    ).order_by(
-        desc(Transaction.transaction_date)  # Sort by transaction date descending
-    ).limit(5).all()
+    with track_db("select", "Transaction"):
+        recent_transactions = (
+            db.query(Transaction)
+            .filter(
+                Transaction.from_account_id
+                == account.id,  # Filter by the current account ID
+                Transaction.transaction_date
+                <= current_datetime,  # Filter by current datetime or before
+            )
+            .order_by(
+                desc(
+                    Transaction.transaction_date
+                )  # Sort by transaction date descending
+            )
+            .limit(5)
+            .all()
+        )
     
     # Format recent transactions for response
     recent_txn_list = []
@@ -340,10 +369,12 @@ async def search_txn(
     db: Session = Depends(get_db)
 ):
     if phone:
-        customer = db.query(Customer).filter(
-            Customer.phone == phone,
-            Customer.is_active == True
-        ).first()
+        with track_db("select", "Customer"):
+            customer = (
+                db.query(Customer)
+                .filter(Customer.phone == phone, Customer.is_active == True)
+                .first()
+            )
         if not customer:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, 
@@ -356,9 +387,12 @@ async def search_txn(
 
     # Filter by customer_id if provided
     if customer_id is not None:
-        accounts = db.query(Account.id).filter(
-            Account.customer_id == customer_id
-        ).all()
+        with track_db("select", "Account"):
+            accounts = (
+                db.query(Account.id)
+                .filter(Account.customer_id == customer_id)
+                .all()
+            )
         account_ids = [a.id for a in accounts]
         if account_ids:
             base_query = base_query.filter(Transaction.from_account_id.in_(account_ids))
@@ -372,15 +406,21 @@ async def search_txn(
     
     # Apply recipient filter and get IDs
     if recipient:
-        recipient_query = base_query.filter(Transaction.recipient.ilike(f"%{recipient}%"))
-        transactions_by_recipient = recipient_query.all()
+        recipient_query = base_query.filter(
+            Transaction.recipient.ilike(f"%{recipient}%")
+        )
+        with track_db("select", "Transaction"):
+            transactions_by_recipient = recipient_query.all()
         if transactions_by_recipient:
             transaction_ids = set(t.id for t in transactions_by_recipient)
     
     # Apply category filter and get IDs
     if category:
-        category_query = base_query.filter(Transaction.category.ilike(f"%{category}%"))
-        transactions_by_category = category_query.all()
+        category_query = base_query.filter(
+            Transaction.category.ilike(f"%{category}%")
+        )
+        with track_db("select", "Transaction"):
+            transactions_by_category = category_query.all()
         if transactions_by_category:
             category_ids = set(t.id for t in transactions_by_category)
             
@@ -393,20 +433,25 @@ async def search_txn(
     
     # If neither recipient nor category was provided, use all transactions from base query
     if not recipient and not category:
-        transaction_ids = set(t.id for t in base_query.all())
+        with track_db("select", "Transaction"):
+            transaction_ids = set(t.id for t in base_query.all())
     
     # Empty result if no transactions match the filters
     if not transaction_ids:
         return {"transactions": []}
     
     # Create a query for the filtered transaction IDs
-    filtered_query = db.query(Transaction).filter(Transaction.id.in_(transaction_ids))
+    filtered_query = db.query(Transaction).filter(
+        Transaction.id.in_(transaction_ids)
+    )
     
     # Apply date filters
     if start_date:
         try:
             start_dt = datetime.strptime(start_date, "%Y-%m-%d")
-            filtered_query = filtered_query.filter(Transaction.transaction_date >= start_dt)
+            filtered_query = filtered_query.filter(
+                Transaction.transaction_date >= start_dt
+            )
         except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, 
@@ -415,7 +460,9 @@ async def search_txn(
     if end_date:
         try:
             end_dt = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
-            filtered_query = filtered_query.filter(Transaction.transaction_date < end_dt)
+            filtered_query = filtered_query.filter(
+                Transaction.transaction_date < end_dt
+            )
         except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, 
@@ -423,12 +470,16 @@ async def search_txn(
             )
     
     # Apply sort order and limit
-    filtered_query = filtered_query.order_by(desc(Transaction.transaction_date))
+    filtered_query = filtered_query.order_by(
+        desc(Transaction.transaction_date)
+    )
     
     if limit:
-        db_transactions = filtered_query.limit(limit).all()
+        with track_db("select", "Transaction"):
+            db_transactions = filtered_query.limit(limit).all()
     else:
-        db_transactions = filtered_query.all()
+        with track_db("select", "Transaction"):
+            db_transactions = filtered_query.all()
 
     return {"transactions": db_transactions}
 
@@ -448,7 +499,10 @@ def get_beneficiaries(
 
     # If phone is provided, find customer_id first
     if phone:
-        customer = db.query(Customer).filter(Customer.phone == phone).first()
+        with track_db("select", "Customer"):
+            customer = (
+                db.query(Customer).filter(Customer.phone == phone).first()
+            )
         if not customer:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -457,9 +511,12 @@ def get_beneficiaries(
         customer_id = customer.id
 
     # Query beneficiaries
-    beneficiaries = db.query(Beneficiary).filter(
-        Beneficiary.customer_id == customer_id
-    ).all()
+    with track_db("select", "Beneficiary"):
+        beneficiaries = (
+            db.query(Beneficiary)
+            .filter(Beneficiary.customer_id == customer_id)
+            .all()
+        )
 
     if not beneficiaries:
         raise HTTPException(

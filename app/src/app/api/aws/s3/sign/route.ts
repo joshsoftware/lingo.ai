@@ -7,6 +7,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { NextRequest, NextResponse } from "next/server";
 import { sanitizeFileName } from "@/utils/filenameSanitization";
+import { withHttpMetrics } from "@/lib/metrics";
 
 const s3 = new S3Client({
   region: process.env.AWS_REGION,
@@ -16,7 +17,7 @@ const s3 = new S3Client({
   },
 });
 
-export async function POST(req: NextRequest) {
+async function handler(req: NextRequest) {
   try {
     const formData = await req.formData();
     const fileData = formData.get("file") as File;
@@ -167,3 +168,5 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export const POST = withHttpMetrics("api/aws/s3/sign", handler);

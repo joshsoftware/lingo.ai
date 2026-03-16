@@ -1,4 +1,9 @@
+import { withHttpMetrics } from "@/lib/metrics";
 
-export function GET(req: Request) {
-    return new Response(JSON.stringify({message: "Hello World"}), {status: 200});
+async function handler(req: Request) {
+  return new Response(JSON.stringify({ message: "Hello World" }), {
+    status: 200,
+  });
 }
+
+export const GET = withHttpMetrics("api/callback/test", handler);
