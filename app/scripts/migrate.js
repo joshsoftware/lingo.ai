@@ -7,16 +7,26 @@ if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL is not set");
 }
 
-// SSL configuration for AWS RDS
-const sslConfig = {
-  // AWS RDS requires SSL but uses self-signed certificates
-  // This keeps encryption enabled while accepting AWS certificates
-  rejectUnauthorized: false,
-};
+// SSL configuration - only use for production/AWS RDS
+// Development: set DB_SSL_MODE=disable for local PostgreSQL without SSL
+// Production: set DB_SSL_MODE=require for AWS RDS
+const sslMode = process.env.DB_SSL_MODE || "prefer";
+
+let sslConfig = false;
+if (sslMode === "require") {
+  sslConfig = {
+    rejectUnauthorized: false,
+  };
+} else if (sslMode === "disable") {
+  sslConfig = false;
+} else if (sslMode === "prefer") {
+  // Use connectionString with sslmode parameter instead
+  sslConfig = "prefer";
+}
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: sslConfig,
+  ssl: sslConfig === "prefer" ? false : sslConfig,
 });
 
 const db = drizzle(pool);

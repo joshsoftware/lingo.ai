@@ -11,6 +11,8 @@ services:
     depends_on:
       - fastapi
     restart: unless-stopped
+    networks:
+      - lingo-network
 
   fastapi:
     container_name: service
@@ -24,6 +26,8 @@ services:
     ports:
       - "8000:8000"
     restart: unless-stopped
+    networks:
+      - lingo-network
 
   redis:
     container_name: lingo-redis
@@ -31,3 +35,45 @@ services:
     restart: always
     ports:
       - "6379:6379"
+    networks:
+      - lingo-network
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-storage:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+    restart: unless-stopped
+    networks:
+      - lingo-network
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    networks:
+      - lingo-network
+
+networks:
+  lingo-network:
+    driver: bridge
+
+volumes:
+  prometheus-storage:
+  grafana-storage:

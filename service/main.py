@@ -1,7 +1,8 @@
-from fastapi import FastAPI, UploadFile, File, Form, Depends
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, UploadFile, File, Form, Depends, Header, HTTPException, Request
+from fastapi.responses import JSONResponse, Response
 from logger import logger
 from dotenv import load_dotenv
+import os
 from starlette.middleware.cors import CORSMiddleware
 from audio_service import translate_with_whisper_timestamped, translate_with_whisper_from_upload
 from detect_intent import detect_intent_with_llama, format_intent_response, translate
@@ -19,8 +20,22 @@ import httpx
 from redis_client import session_manager
 from datetime import datetime
 from session_service import SessionService, SessionFlowProcessor
+from prometheus_client import Counter, Histogram, make_asgi_app, CollectorRegistry, multiprocess, generate_latest
+from prometheus_client import REGISTRY
+
+load_dotenv()
+PROMETHEUS_API_KEY = os.getenv("PROMETHEUS_API_KEY", "")
+
+# Ensure Prometheus temp directory exists if using multiprocess mode
+prometheus_multiproc_dir = os.getenv("PROMETHEUS_MULTIPROC_DIR")
+if prometheus_multiproc_dir and not os.path.exists(prometheus_multiproc_dir):
+    os.makedirs(prometheus_multiproc_dir, exist_ok=True)
 
 app = FastAPI()
+
+# Initialize basic Prometheus metrics
+request_count = Counter('lingo_requests_total', 'Total requests', ['endpoint', 'method', 'status'])
+request_duration = Histogram('lingo_request_duration_seconds', 'Request duration in seconds', ['endpoint', 'method'])
 
 # Add CORS middleware to the application
 app.add_middleware(
@@ -31,9 +46,117 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
+# Middleware to track metrics and log detailed request/response info
+@app.middleware("http")
+async def detailed_logging_middleware(request, call_next):
+    import time
+    import json
+    
+    start_time = time.time()
+    request_id = str(os.urandom(8).hex())
+    
+    # Skip detailed logging for metrics endpoint (to avoid noise), but still track metrics
+    skip_logging = request.url.path == "/metrics" or request.url.path == "/metrics/"
+    
+    # Log request details (skip for /metrics to avoid noise)
+    if not skip_logging:
+        logger.info(f"\n{'='*80}")
+        logger.info(f"[REQUEST {request_id}] {request.method} {request.url.path}")
+        logger.info(f"{'='*80}")
+    
+    # Log basic request info (skip for /metrics)
+    if not skip_logging:
+        logger.info(f"URL: {request.url}")
+        logger.info(f"Client: {request.client.host if request.client else 'Unknown'}:{request.client.port if request.client else 'Unknown'}")
+        logger.info(f"Method: {request.method}")
+        logger.info(f"Path: {request.url.path}")
+        logger.info(f"Query Params: {dict(request.query_params)}")
+        
+        # Log headers (excluding sensitive ones)
+        headers_to_log = {}
+        sensitive_headers = {'authorization', 'x-api-key', 'cookie', 'password'}
+        for key, value in request.headers.items():
+            if key.lower() not in sensitive_headers:
+                headers_to_log[key] = value
+        logger.info(f"Headers: {headers_to_log}")
+        
+        # Log body for POST/PUT/PATCH requests
+        if request.method in ["POST", "PUT", "PATCH"]:
+            try:
+                body = await request.body()
+                if body:
+                    try:
+                        body_json = json.loads(body)
+                        logger.info(f"Body: {json.dumps(body_json, indent=2)}")
+                    except:
+                        logger.info(f"Body (raw): {body[:500]}")
+            except Exception as e:
+                logger.warning(f"Failed to read request body: {e}")
+    
+    try:
+        response = await call_next(request)
+        duration = time.time() - start_time
+        
+        # Log response details (skip for /metrics)
+        if not skip_logging:
+            logger.info(f"\n[RESPONSE {request_id}] Status: {response.status_code}")
+            logger.info(f"Duration: {duration:.3f}s")
+            
+            # Safely convert headers to dict
+            try:
+                response_headers = dict(response.headers)
+            except:
+                response_headers = dict(response.headers.raw) if hasattr(response.headers, 'raw') else {}
+            logger.info(f"Response Headers: {response_headers}")
+        
+        # Record metrics for all endpoints (including /metrics)
+        try:
+            endpoint = request.url.path
+            method = request.method
+            status = response.status_code
+            
+            request_count.labels(endpoint=endpoint, method=method, status=status).inc()
+            request_duration.labels(endpoint=endpoint, method=method).observe(duration)
+        except Exception as e:
+            logger.warning(f"Failed to record metrics: {e}")
+        
+        if not skip_logging:
+            logger.info(f"{'='*80}\n")
+        return response
+        
+    except Exception as e:
+        duration = time.time() - start_time
+        if not skip_logging:
+            logger.error(f"\n[ERROR {request_id}] Exception occurred after {duration:.3f}s")
+            logger.error(f"Error Type: {type(e).__name__}")
+            logger.error(f"Error Message: {str(e)}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+        
+        try:
+            request_count.labels(endpoint=request.url.path, method=request.method, status=500).inc()
+            request_duration.labels(endpoint=request.url.path, method=request.method).observe(duration)
+        except Exception as metric_err:
+            if not skip_logging:
+                logger.warning(f"Failed to record error metrics: {metric_err}")
+        
+        if not skip_logging:
+            logger.error(f"{'='*80}\n")
+        raise
+
 @app.get("/")
 def root_route():
     return 'Hello, this is the root route for lingo ai server'
+
+@app.get("/health")
+def health_check():
+    """Health check endpoint for monitoring"""
+    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+
+@app.post("/test-log")
+def test_logging(data: dict = None):
+    """Test endpoint to verify detailed logging is working"""
+    logger.info(f"Test endpoint called with data: {data}")
+    return {"message": "Test successful", "received": data}
 
 class Body(BaseModel):
     audio_file_link: str
@@ -231,3 +354,26 @@ async def transcribe_intent(
         logger.error(f"Error in transcribe-intent: {traceback.format_exc()}")
         current_session_id = session_id if session_id else "unknown"
         return JSONResponse(content={"message": str(e), "session_id": current_session_id}, status_code=500)
+
+
+# Simple metrics endpoint (no authentication for now)
+@app.get("/metrics")
+@app.get("/metrics/")
+def get_metrics_handler():
+    """Prometheus metrics endpoint"""
+    try:
+        prometheus_multiproc_dir = os.getenv("PROMETHEUS_MULTIPROC_DIR")
+        
+        if prometheus_multiproc_dir:
+            # Use multiprocess mode for Gunicorn with multiple workers
+            registry = CollectorRegistry()
+            multiprocess.MultiProcessCollector(registry)
+        else:
+            # Use default registry for single-worker development
+            registry = REGISTRY
+        
+        metrics_data = generate_latest(registry)
+        return Response(metrics_data, media_type="text/plain; version=0.0.4")
+    except Exception as e:
+        logger.error(f"Error generating metrics: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail="Failed to generate metrics")
