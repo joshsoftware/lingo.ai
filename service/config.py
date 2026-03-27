@@ -19,8 +19,8 @@ db_port = os.getenv("DB_PORT")
 db_name = os.getenv("DB_NAME")
 
 # Zaban STT/TTS API (replaces Sarvam for speech). Use https to avoid redirect (POST→GET causes 405).
-zaban_base_url = os.getenv("ZABAN_BASE_URL", "")
-zaban_api_key = os.getenv("ZABAN_API_KEY", "")
+zaban_base_url = os.getenv("ZABAN_BASE_URL", "https://zaban.joshsoftware.com")
+zaban_api_key = os.getenv("ZABAN_API_KEY", "sk-JxltoFeftZbEMluKwlCNDLM4-RyvpC2a8xHqprv21kajZjeVrfiQ1Ihj2LAsdmxJ")
 
 # Redis configuration
 redis_host = os.getenv("REDIS_HOST", "localhost")
