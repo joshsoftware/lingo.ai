@@ -167,3 +167,12 @@ cython_debug/
 /service/models
 
 secrets/
+
+
+# test-automation-ignore -files
+com.hybrid.joshsoftware.lingoai/target/
+com.hybrid.joshsoftware.lingoai/Reports/
+com.hybrid.joshsoftware.lingoai/test-output/
+com.hybrid.joshsoftware.lingoai/.settings/
+com.hybrid.joshsoftware.lingoai/.classpath
+com.hybrid.joshsoftware.lingoai/.project
