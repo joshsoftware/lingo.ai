@@ -27,3 +27,10 @@ redis_host = os.getenv("REDIS_HOST", "localhost")
 redis_port = int(os.getenv("REDIS_PORT", 6379))
 redis_db = int(os.getenv("REDIS_DB", 0))
 redis_password = os.getenv("REDIS_PASSWORD", None)
+
+# Error-log audio storage (failed /voice/transcribe-intent requests; for admin playback)
+# Default: next to this config file (service/error_audio). Override with ERROR_AUDIO_DIR for absolute path.
+error_audio_dir = os.getenv(
+    "ERROR_AUDIO_DIR",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "error_audio"),
+)

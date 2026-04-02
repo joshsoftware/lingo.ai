@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       set: { token, expiresAt },
     });
 
-    // Send email
+    // Email sending code commented out for now
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: Number(process.env.SMTP_PORT),

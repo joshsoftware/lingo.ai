@@ -19,6 +19,7 @@ import httpx
 from redis_client import session_manager
 from datetime import datetime
 from session_service import SessionService, SessionFlowProcessor
+from error_logger import log_api_error
 
 app = FastAPI()
 
@@ -105,6 +106,10 @@ versions = Versionizer(
 
 app.include_router(banking_router)
 
+# Import and include admin routes
+from admin_routes import router as admin_router
+app.include_router(admin_router)
+
 
 @app.post("/voice/transcribe-intent")
 async def transcribe_intent(
@@ -124,110 +129,252 @@ async def transcribe_intent(
     1. Standard flow: Audio is provided, transcribed, and intent is detected
     2. OTP + session_id flow: No audio, fetch transcribe_text and language from session data
     """
+    translation_text = None
+    detected_language = None
+    audio_file_name = None
+    audio_bytes = None
+    intent_data = None
+
     try:
         # Check for (OTP or beneficiary_name) + session_id flow (no audio required)
         if not audio and session_id and ((otp and otp.isdigit() and (int(otp) == 123456)) or beneficiary_name) :
             logger.info(f"Using OTP + session_id flow for session: {session_id}")
             
-            # Initialize session flow processor
-            session_processor = SessionFlowProcessor()
-            
-            # Get session data to fetch stored transcribe_text and language
-            session_data = SessionService.get_session_data(session_id)
-            if not session_data:
-                return JSONResponse(status_code=400, content={"message": f"Session {session_id} not found"})
-            
-            # Extract transcribe_text and language from session data
-            translations = session_data.get("translations", [])
-            if not translations:
-                return JSONResponse(status_code=400, content={"message": "No translation data found in session"})
-            
-            # Use the first (original) translation as transcribe_text
-            translation_text = translations[0]
-            language = session_data.get("language")
-            
-            if not language:
-                return JSONResponse(status_code=400, content={"message": "No language data found in session"})
-            
-            # Use existing intent data from the session
-            formatted_intent_data = session_data.get("intent_data", {})
-            
-            logger.info(f"Retrieved from session - translation: {translation_text}, language: {language}")
-            # Process existing session with OTP
-            success, response_data = await session_processor.process_existing_session(
-                session_id, translation_text, language, formatted_intent_data, otp, beneficiary_name
-            )
-            if not success:
-                return JSONResponse(status_code=400, content=response_data)
+            try:
+                # Initialize session flow processor
+                session_processor = SessionFlowProcessor()
                 
-            return JSONResponse(content=response_data, status_code=200)
+                # Get session data to fetch stored transcribe_text and language
+                session_data = SessionService.get_session_data(session_id)
+                if not session_data:
+                    error_msg = f"Session {session_id} not found"
+                    log_api_error(
+                        endpoint="/voice/transcribe-intent",
+                        error=Exception(error_msg),
+                        failure_stage="session_retrieval",
+                    )
+                    return JSONResponse(status_code=400, content={"message": error_msg})
+                
+                # Extract transcribe_text and language from session data
+                translations = session_data.get("translations", [])
+                if not translations:
+                    error_msg = "No translation data found in session"
+                    log_api_error(
+                        endpoint="/voice/transcribe-intent",
+                        error=Exception(error_msg),
+                        failure_stage="session_data_extraction",
+                    )
+                    return JSONResponse(status_code=400, content={"message": error_msg})
+                
+                # Use the first (original) translation as transcribe_text
+                translation_text = translations[0]
+                detected_language = session_data.get("language")
+                
+                if not detected_language:
+                    error_msg = "No language data found in session"
+                    log_api_error(
+                        endpoint="/voice/transcribe-intent",
+                        error=Exception(error_msg),
+                        failure_stage="session_data_extraction",
+                        translated_text=translation_text,
+                    )
+                    return JSONResponse(status_code=400, content={"message": error_msg})
+                
+                # Use existing intent data from the session
+                formatted_intent_data = session_data.get("intent_data", {})
+                
+                logger.info(f"Retrieved from session - translation: {translation_text}, language: {detected_language}")
+                
+                # Process existing session with OTP
+                success, response_data = await session_processor.process_existing_session(
+                    session_id, translation_text, detected_language, formatted_intent_data, otp, beneficiary_name
+                )
+                if not success:
+                    log_api_error(
+                        endpoint="/voice/transcribe-intent",
+                        error=Exception(str(response_data)),
+                        failure_stage="session_processing",
+                        translated_text=translation_text,
+                        detected_language=detected_language,
+                        intent_data=formatted_intent_data,
+                    )
+                    return JSONResponse(status_code=400, content=response_data)
+                    
+                return JSONResponse(content=response_data, status_code=200)
+            except Exception as e:
+                log_api_error(
+                    endpoint="/voice/transcribe-intent",
+                    error=e,
+                    failure_stage="otp_session_flow",
+                    translated_text=translation_text,
+                    detected_language=detected_language,
+                    intent_data=intent_data,
+                )
+                raise
+        
         # Standard flow - audio is required
         if not audio:
-            return JSONResponse(status_code=400, content={"message":"No audio file provided"})
+            error_msg = "No audio file provided"
+            log_api_error(
+                endpoint="/voice/transcribe-intent",
+                error=Exception(error_msg),
+                failure_stage="input_validation",
+            )
+            return JSONResponse(status_code=400, content={"message": error_msg})
+
+        # Read audio once so we can store it on error and still pass a copy to whisper
+        from io import BytesIO
+        from starlette.datastructures import UploadFile as StarletteUploadFile
+        audio_bytes = await audio.read()
+        audio_file_name = audio.filename if audio else None
+        audio_for_whisper = StarletteUploadFile(
+            filename=audio_file_name or "audio.wav",
+            file=BytesIO(audio_bytes),
+        )
 
         # Step 1: Common audio processing (transcription and intent detection)
-        id,response,lang,dia = translate_with_whisper_from_upload(audio)
-        translation_text = response[1]
-        language = lang[1]
-        logger.info("Translation done")
-        logger.info(translation_text)
-        logger.info(language)
+        try:
+            id, response, lang, dia = translate_with_whisper_from_upload(audio_for_whisper)
+            translation_text = response[1]
+            detected_language = lang[1]
+            logger.info("Translation done")
+            logger.info(translation_text)
+            logger.info(detected_language)
+        except Exception as e:
+            # Capture error traceback and logs
+            error_traceback = traceback.format_exc()
+            logger.error(f"Transcription error: {error_traceback}")
+            
+            log_api_error(
+                endpoint="/voice/transcribe-intent",
+                error=e,
+                failure_stage="transcription",
+                audio_file_name=audio_file_name,
+                audio_bytes=audio_bytes,
+                preprocessing_logs_text=error_traceback,  # Store traceback as preprocessing logs
+            )
+            raise
 
         #translation_text = "How much I spend on Flipkart last week"
         #translation_text = "list all my beneficiaries"
         #translation_text = "Pay 10 to Shailesh"
         #language = "hi-IN"
         # Detect intent
-        intent = detect_intent_with_llama(translation_text, language)
-        logger.info("Intent identified")
         try:
-            if isinstance(intent, dict):
-                intent_dict = intent
-            else:
-                intent_dict = json.loads(intent)
-        except json.JSONDecodeError:
-            logger.warning(f"Intent detection returned non-JSON response: {intent}")
-            result = {"error": intent, "session_id": session_id, "translation": translation_text}
-            return JSONResponse(content=result, status_code=200)
+            intent = detect_intent_with_llama(translation_text, detected_language)
+            logger.info("Intent identified")
+            
+            try:
+                if isinstance(intent, dict):
+                    intent_dict = intent
+                else:
+                    intent_dict = json.loads(intent)
+            except json.JSONDecodeError as e:
+                logger.warning(f"Intent detection returned non-JSON response: {intent}")
+                error_traceback = traceback.format_exc()
+                log_api_error(
+                    endpoint="/voice/transcribe-intent",
+                    error=e,
+                    failure_stage="intent_parsing",
+                    audio_file_name=audio_file_name,
+                    audio_bytes=audio_bytes,
+                    translated_text=translation_text,
+                    detected_language=detected_language,
+                    preprocessing_logs_text=error_traceback,
+                    intent_data={"raw_intent_response": str(intent)},
+                )
+                result = {"error": intent, "session_id": session_id, "translation": translation_text}
+                return JSONResponse(content=result, status_code=200)
 
-        # Format intent response
-        formatted_intent_data = format_intent_response(intent_dict)
-        logger.info(f"Formatted intent data: {formatted_intent_data}")
-
+            # Format intent response
+            formatted_intent_data = format_intent_response(intent_dict)
+            intent_data = formatted_intent_data
+            logger.info(f"Formatted intent data: {formatted_intent_data}")
+        except Exception as e:
+            # Capture error traceback
+            error_traceback = traceback.format_exc()
+            logger.error(f"Intent detection error: {error_traceback}")
+            
+            log_api_error(
+                endpoint="/voice/transcribe-intent",
+                error=e,
+                failure_stage="intent_detection",
+                audio_file_name=audio_file_name,
+                audio_bytes=audio_bytes,
+                translated_text=translation_text,
+                detected_language=detected_language,
+                preprocessing_logs_text=error_traceback,
+            )
+            raise
 
         # Step 3: Initialize session flow processor
-        session_processor = SessionFlowProcessor()
-        # Step 4: Decision logic - use session service to determine flow
-        if SessionService.should_use_session_flow(session_id):
-            # SESSION-BASED FLOW
-            logger.info(f"Using session flow for session: {session_id}")
-            
-            success, response_data = await session_processor.process_existing_session(
-                session_id, translation_text, language, formatted_intent_data, otp, beneficiary_name
-            )
-            
-            if not success:
-                return JSONResponse(status_code=400, content=response_data)
+        try:
+            session_processor = SessionFlowProcessor()
+            # Step 4: Decision logic - use session service to determine flow
+            if SessionService.should_use_session_flow(session_id):
+                # SESSION-BASED FLOW
+                logger.info(f"Using session flow for session: {session_id}")
                 
-            return JSONResponse(content=response_data, status_code=200)
-        
-        else:
-            # NEW SESSION FLOW
-            logger.info("Creating new session flow")
+                success, response_data = await session_processor.process_existing_session(
+                    session_id, translation_text, detected_language, formatted_intent_data, otp, beneficiary_name
+                )
+                
+                if not success:
+                    log_api_error(
+                        endpoint="/voice/transcribe-intent",
+                        error=Exception(str(response_data)),
+                        failure_stage="session_processing",
+                        audio_file_name=audio_file_name,
+                        audio_bytes=audio_bytes,
+                        translated_text=translation_text,
+                        detected_language=detected_language,
+                        intent_data=formatted_intent_data,
+                    )
+                    return JSONResponse(status_code=400, content=response_data)
+                    
+                return JSONResponse(content=response_data, status_code=200)
             
-            response_data = await session_processor.process_new_session(
-                customer_id,
-                phone, 
-                transaction_type,
-                payment_method,
-                language,
-                translation_text,
-                formatted_intent_data
+            else:
+                # NEW SESSION FLOW
+                logger.info("Creating new session flow")
+                
+                response_data = await session_processor.process_new_session(
+                    customer_id,
+                    phone, 
+                    transaction_type,
+                    payment_method,
+                    detected_language,
+                    translation_text,
+                    formatted_intent_data
+                )
+                
+                return JSONResponse(content=response_data, status_code=200)
+        except Exception as e:
+            log_api_error(
+                endpoint="/voice/transcribe-intent",
+                error=e,
+                failure_stage="session_processing",
+                audio_file_name=audio_file_name,
+                audio_bytes=audio_bytes,
+                translated_text=translation_text,
+                detected_language=detected_language,
+                intent_data=intent_data,
             )
-            
-            return JSONResponse(content=response_data, status_code=200)
+            raise
 
     except Exception as e:
         logger.error(f"Error in transcribe-intent: {traceback.format_exc()}")
         current_session_id = session_id if session_id else "unknown"
+        # Log the top-level error if not already logged
+        log_api_error(
+            endpoint="/voice/transcribe-intent",
+            error=e,
+            failure_stage="unknown",
+            audio_file_name=audio_file_name,
+            audio_bytes=audio_bytes,
+            translated_text=translation_text,
+            detected_language=detected_language,
+            intent_data=intent_data,
+        )
+        
         return JSONResponse(content={"message": str(e), "session_id": current_session_id}, status_code=500)

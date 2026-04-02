@@ -259,10 +259,27 @@ def translate_with_whisper_from_upload(upload_file: UploadFile):
         )
     except Exception as e:
         logger.error(f"Translation from upload failed: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Translation from upload failed: {str(e)}"
-        )
+        # Propagate status code and message from upstream API (e.g. 403 Subscription key not provided)
+        status_code = 500
+        detail = str(e)
+        if hasattr(e, "status_code") and e.status_code is not None:
+            status_code = e.status_code
+        if hasattr(e, "body") and isinstance(e.body, dict):
+            err = e.body.get("error") or e.body
+            if isinstance(err, dict) and err.get("message"):
+                detail = err["message"]
+        # Parse from message if SDK embeds status_code/body in str(e)
+        if "status_code:" in detail:
+            import re
+            m = re.search(r"status_code:\s*(\d+)", detail)
+            if m:
+                status_code = int(m.group(1))
+            m = re.search(r"body:\s*\{[^}]*'message':\s*'([^']+)'", detail)
+            if not m:
+                m = re.search(r'"message":\s*"([^"]+)"', detail)
+            if m:
+                detail = m.group(1)
+        raise HTTPException(status_code=status_code, detail=detail)
     finally:
         # Clean up temporary file
         if temp_file_path and os.path.exists(temp_file_path):

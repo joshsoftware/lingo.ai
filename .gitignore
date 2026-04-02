@@ -1,3 +1,9 @@
+# Stored error-log audio (admin playback)
+service/error_audio/
+
+# macOS
+.DS_Store
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
